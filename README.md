@@ -75,7 +75,7 @@ which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the 
 
 All of the AWS Java apis (except S3) follow this pattern, either having a single implementation which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.   
 
-For example, AmazonEC2Client's `describeImages()` method is overloaded, and can be invoked either with no args, or with a `DescribeImagesRequest`. So the Clojure invocation would look like
+For example, AmazonEC2Client's [`describeImages()`] [7] method is overloaded, and can be invoked either with no args, or with a [`DescribeImagesRequest`] [8]. So the Clojure invocation would look like
 ```clj
 (describe-images)
 ```
@@ -174,3 +174,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [4]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/CreateSnapshotRequest.html
 [5]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/AmazonEC2Client.html#describeAvailabilityZones(com.amazonaws.services.ec2.model.DescribeAvailabilityZonesRequest)
 [6]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/DescribeAvailabilityZonesRequest.html
+[7]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/AmazonEC2Client.html#describeImages()
+[8]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/DescribeImagesRequest.html

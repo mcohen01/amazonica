@@ -64,8 +64,18 @@ and the following dependency:
 * Support for multiple AWS credentials
     
 ## Documentation   
-Amazonica delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].   
-Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. Camel-case Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
+[Minimum Viable Snippet] [9]:  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.ec2]))
+
+  (with-credential ["aws-access-key" "aws-secret-key"]
+    (describe-instances))
+```  
+
+Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].   
+Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
 (use 'amazonica.core 'amazonica.aws.ec2)
 (create-snapshot :volume-id "vol-8a4857fa"
@@ -84,15 +94,29 @@ or
 (describe-images :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
-Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are often instances of the Java wrapper classes. Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. `java.util.Date` and Joda Time `org.joda.time.base.AbstractInstant` are supported as well. In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filter`s. Passing the filters argument would look like:
+Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are often instances of the Java wrapper classes. Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. `java.util.Date` and Joda Time `org.joda.time.base.AbstractInstant` are supported as well. In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filter`s. Passing the filters argument would look like:
 ```clj
 (describe-availability-zones 
   :zone-names ["us-east-1a" "us-east-1b"]
-  :filters [{
-    :name "environment"
-    :values ["dev" "qa" "staging"]}])
+  :filters [
+    {:name "environment"
+     :values ["dev" "qa" "staging"]}])
 ```
 
+### Authentication
+You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` and passing in their AWS key pair and an optional endpoint:  
+```clj
+(defcredential "aws-access-key" "aws-secret-key" "us-west-1")
+```  
+All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential) macro, which takes a vector of key pair credntials and an optional endpoint, like so:  
+```clj
+(defcredential "aws-access-key" "aws-secret-key" "us-west-1")
+(describe-instances)
+
+(with-credential ["other-account" "secret" "us-east-1"]
+  (describe-instances))
+; returns EC2 instances from "other-account" running in US-East region
+```  
 
 
 ## Example Usage
@@ -100,7 +124,8 @@ Note that `java.util.Collections` are supported as arguments (as well as being c
 ###EC2
 ```clj
 (ns com.example
-  (:use (amazonica core ec2)))
+  (:use [amazonica.core]
+        [amazonica.aws.ec2]))
         
 (describe-images :owners ["self"])
 ; {:images
@@ -176,3 +201,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [6]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/DescribeAvailabilityZonesRequest.html
 [7]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/AmazonEC2Client.html#describeImages()
 [8]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/DescribeImagesRequest.html
+[9]: http://blog.fogus.me/2012/08/23/minimum-viable-snippet/

@@ -70,8 +70,12 @@ and the following dependency:
   (:use [amazonica.core]
         [amazonica.aws.ec2]))
 
-  (with-credential ["aws-access-key" "aws-secret-key"]
-    (describe-instances))
+  (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
+  
+  (describe-instances)
+
+  (create-snapshot :volume-id   "vol-8a4857fa"
+                   :description "my_new_snapshot")
 ```  
 
 Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].   
@@ -104,18 +108,23 @@ Note that `java.util.Collections` are supported as arguments (as well as being c
 ```
 
 ### Authentication
-You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` and passing in their AWS key pair and an optional endpoint:  
+You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
 ```  
-All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential) macro, which takes a vector of key pair credntials and an optional endpoint, like so:  
+All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential) macro, which takes a vector of key pair credentials and an optional endpoint, like so:  
 ```clj
-(defcredential "aws-access-key" "aws-secret-key" "us-west-1")
-(describe-instances)
+(defcredential "account-1-aws-access-key" "aws-secret-key" "us-west-1")
 
-(with-credential ["other-account" "secret" "us-east-1"]
+(describe-instances)
+; returns instances visible to account-1
+
+(with-credential ["account-2-aws-access-key" "secret" "us-east-1"]
   (describe-instances))
-; returns EC2 instances from "other-account" running in US-East region
+; returns EC2 instances visible to account-2 running in US-East region
+
+(describe-images :owners ["self"])
+; returns images belonging to account-1
 ```  
 
 

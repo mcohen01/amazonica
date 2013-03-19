@@ -73,7 +73,7 @@ Reflection is used to create idiomatically named Clojure Vars in the library nam
 ```
 which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.   
 
-All of the AWS Java apis (except S3) follow this pattern, such that the corresponding Clojure functions can either be invoked with no argguments or with key-value pairs corresponding to the Java bean properties exposed.   
+All of the AWS Java apis (except S3) follow this pattern, either having a single implementation which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.   
 
 For example, AmazonEC2Client's `describeImages()` method is overloaded, and can be invoked either with no args, or with a `DescribeImagesRequest`. So the Clojure invocation would look like
 ```clj

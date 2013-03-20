@@ -99,7 +99,14 @@ or
 (describe-images :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
-Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values of Collections). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes. Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. `java.util.Date` and Joda Time `org.joda.time.base.AbstractInstant` are supported as well. In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
+
+### Conversions/Coercions  
+
+Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values of Collections). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes.  
+
+Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. Methods requiring a `java.util.Date` argument can take Joda Time `org.joda.time.base.AbstractInstants`, longs, or Strings (default pattern is "yyyy-MM-dd"), with conversion happening automatically. ```clj (set-date-format "MM-dd-yyyy")``` can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.  
+
+In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
 (describe-availability-zones 
   :filters [

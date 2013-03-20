@@ -1,0 +1,17 @@
+aws.config
+lib
+bin
+classes
+target
+pom.xml
+*.jar
+checkouts
+.classpath
+.project
+.settings
+*.iml
+.idea
+.lein-failures
+.lein-deps-sum
+.lein-failures
+.lein-repl-history

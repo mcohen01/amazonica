@@ -79,10 +79,10 @@ and the following dependency:
                    :description "my_new_snapshot")
 ```  
 
-Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].   
+Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].  
+
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
-(use 'amazonica.core 'amazonica.aws.ec2)
 (create-snapshot :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
@@ -99,14 +99,37 @@ or
 (describe-images :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
-Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are often instances of the Java wrapper classes. Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. `java.util.Date` and Joda Time `org.joda.time.base.AbstractInstant` are supported as well. In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filter`s. Passing the filters argument would look like:
+Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values of Collections). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes. Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. `java.util.Date` and Joda Time `org.joda.time.base.AbstractInstant` are supported as well. In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
 (describe-availability-zones 
-  :zone-names ["us-east-1a" "us-east-1b"]
   :filters [
     {:name "environment"
      :values ["dev" "qa" "staging"]}])
 ```
+which might return the following Clojure collection:
+```clj
+{:availability-zones
+ [{:state "available",
+   :region-name "us-east-1",
+   :zone-name "us-east-1a",
+   :messages []}
+  {:state "available",
+   :region-name "us-east-1",
+   :zone-name "us-east-1b",
+   :messages []}
+  {:state "available",
+   :region-name "us-east-1",
+   :zone-name "us-east-1c",
+   :messages []}
+  {:state "available",
+   :region-name "us-east-1",
+   :zone-name "us-east-1d",
+   :messages []}
+  {:state "available",
+   :region-name "us-east-1",
+   :zone-name "us-east-1e",
+   :messages []}]}
+``` 
 
 ### Authentication
 You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  

@@ -1,4 +1,4 @@
-<img src="https://raw.github.com/mcohen01/amazonica/master/claws.png" />
+<img src="https://raw.github.com/mcohen01/amazonica/master/claws.png" style="float:left;" />
 # `Amazonica`
 
 A comprehensive Clojure client for the entire [Amazon AWS api] [1].   

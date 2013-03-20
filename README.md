@@ -136,7 +136,11 @@ which might return the following Clojure collection:
    :region-name "us-east-1",
    :zone-name "us-east-1e",
    :messages []}]}
-``` 
+```  
+
+### Extension points  
+
+
 
 ### Authentication
 You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  

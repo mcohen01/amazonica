@@ -4,6 +4,7 @@ bin
 classes
 target
 pom.xml
+pom.xml.asc
 *.jar
 checkouts
 .classpath

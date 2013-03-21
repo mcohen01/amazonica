@@ -99,12 +99,11 @@
                     (:secret-key credentials))
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
-      (.setRegion
-        client
-        (Region/getRegion
-          (Regions/valueOf
-            (-> (str/upper-case endpoint)
-                (.replaceAll "-" "_"))))))
+      (->> (-> (str/upper-case endpoint)
+               (.replaceAll "-" "_"))
+           Regions/valueOf
+           Region/getRegion
+           (.setRegion client)))
     client))
 
 (def ^:private amazon-client
@@ -227,17 +226,6 @@
       true  (= 0 (count (.getParameterTypes method)))
       false (< 0 (count (.getParameterTypes method))))))
 
-(defn- accessors
-  [clazz getters?]
-  (reduce
-    #(if (-> (.getName %2)
-             (.startsWith
-               (if getters? "get" "set")))
-      (conj % %2)
-      %)
-    []
-    (.getDeclaredMethods clazz)))
-
 (defn- accessor-methods
   [class-methods name getter?]
   (reduce
@@ -330,6 +318,34 @@
 (defprotocol IMarshall
   (marshall [obj]))
 
+(defn- getter?
+  [method]
+  (let [name (.getName method)
+        type (.getName (.getReturnType method))]
+    (or (.startsWith name "get")
+        (and 
+          (.startsWith name "is")
+          (= "boolean" type)))))
+
+(defn- accessors
+  [clazz getters?]
+  (reduce
+    #(if (or
+           (and getters? (getter? %2))
+           (and (not getters?)
+                (.startsWith (.getName %2) "set")))
+      (conj % %2)
+      %)
+    []
+    (.getDeclaredMethods clazz)))
+
+(defn- prop->name
+  [method]
+  (let [name (.getName method)]
+    (if (.startsWith name "is")
+      (str (.substring name 2) "?")
+      (.substring name 3))))
+  
 (defn- get-fields
   "Returns a map of all non-null values returned by
   invoking all public getters on the specified object."
@@ -337,11 +353,11 @@
   (let [no-arg (make-array Object 0)]
     (into {}
       (for [m (accessors (class obj) true)]
-        (if-let [r (marshall (.invoke m obj no-arg))]
-          (hash-map
-            (camel->keyword
-              (.substring (.getName m) 3))
-            r))))))
+        (let [r (marshall (.invoke m obj no-arg))]
+          (if-not (nil? r)
+            (hash-map
+              (camel->keyword (prop->name m))
+              r)))))))
 
 (extend-protocol IMarshall
   nil

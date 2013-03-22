@@ -158,6 +158,26 @@ invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services
 ```
 If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` returns a `java.util.List` of `GroupIdentifiers`, which is converted to a vector of maps containing keys `:group-name` and `:group-id`, under the `:groups` key. Ditto for :block-device-mappings and :tags, and so and so on...
 
+Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling 
+```clj
+(list-tables)
+```
+by default would return 
+```clj
+{:table-names ["TableOne" "TableTwo" "TableThree"]}
+```
+However, if you call 
+```clj
+(set-root-unwrapping! true)
+```
+then single keyed top level maps will be "unwrapped" like so:
+```clj
+(list-tables)
+; ["TableOne" "TableTwo" "TableThree"]
+```
+
+
+
 The returned data can be "round tripped" as well. So the returned Clojure data structures can be supplied as arguments to function calls which delegate to Java methods taking the same object type as an argument. See the section below for more on this.  
 
 ### Argument Coercion   
@@ -272,6 +292,10 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 
 ## Examples
 
+###Autoscaling  
+
+###CloudFormation
+
 ###CloudFront  
 ```clj
 (create-distribution :distribution-config {
@@ -313,7 +337,7 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
                        :min-ttl 3600
                      }
                      :price-class "PriceClass_All"})
-                       
+
 (list-distributions :max-items 10)
 ; {:distribution-list
 ;  {:is-truncated false,

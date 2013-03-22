@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
@@ -245,6 +245,30 @@ All subsequent API calls will use the specified credential. If you need to execu
 ; returns images belonging to account-1
 ```  
 
+### Exception Handling  
+All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catch exceptions you can convert the AWS object to a Clojure map like so:
+```clj
+(try
+  (create-snapshot :volume-id "vol-ahsg23h"
+                   :description "daily backup")
+  (catch Exception e
+    (log (ex->map e))))
+
+; {:error-code "InvalidParameterValue",
+;  :error-type "Unknown",
+;  :status-code 400,
+;  :request-id "9ba69e16-ed63-41d4-ac02-1f6032cb64de",
+;  :service-name "AmazonEC2",
+;  :message
+;  "Value (vol-ahsg23h) for parameter volumeId is invalid. Expected: 'vol-...'.",
+;  :stack-trace "Status Code: 400, AWS Service: AmazonEC2, AWS Request ID: a5b0340a-8f37-4122-941c-ed8d5472b11d, AWS Error Code: InvalidParameterValue, AWS Error Message: Value (vol-ahsg23h) for parameter volumeId is invalid. Expected: 'vol-...'. 
+;  at com.amazonaws.http.AmazonHttpClient.handleErrorResponse(AmazonHttpClient.java:644)
+;   at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:338)
+;   at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:190)
+;   at com.amazonaws.services.ec2.AmazonEC2Client.invoke(AmazonEC2Client.java:6199)
+;   at com.amazonaws.services.ec2.AmazonEC2Client.createSnapshot(AmazonEC2Client.java:1531)
+;   .....
+```
 
 ## Examples
 

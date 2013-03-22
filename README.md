@@ -206,7 +206,10 @@ and return the following Clojure collection:
 
 
 ### Extension points  
-Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished with the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the ```clj (amazonica.core/register-coercions) ``` function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
+Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished with the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the ```clj 
+(amazonica.core/register-coercions) 
+``` 
+function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
 ```clj
 (get-item :table-name "MyTable"
           :key "foo")

@@ -100,20 +100,82 @@ or
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
 
-### Conversions/Coercions  
+### Conversion of Returned Types  
 
-Note that `java.util.Collections` are supported as arguments (as well as being converted to Clojure persistent data structures in the case of return values of Collections). Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes.  
+`java.util.Collections` are converted to the corresponding Clojure collection type. `java.util.Maps` are converted to `clojure.lang.IPersistenMaps`, `java.util.Lists` are converted to `clojure.lang.IPersistenVectors`, etc.  
 
-Smart conversions are attempted based on the argument types of the underlying Java method signature, and are generally transparent to the user, such as Clojure's preferred longs being converted to ints where required. Methods requiring a `java.util.Date` argument can take Joda Time `org.joda.time.base.AbstractInstants`, longs, or Strings (default pattern is "yyyy-MM-dd"), with conversion happening automatically. ```clj (set-date-format "MM-dd-yyyy")``` can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.  
+`java.util.Dates` are automatically converted to Joda Time `DateTime` instances.   
 
-In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property which is a java.util.List of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
+Amazon AWS object types are returned as Clojure maps, with conversion taking place recursively, so, "Clojure data all the way down."  
+
+For example, a call to 
+```clj
+(describe-instances)
+```
+invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services.ec2.model.DescribeInstancesResult`. However, this is recursively converted to Clojure data, yielding a map of `Reservations`, like so:
+```clj
+{:owner-id "676820690883",
+   :group-names ["cx"],
+   :groups [{:group-name "cx", :group-id "sg-38f45150"}],
+   :instances
+   [{:instance-type "m1.large",
+     :kernel-id "aki-825ea7eb",
+     :hypervisor "xen",
+     :state {:name "running", :code 16},
+     :ebs-optimized false,
+     :public-dns-name "ec2-154-73-176-213.compute-1.amazonaws.com",
+     :root-device-name "/dev/sda1",
+     :virtualization-type "paravirtual",
+     :root-device-type "ebs",
+     :block-device-mappings
+     [{:device-name "/dev/sda1",
+       :ebs
+       {:status "attached",
+        :volume-id "vol-b0e519c3",
+        :attach-time #<DateTime 2013-03-21T22:00:56.000-07:00>,
+        :delete-on-termination true}}],
+     :network-interfaces [],
+     :public-ip-address "164.73.176.213",
+     :placement
+     {:availability-zone "us-east-1a",
+      :group-name "",
+      :tenancy "default"},
+     :private-ip-address "10.116.187.19",
+     :security-groups [{:group-name "cx", :group-id "sg-38f45150"}],
+     :state-transition-reason "",
+     :private-dns-name "ip-10-116-187-19.ec2.internal",
+     :instance-id "i-cefbe7a2",
+     :key-name "cxci",
+     :architecture "x86_64",
+     :client-token "",
+     :image-id "ami-baba68d3",
+     :ami-launch-index 0,
+     :monitoring {:state "disabled"},
+     :product-codes [],
+     :launch-time #<DateTime 2013-03-21T22:00:52.000-07:00>,
+     :tags [{:value "CXCI_nightly", :key "Name"}]}],
+   :reservation-id "r-8a23d6f7"}
+```
+If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` returns a `java.util.List` of `GroupIdentifiers`, which is converted to a vector of maps containing keys `:group-name` and `:group-id`, under the `:groups` key. Ditto for :block-device-mappings and :tags, and so and so on...
+
+The returned data can be "round tripped" as well. So the returned Clojure data structures can be supplied as arguments to function calls which delegate to Java methods taking the same object type as an argument. See the section below for more on this.  
+
+### Argument Coercion   
+
+Coercion of any types that are part of the java.lang wrapper classes happens transparently. So for example, CLojure's preferred longs are automatically converted to ints where required. 
+
+Clojure data structures automatically participate in the Java Collections abstractions, and so no explicit coercion is necessary. Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes.  
+
+When complex objects consisting of types outside of those in the `java.lang` package are required as argument parameters, smart conversions are attempted based on the argument types of the underlying Java method signature. Methods requiring a `java.util.Date` argument can take Joda Time `org.joda.time.base.AbstractInstants`, longs, or Strings (default pattern is "yyyy-MM-dd"), with conversion happening automatically. ```clj (set-date-format "MM-dd-yyyy")``` can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.  
+
+In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
 (describe-availability-zones 
   :filters [
     {:name "environment"
      :values ["dev" "qa" "staging"]}])
 ```
-which might return the following Clojure collection:
+and return the following Clojure collection:
 ```clj
 {:availability-zones
  [{:state "available",
@@ -138,8 +200,21 @@ which might return the following Clojure collection:
    :messages []}]}
 ```  
 
-### Extension points  
 
+### Extension points  
+Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished with the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the ```clj (amazonica.core/register-coercions) ``` function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
+```clj
+(get-item :table-name "MyTable"
+          :key "foo")
+```
+The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:  
+```clj
+(get-item :table-name "TestTable"
+          :key {
+            :hash-key-element {
+              :s "foo"}})
+```  
+Note that either form will work. This allows contributors to the library to incrementally evolve the api independently from the core of the library, as well as maintain backward compatibility of existing code written against prior versions of the library which didn't contain the conveniences. 
 
 
 ### Authentication
@@ -147,7 +222,7 @@ You'll note that none of the functions take an explicit credentials (key pair) a
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
 ```  
-All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential) macro, which takes a vector of key pair credentials and an optional endpoint, like so:  
+All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential)` macro, which takes a vector of key pair credentials and an optional endpoint, like so:  
 ```clj
 (defcredential "account-1-aws-access-key" "aws-secret-key" "us-west-1")
 
@@ -246,3 +321,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [7]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/AmazonEC2Client.html#describeImages()
 [8]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/DescribeImagesRequest.html
 [9]: http://blog.fogus.me/2012/08/23/minimum-viable-snippet/
+[10]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/Reservation.html
+[11]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodb/model/GetItemRequest.html

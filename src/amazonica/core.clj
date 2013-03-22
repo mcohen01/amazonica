@@ -121,9 +121,11 @@
 
 (defn keyword->camel
   [kw]
-  (->> (str/split (name kw) #"\-")
-       (fmap str/capitalize)
-       str/join))
+  (let [n (name kw)
+        m (.replace n "?" "")]
+    (->> (str/split m #"\-")
+         (fmap str/capitalize)
+         str/join)))
 
 
 (defn- aws-package?
@@ -327,7 +329,7 @@
           (.startsWith name "is")
           (= "boolean" type)))))
 
-(defn- accessors
+(defn accessors
   [clazz getters?]
   (reduce
     #(if (or

@@ -246,7 +246,7 @@ All subsequent API calls will use the specified credential. If you need to execu
 ```  
 
 
-## Example Usage
+## Examples
 
 ###EC2
 ```clj

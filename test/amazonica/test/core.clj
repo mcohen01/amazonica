@@ -245,7 +245,7 @@
               :text { :s "zonica" }
             })
   (try
-    (get-item :table-name "TestTable"
+    (get-item :table-name "TestTableXXX"
               :key "foo")
   (catch Exception e
     (let [error-map (ex->map e)]

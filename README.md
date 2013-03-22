@@ -272,6 +272,78 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 
 ## Examples
 
+###CloudFront  
+```clj
+(create-distribution :distribution-config {
+                     :enabled true
+                     :default-root-object "index.html"
+                     :origins {
+                       :quantity 0
+                       :items []
+                     }
+                     :logging {
+                       :enabled false
+                       :include-cookies false
+                       :bucket "abcd1234.s3.amazonaws.com"
+                       :prefix "cflog_"
+                     }
+                     :caller-reference 12345
+                     :aliases {
+                       :items ["m.example.com" "www.example.com"]
+                       :quantity 2
+                     }
+                     :cache-behaviors {
+                       :quantity 0 
+                       :items []
+                     }
+                     :comment "example"
+                     :default-cache-behavior {
+                       :target-origin-id "MyOrigin"
+                       :forwarded-values {
+                         :query-string false 
+                         :cookies {
+                           :forward "none"
+                         }
+                       }
+                       :trusted-signers {
+                         :enabled false
+                         :quantity 0
+                       }
+                       :viewer-protocol-policy "allow-all"
+                       :min-ttl 3600
+                     }
+                     :price-class "PriceClass_All"})
+                       
+(list-distributions :max-items 10)
+; {:distribution-list
+;  {:is-truncated false,
+;   :quantity 3,
+;   :marker "",
+;   :items
+;   [{:status "Deployed",
+;     :enabled true,
+;     :comment "wordfront",
+;     :origins
+;     {:quantity 1,
+;      :items
+;      [{:s3origin-config {:origin-access-identity ""},
+;        :id "MyOrigin",
+;        :domain-name "myblog.s3.amazonaws.com"}]},
+;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
+;     :cache-behaviors {:quantity 0, :items []},
+;     :domain-name "dhpz2lx23abcd.cloudfront.net",
+;     :default-cache-behavior
+;     {:target-origin-id "MyOrigin",
+;      :forwarded-values
+;      {:query-string false, :cookies {:forward "none"}},
+;      :trusted-signers {:quantity 0, :enabled false, :items []},
+;      :viewer-protocol-policy "allow-all",
+;      :min-ttl 3600},
+;     :price-class "PriceClass_All",
+;     :id "E5GB5B26FIF5A",
+;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
+```
+
 ###EC2
 ```clj
 (ns com.example

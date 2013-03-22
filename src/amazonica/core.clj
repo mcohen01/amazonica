@@ -41,7 +41,8 @@
 
 (defn stack->string [ex]
   (let [sw (StringWriter.)
-        pw (PrintWriter. sw)]
+        pw (PrintWriter. sw)
+        _  (.printStackTrace ex pw)]
     (.toString sw)))
 
 (defn ex->map [e]

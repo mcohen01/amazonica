@@ -24,7 +24,7 @@
            java.util.Date))
 
 
-(def ^:private credential (atom {}))
+(defonce ^:private credential (atom {}))
 
 (def ^:dynamic ^:private *credentials* nil)
 
@@ -93,15 +93,17 @@
                     :secret-key secret-key}]
     (assert (not (nil? secret-key))
             "secret-key is required")
-    (if endpoint
-      (merge credential {:endpoint endpoint})
+    (if-not (empty? endpoint)
+      (merge credential {:endpoint (first endpoint)})
       credential)))
 
-(defonce defcredential
-  (fn [& [access-key secret-key endpoint]]
-    (reset!
-      credential
-      (keys->cred access-key secret-key endpoint))))
+(defn defcredential
+  "Specify the AWS access key, secret key and optional
+  endpoint to use on subsequent requests."
+  [access-key secret-key & endpoint]
+  (reset!
+    credential
+    (keys->cred access-key secret-key endpoint)))
         
 (defmacro with-credential
   "Per invocation binding of credentials for ad-hoc

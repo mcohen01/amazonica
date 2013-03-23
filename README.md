@@ -35,10 +35,10 @@ and the following dependency:
 * [CloudFormation] (#cloudformation)
 * [CloudFront] (#cloudfront)
 * [CloudSearch] (#cloudsearch)
-* CloudWatch
+* [CloudWatch] (#cloudwatch)
 * DataPipeline
 * DirectConnect
-* DynamoDB
+* [DynamoDB] (#dynamodb)
 * [EC2] (#ec2)
 * ElastiCache
 * ElasticBeanstalk
@@ -48,9 +48,9 @@ and the following dependency:
 * IdentityManagement
 * OpsWorks
 * RDS
-* Redshift
+* [Redshift] (#redshift)
 * Route53
-* S3
+* [S3] (#s3)
 * SimpleDB
 * SimpleEmail
 * SNS
@@ -88,7 +88,7 @@ Reflection is used to create idiomatically named Clojure Vars in the library nam
 ```
 which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.   
 
-All of the AWS Java apis (except S3) follow this pattern, either having a single implementation which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.   
+All of the AWS Java apis (except S3) follow this pattern, either having a single implementation method which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.   
 
 For example, AmazonEC2Client's [describeImages()] [7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest] [8]. So the Clojure invocation would look like
 ```clj
@@ -174,7 +174,7 @@ However, if you call
 then single keyed top level maps will be "unwrapped" like so:
 ```clj
 (list-tables)
-; ["TableOne" "TableTwo" "TableThree"]
+=> ["TableOne" "TableTwo" "TableThree"]
 ```
 
 
@@ -227,7 +227,7 @@ and return the following Clojure collection:
 
 
 ### Extension points  
-Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished with the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the  
+Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished via the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the  
 ```clj 
 (amazonica.core/register-coercions) 
 ``` 
@@ -300,28 +300,30 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
   (:use [amazonica.core]
         [amazonica.aws.autoscaling]))
 
-  (create-launch-configuration :launch-configuration-name "aws_launch_cfg"
-                               :block-device-mappings [
-                                {:device-name "/dev/sda1"
-                                 :virtual-name "vol-b0e519c3"
-                                 :ebs { 
-                                  :snapshot-id "snap-36295e51"
-                                  :volume-size 32}}]
-                               :ebs-optimized true
-                               :image-id "ami-6fde0d06"
-                               :instance-type "m1.large"
-                               :spot-price ".10")
+(defcredential "aws-access-key" "aws-secret-key")
 
-  (create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
-                             :availability-zones ["us-east-1a" "us-east-1b"]
-                             :desired-capacity 3
-                             :health-check-grace-period 300
-                             :health-check-type "EC2"
-                             :launch-configuration-name "aws_launch_cfg"
-                             :min-size 3
-                             :max-size 3)
+(create-launch-configuration :launch-configuration-name "aws_launch_cfg"
+                             :block-device-mappings [
+                              {:device-name "/dev/sda1"
+                               :virtual-name "vol-b0e519c3"
+                               :ebs { 
+                                :snapshot-id "snap-36295e51"
+                                :volume-size 32}}]
+                             :ebs-optimized true
+                             :image-id "ami-6fde0d06"
+                             :instance-type "m1.large"
+                             :spot-price ".10")
 
-  (describe-auto-scaling-instances)
+(create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
+                           :availability-zones ["us-east-1a" "us-east-1b"]
+                           :desired-capacity 3
+                           :health-check-grace-period 300
+                           :health-check-type "EC2"
+                           :launch-configuration-name "aws_launch_cfg"
+                           :min-size 3
+                           :max-size 3)
+
+(describe-auto-scaling-instances)
 ```  
 
 ###CloudFormation  
@@ -330,10 +332,12 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
   (:use [amazonica.core]
         [amazonica.aws.cloudformation]))
 
-  (create-stack :stack-name "my-stack"
-                :template-url "abcd1234.s3.amazonaws.com")
+(defcredential "aws-access-key" "aws-secret-key")
+      
+(create-stack :stack-name "my-stack"
+              :template-url "abcd1234.s3.amazonaws.com")
 
-  (describe-stack-resources)
+(describe-stack-resources)
 ```
 
 ###CloudFront  
@@ -342,74 +346,76 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
   (:use [amazonica.core]
         [amazonica.aws.cloudfront]))
 
-  (create-distribution :distribution-config {
-                       :enabled true
-                       :default-root-object "index.html"
-                       :origins {
-                         :quantity 0
-                         :items []
-                       }
-                       :logging {
-                         :enabled false
-                         :include-cookies false
-                         :bucket "abcd1234.s3.amazonaws.com"
-                         :prefix "cflog_"
-                       }
-                       :caller-reference 12345
-                       :aliases {
-                         :items ["m.example.com" "www.example.com"]
-                         :quantity 2
-                       }
-                       :cache-behaviors {
-                         :quantity 0 
-                         :items []
-                       }
-                       :comment "example"
-                       :default-cache-behavior {
-                         :target-origin-id "MyOrigin"
-                         :forwarded-values {
-                           :query-string false 
-                           :cookies {
-                             :forward "none"
-                           }
-                         }
-                         :trusted-signers {
-                           :enabled false
-                           :quantity 0
-                         }
-                         :viewer-protocol-policy "allow-all"
-                         :min-ttl 3600
-                       }
-                       :price-class "PriceClass_All"})
+(defcredential "aws-access-key" "aws-secret-key")
 
-  (list-distributions :max-items 10)
-  ; {:distribution-list
-  ;  {:is-truncated false,
-  ;   :quantity 3,
-  ;   :marker "",
-  ;   :items
-  ;   [{:status "Deployed",
-  ;     :enabled true,
-  ;     :comment "wordfront",
-  ;     :origins
-  ;     {:quantity 1,
-  ;      :items
-  ;      [{:s3origin-config {:origin-access-identity ""},
-  ;        :id "MyOrigin",
-  ;        :domain-name "myblog.s3.amazonaws.com"}]},
-  ;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
-  ;     :cache-behaviors {:quantity 0, :items []},
-  ;     :domain-name "dhpz2lx23abcd.cloudfront.net",
-  ;     :default-cache-behavior
-  ;     {:target-origin-id "MyOrigin",
-  ;      :forwarded-values
-  ;      {:query-string false, :cookies {:forward "none"}},
-  ;      :trusted-signers {:quantity 0, :enabled false, :items []},
-  ;      :viewer-protocol-policy "allow-all",
-  ;      :min-ttl 3600},
-  ;     :price-class "PriceClass_All",
-  ;     :id "E5GB5B26FIF5A",
-  ;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
+(create-distribution :distribution-config {
+                     :enabled true
+                     :default-root-object "index.html"
+                     :origins {
+                       :quantity 0
+                       :items []
+                     }
+                     :logging {
+                       :enabled false
+                       :include-cookies false
+                       :bucket "abcd1234.s3.amazonaws.com"
+                       :prefix "cflog_"
+                     }
+                     :caller-reference 12345
+                     :aliases {
+                       :items ["m.example.com" "www.example.com"]
+                       :quantity 2
+                     }
+                     :cache-behaviors {
+                       :quantity 0 
+                       :items []
+                     }
+                     :comment "example"
+                     :default-cache-behavior {
+                       :target-origin-id "MyOrigin"
+                       :forwarded-values {
+                         :query-string false 
+                         :cookies {
+                           :forward "none"
+                         }
+                       }
+                       :trusted-signers {
+                         :enabled false
+                         :quantity 0
+                       }
+                       :viewer-protocol-policy "allow-all"
+                       :min-ttl 3600
+                     }
+                     :price-class "PriceClass_All"})
+
+(list-distributions :max-items 10)
+; {:distribution-list
+;  {:is-truncated false,
+;   :quantity 3,
+;   :marker "",
+;   :items
+;   [{:status "Deployed",
+;     :enabled true,
+;     :comment "wordfront",
+;     :origins
+;     {:quantity 1,
+;      :items
+;      [{:s3origin-config {:origin-access-identity ""},
+;        :id "MyOrigin",
+;        :domain-name "myblog.s3.amazonaws.com"}]},
+;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
+;     :cache-behaviors {:quantity 0, :items []},
+;     :domain-name "dhpz2lx23abcd.cloudfront.net",
+;     :default-cache-behavior
+;     {:target-origin-id "MyOrigin",
+;      :forwarded-values
+;      {:query-string false, :cookies {:forward "none"}},
+;      :trusted-signers {:quantity 0, :enabled false, :items []},
+;      :viewer-protocol-policy "allow-all",
+;      :min-ttl 3600},
+;     :price-class "PriceClass_All",
+;     :id "E5GB5B26FIF5A",
+;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
 ```
 
 ###CloudSearch  
@@ -418,21 +424,71 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
   (:use [amazonica.core]
         [amazonica.aws.cloudsearch]))
 
+(defcredential "aws-access-key" "aws-secret-key")
+
 (create-domain :domain-name "my-index")
 
 (index-documents :domain-name "my-index")
 ```
 
 ###CloudWatch  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.cloudwatch]))
 
+(defcredential "aws-access-key" "aws-secret-key")
 
+(put-metric-alarm :alarm-name "my-alarm"
+                  :actions-enabled true
+                  :evaluation-periods 5
+                  :period 60
+                  :metric-name "CPU"
+                  :threshold "50%")
+```
+
+###DynamoDB  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.dynamodb]))
+
+(defcredential "aws-access-key" "aws-secret-key")
+
+(create-table :table-name "TestTable"
+              :key-schema {
+                :hash-key-element {
+                  :attribute-name "id"
+                  :attribute-type "S"
+                }
+              }
+              :provisioned-throughput {
+                :read-capacity-units 1
+                :write-capacity-units 1
+              })
+
+(put-item :table-name "TestTable"
+          :item {
+            :id "foo" 
+            :text "barbaz"
+          })              
+
+(get-item :table-name "TestTable"
+          :key "foo")
+
+(scan :table-name "TestTable")
+
+(delete-table :table-name "TestTable")
+```
 
 ###EC2
 ```clj
 (ns com.example
   (:use [amazonica.core]
         [amazonica.aws.ec2]))
-        
+
+(defcredential "aws-access-key" "aws-secret-key")
+
 (describe-images :owners ["self"])
 ; {:images
 ;  [{:kernel-id "aki-8e5ea7e7",
@@ -463,11 +519,57 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;    :description "Use this to spin up development instances",
 ;    :tags [{:value "CentOS 6.2", :key "Name"}]}
 ; ....
-```
-```clojure
+
+
 (describe-instances)
-```
-```clojure
+
+; {:reservations
+; [{:owner-id "676820690883",
+;  :reservation-id "r-8a7463e1",
+;  :instances
+;  [{:instance-type "m1.small",
+;    :kernel-id "aki-92ba58fb",
+;    :hypervisor "xen",
+;    :state {:code 16, :name "running"},
+;    :ebs-optimized false,
+;    :public-dns-name "ec2-184-73-212-155.compute-1.amazonaws.com",
+;    :root-device-name "/dev/sda1",
+;    :virtualization-type "paravirtual",
+;    :root-device-type "ebs",
+;    :block-device-mappings
+;    [{:device-name "/dev/sda1",
+;      :ebs
+;      {:attach-time #<DateTime 2010-09-24T01:30:19.000-07:00>,
+;       :delete-on-termination true,
+;       :volume-id "vol-d0745eb9",
+;       :status "attached"}}],
+;    :network-interfaces [],
+;    :public-ip-address "164.73.212.155",
+;    :placement
+;    {:tenancy "default",
+;     :availability-zone "us-east-1a",
+;     :group-name ""},
+;    :private-ip-address "10.194.22.227",
+;    :security-groups [{:group-name "web", :group-id "sg-2582484c"}],
+;    :state-transition-reason "",
+;    :ramdisk-id "ari-94ba58fd",
+;    :private-dns-name "ip-10-194-22-227.ec2.internal",
+;    :instance-id "i-1b9a9f71",
+;    :key-name "bootstrap",
+;    :architecture "i386",
+;    :client-token "",
+;    :image-id "ami-cb8d61a2",
+;    :ami-launch-index 0,
+;    :monitoring {:state "enabled"},
+;    :product-codes [],
+;    :launch-time #<DateTime 2010-10-07T06:04:41.000-07:00>,
+;    :tags
+;    [{:value "Flowtown Blog", :key "Name"}
+;     {:value "blog/homepage", :key "purpose"}]}],
+;  :group-names ["web"],
+;  :groups [{:group-name "web", :group-id "sg-2582484c"}]}
+;  ....
+
 (create-image 
   :name "my_test_image"
   :instance-id "i-1b9a9f71"
@@ -480,20 +582,47 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
        :volume-type "standard"
        :delete-on-termination true}}])
 ```
-&nbsp;  
-###S3
 
-&nbsp;  
-###DynamoDB
+(create-snapshot :volume-id   "vol-8a4857fa"
+                :description "my_new_snapshot")
+```
+###Redshift  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.redshift]))
 
-&nbsp;  
-###Redshift
+(defcredential "aws-access-key" "aws-secret-key")
 
-&nbsp;  
-###ElasticMapReduce
+(create-cluster :availability-zone "us-east-1a"
+                :cluster-type "multi-node"
+                :db-name "dw"
+                :master-username "scott"
+                :master-user-password "tiger"
+                :number-of-nodes 3)
+```
 
-&nbsp;  
-## License
+###S3  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.s3]))
+
+(defcredential "aws-access-key" "aws-secret-key")
+
+(create-bucket "two-peas")
+
+(put-object :bucket-name "two-peas"
+            :key "foo"
+            :file upload-file)
+
+(copy-object bucket1 "key-1" bucket2 "key-2")            
+
+(generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
+
+```
+
+### License
 
 Copyright (C) 2013 Michael Cohen
 

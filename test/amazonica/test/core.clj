@@ -55,6 +55,8 @@
   (seq (.split (slurp "aws.config") " ")))
 
 
+(clojure.pprint/pprint
+(describe-instances))
 
 (deftest s3 []
   
@@ -126,7 +128,8 @@
 
   (println (describe-cluster-versions))
   (println (describe-clusters))
- 
+
+
   (try
     (create-cluster-subnet-group :cluster-subnet-group-name "my subnet"
                                  :description "some desc"

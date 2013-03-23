@@ -296,112 +296,128 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ###Autoscaling  
 
 ```clj
-(create-launch-configuration :launch-configuration-name "aws_launch_cfg"
-                             :block-device-mappings [
-                              {:device-name "/dev/sda1"
-                               :virtual-name "vol-b0e519c3"
-                               :ebs { 
-                                :snapshot-id "snap-36295e51"
-                                :volume-size 32}}]
-                             :ebs-optimized true
-                             :image-id "ami-6fde0d06"
-                             :instance-type "m1.large"
-                             :spot-price ".10")
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.autoscaling]))
 
-(create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
-                           :availability-zones ["us-east-1a" "us-east-1b"]
-                           :desired-capacity 3
-                           :health-check-grace-period 300
-                           :health-check-type "EC2"
-                           :launch-configuration-name "aws_launch_cfg"
-                           :min-size 3
-                           :max-size 3)
+  (create-launch-configuration :launch-configuration-name "aws_launch_cfg"
+                               :block-device-mappings [
+                                {:device-name "/dev/sda1"
+                                 :virtual-name "vol-b0e519c3"
+                                 :ebs { 
+                                  :snapshot-id "snap-36295e51"
+                                  :volume-size 32}}]
+                               :ebs-optimized true
+                               :image-id "ami-6fde0d06"
+                               :instance-type "m1.large"
+                               :spot-price ".10")
 
-(describe-auto-scaling-instances)
+  (create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
+                             :availability-zones ["us-east-1a" "us-east-1b"]
+                             :desired-capacity 3
+                             :health-check-grace-period 300
+                             :health-check-type "EC2"
+                             :launch-configuration-name "aws_launch_cfg"
+                             :min-size 3
+                             :max-size 3)
+
+  (describe-auto-scaling-instances)
 ```  
 
 ###CloudFormation  
 ```clj
-(create-stack :stack-name "my-stack"
-              :template-url "abcd1234.s3.amazonaws.com")
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.cloudformation]))
 
-(describe-stack-resources)
+  (create-stack :stack-name "my-stack"
+                :template-url "abcd1234.s3.amazonaws.com")
+
+  (describe-stack-resources)
 ```
 
 ###CloudFront  
 ```clj
-(create-distribution :distribution-config {
-                     :enabled true
-                     :default-root-object "index.html"
-                     :origins {
-                       :quantity 0
-                       :items []
-                     }
-                     :logging {
-                       :enabled false
-                       :include-cookies false
-                       :bucket "abcd1234.s3.amazonaws.com"
-                       :prefix "cflog_"
-                     }
-                     :caller-reference 12345
-                     :aliases {
-                       :items ["m.example.com" "www.example.com"]
-                       :quantity 2
-                     }
-                     :cache-behaviors {
-                       :quantity 0 
-                       :items []
-                     }
-                     :comment "example"
-                     :default-cache-behavior {
-                       :target-origin-id "MyOrigin"
-                       :forwarded-values {
-                         :query-string false 
-                         :cookies {
-                           :forward "none"
-                         }
-                       }
-                       :trusted-signers {
-                         :enabled false
-                         :quantity 0
-                       }
-                       :viewer-protocol-policy "allow-all"
-                       :min-ttl 3600
-                     }
-                     :price-class "PriceClass_All"})
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.cloudfront]))
 
-(list-distributions :max-items 10)
-; {:distribution-list
-;  {:is-truncated false,
-;   :quantity 3,
-;   :marker "",
-;   :items
-;   [{:status "Deployed",
-;     :enabled true,
-;     :comment "wordfront",
-;     :origins
-;     {:quantity 1,
-;      :items
-;      [{:s3origin-config {:origin-access-identity ""},
-;        :id "MyOrigin",
-;        :domain-name "myblog.s3.amazonaws.com"}]},
-;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
-;     :cache-behaviors {:quantity 0, :items []},
-;     :domain-name "dhpz2lx23abcd.cloudfront.net",
-;     :default-cache-behavior
-;     {:target-origin-id "MyOrigin",
-;      :forwarded-values
-;      {:query-string false, :cookies {:forward "none"}},
-;      :trusted-signers {:quantity 0, :enabled false, :items []},
-;      :viewer-protocol-policy "allow-all",
-;      :min-ttl 3600},
-;     :price-class "PriceClass_All",
-;     :id "E5GB5B26FIF5A",
-;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
+  (create-distribution :distribution-config {
+                       :enabled true
+                       :default-root-object "index.html"
+                       :origins {
+                         :quantity 0
+                         :items []
+                       }
+                       :logging {
+                         :enabled false
+                         :include-cookies false
+                         :bucket "abcd1234.s3.amazonaws.com"
+                         :prefix "cflog_"
+                       }
+                       :caller-reference 12345
+                       :aliases {
+                         :items ["m.example.com" "www.example.com"]
+                         :quantity 2
+                       }
+                       :cache-behaviors {
+                         :quantity 0 
+                         :items []
+                       }
+                       :comment "example"
+                       :default-cache-behavior {
+                         :target-origin-id "MyOrigin"
+                         :forwarded-values {
+                           :query-string false 
+                           :cookies {
+                             :forward "none"
+                           }
+                         }
+                         :trusted-signers {
+                           :enabled false
+                           :quantity 0
+                         }
+                         :viewer-protocol-policy "allow-all"
+                         :min-ttl 3600
+                       }
+                       :price-class "PriceClass_All"})
+
+  (list-distributions :max-items 10)
+  ; {:distribution-list
+  ;  {:is-truncated false,
+  ;   :quantity 3,
+  ;   :marker "",
+  ;   :items
+  ;   [{:status "Deployed",
+  ;     :enabled true,
+  ;     :comment "wordfront",
+  ;     :origins
+  ;     {:quantity 1,
+  ;      :items
+  ;      [{:s3origin-config {:origin-access-identity ""},
+  ;        :id "MyOrigin",
+  ;        :domain-name "myblog.s3.amazonaws.com"}]},
+  ;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
+  ;     :cache-behaviors {:quantity 0, :items []},
+  ;     :domain-name "dhpz2lx23abcd.cloudfront.net",
+  ;     :default-cache-behavior
+  ;     {:target-origin-id "MyOrigin",
+  ;      :forwarded-values
+  ;      {:query-string false, :cookies {:forward "none"}},
+  ;      :trusted-signers {:quantity 0, :enabled false, :items []},
+  ;      :viewer-protocol-policy "allow-all",
+  ;      :min-ttl 3600},
+  ;     :price-class "PriceClass_All",
+  ;     :id "E5GB5B26FIF5A",
+  ;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
 ```
 
 ###CloudSearch  
 ```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.cloudsearch]))
+
 (create-domain :domain-name "my-index")
 
 (index-documents :domain-name "my-index")

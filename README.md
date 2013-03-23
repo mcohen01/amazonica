@@ -581,7 +581,6 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
        :volume-size 8
        :volume-type "standard"
        :delete-on-termination true}}])
-```
 
 (create-snapshot :volume-id   "vol-8a4857fa"
                 :description "my_new_snapshot")

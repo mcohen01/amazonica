@@ -31,15 +31,15 @@ and the following dependency:
 ```
 
 ## Supported Services
-* Autoscaling
-* CloudFormation
-* CloudFront
-* CloudSearch
+* [Autoscaling] (#autoscaling)
+* [CloudFormation] (#cloudformation)
+* [CloudFront] (#cloudfront)
+* [CloudSearch] (#cloudsearch)
 * CloudWatch
 * DataPipeline
 * DirectConnect
 * DynamoDB
-* EC2
+* [EC2] (#ec2)
 * ElastiCache
 * ElasticBeanstalk
 * ElasticLoadBalancing
@@ -308,16 +308,16 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
                              :instance-type "m1.large"
                              :spot-price ".10")
 
-  (create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
-                             :availability-zones ["us-east-1a" "us-east-1b"]
-                             :desired-capacity 3
-                             :health-check-grace-period 300
-                             :health-check-type "EC2"
-                             :launch-configuration-name "aws_launch_cfg"
-                             :min-size 3
-                             :max-size 3)
+(create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
+                           :availability-zones ["us-east-1a" "us-east-1b"]
+                           :desired-capacity 3
+                           :health-check-grace-period 300
+                           :health-check-type "EC2"
+                           :launch-configuration-name "aws_launch_cfg"
+                           :min-size 3
+                           :max-size 3)
 
-  (describe-auto-scaling-instances)
+(describe-auto-scaling-instances)
 ```  
 
 ###CloudFormation  

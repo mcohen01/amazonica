@@ -1,6 +1,7 @@
 (ns amazonica.aws.dynamodb
   "Amazon DyanmoDB support."
-  (:use [amazonica.core :only (accessors coerce-value set-fields IMarshall)]
+  (:use [amazonica.core :only (accessors coerce-value marshall
+                               register-coercions set-fields IMarshall)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.dynamodb
               AmazonDynamoDBAsyncClient
@@ -14,12 +15,12 @@
 (extend-protocol IMarshall
   AttributeValue
     (marshall [obj]
-      (amazonica.core/marshall
+      (marshall
         (some
           #(.invoke % obj (make-array Object 0))
           (accessors (class obj) true)))))
 
-(amazonica.core/register-coercions
+(register-coercions
   AttributeValue
   (fn [value]
     (let [attr (AttributeValue.)]

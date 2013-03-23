@@ -160,6 +160,7 @@ If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` re
 
 Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling 
 ```clj
+; dynamodb
 (list-tables)
 ```
 by default would return 
@@ -294,7 +295,38 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 
 ###Autoscaling  
 
-###CloudFormation
+```clj
+(create-launch-configuration :launch-configuration-name "aws_launch_cfg"
+                             :block-device-mappings [
+                              {:device-name "/dev/sda1"
+                               :virtual-name "vol-b0e519c3"
+                               :ebs { 
+                                :snapshot-id "snap-36295e51"
+                                :volume-size 32}}]
+                             :ebs-optimized true
+                             :image-id "ami-6fde0d06"
+                             :instance-type "m1.large"
+                             :spot-price ".10")
+
+  (create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
+                             :availability-zones ["us-east-1a" "us-east-1b"]
+                             :desired-capacity 3
+                             :health-check-grace-period 300
+                             :health-check-type "EC2"
+                             :launch-configuration-name "aws_launch_cfg"
+                             :min-size 3
+                             :max-size 3)
+
+  (describe-auto-scaling-instances)
+```  
+
+###CloudFormation  
+```clj
+(create-stack :stack-name "my-stack"
+              :template-url "abcd1234.s3.amazonaws.com")
+
+(describe-stack-resources)
+```
 
 ###CloudFront  
 ```clj
@@ -367,6 +399,17 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;     :id "E5GB5B26FIF5A",
 ;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
 ```
+
+###CloudSearch  
+```clj
+(create-domain :domain-name "my-index")
+
+(index-documents :domain-name "my-index")
+```
+
+###CloudWatch  
+
+
 
 ###EC2
 ```clj

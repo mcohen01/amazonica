@@ -55,6 +55,7 @@
   (seq (.split (slurp "aws.config") " ")))
 
 
+
 (deftest s3 []
   
   (def bucket1 "amazonica8675309")

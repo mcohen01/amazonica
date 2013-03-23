@@ -32,20 +32,43 @@
 
 (def ^:private root-unwrapping (atom false))
 
-(defn set-root-unwrapping! [b]
+(defn set-root-unwrapping!
+  "Enables JSON-like root unwrapping of singly keyed
+  top level maps. 
+    {:root {:key 'foo' :name 'bar'}}
+  would become 
+    {:key 'foo' :name 'bar'}"
+  [b]
   (reset! root-unwrapping b))
 
-(defn set-date-format! [df]
+(defn set-date-format!
+  "Sets the java.text.SimpleDateFormat pattern to use
+  for transparent coercion of Strings passed as 
+  arguments where java.util.Dates are required by the 
+  AWS api."
+  [df]
   (reset! date-format df))
 
 
-(defn stack->string [ex]
+(defn stack->string
+  "Converts a Java stacktrace to String representation."
+  [ex]
   (let [sw (StringWriter.)
         pw (PrintWriter. sw)
         _  (.printStackTrace ex pw)]
     (.toString sw)))
 
-(defn ex->map [e]
+(defn ex->map
+  "Converts a com.amazonaws.AmazonServiceException to a
+  Clojure map with keys:
+  :error-code
+  :error-type
+  :status-code
+  :request-id
+  :service-name
+  :message
+  :stack-trace"
+  [e]
   {:error-code   (.getErrorCode e)
    :error-type   (.toString (.getErrorType e))
    :status-code  (.getStatusCode e)
@@ -55,12 +78,13 @@
    :stack-trace  (stack->string e)})
 
 ; Java methods on the AWS*Client class which won't be exposed
-(def excluded #{:invoke
-                :init
-                :set-endpoint
-                :get-cached-response-metadata
-                :get-service-abbreviation})
-                ; addRequestHandler???
+(def ^:private excluded 
+  #{:invoke
+    :init
+    :set-endpoint
+    :get-cached-response-metadata
+    :get-service-abbreviation})
+    ; addRequestHandler???
 
 
 (defn- keys->cred
@@ -111,7 +135,7 @@
   (memoize amazon-client*))
 
 
-(defn camel->keyword
+(defn- camel->keyword
   "from Emerick, Grande, Carper 2012 p.70"
   [s]
   (->> (str/split s #"(?<=[a-z])(?=[A-Z])")
@@ -120,7 +144,7 @@
        str/join
        keyword))
 
-(defn keyword->camel
+(defn- keyword->camel
   [kw]
   (let [n (name kw)
         m (.replace n "?" "")]
@@ -143,7 +167,7 @@
           (parse (str date) (ParsePosition. 0))))))
 
 (defn to-enum
-  "Case-insensitive resolution of Enum types."
+  "Case-insensitive resolution of Enum types by String."
   [type value]
   (some
     #(if (and 
@@ -168,6 +192,9 @@
    Date       to-date}))
 
 (defn register-coercions
+  "Accepts key/value pairs of class/function, which defines
+  how data will be converted to the appropriate type 
+  required by the AWS Amazon*Client Java method."
   [& {:as coercion}]
   (swap! coercions merge coercion))
 
@@ -319,6 +346,13 @@
 
 
 (defprotocol IMarshall
+  "Defines the contract for converting Java types to Clojure
+  data. All return values from AWS service calls are 
+  marshalled. As such, the AWS service-specific namespaces
+  will frequently need to implement this protocol in order
+  to provide convenient data representations. See also the
+  register-coercions function for coercing Clojure data to
+  Java types."
   (marshall [obj]))
 
 (defn- getter?
@@ -331,6 +365,7 @@
           (= "boolean" type)))))
 
 (defn accessors
+  "Returns a vector of getters or setters for the class."
   [clazz getters?]
   (reduce
     #(if (or

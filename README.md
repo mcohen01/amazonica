@@ -58,12 +58,6 @@ and the following dependency:
 * StorageGateway
 
     
-## Features
-* Follows idiomatic Clojure naming conventions
-* Clojure data in, Clojure data out
-* JodaTime support
-* Support for multiple AWS credentials
-    
 ## Documentation   
 [Minimum Viable Snippet] [9]:  
 ```clj

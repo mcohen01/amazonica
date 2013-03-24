@@ -279,7 +279,9 @@
                    :consistent-read true
                    :attributes-to-get ["id" "text"]}}))
 
-  #_(batch-write-item :request-items {
+  
+  (try
+    (batch-write-item :request-items {
     "TestTable" [
       {:put-request {
         :item {
@@ -289,6 +291,8 @@
         :item {
           :id "foo"
           :text "barbarbanks"}}}]})
+    (catch Exception e
+      (println (.printStackTrace e))))
 
   (clojure.pprint/pprint 
     (describe-table :table-name "TestTable"))

@@ -457,13 +457,22 @@
             ; as the first or last argument, as of v1.4.0
             ))))))
 
+(defn- args-from
+  [args]
+  (let [a (first args)]
+    (if (and (= 1 (count a)) 
+             (map? (first a)))
+      (interleave (keys (first a)) 
+                  (vals (first a)))
+      a)))
+
 (defn- fn-call
   "Returns a function that reflectively invokes method on
    clazz with supplied args (if any). The 'method' here is
    the Java method on the Amazon*Client class."
   [clazz method & arg]
   (let [client  (delay (amazon-client clazz @credential))
-        arg-arr (prepare-args method (first arg))]
+        arg-arr (prepare-args method (args-from arg))]
     (fn []
       (try 
         (let [c (if (thread-bound? #'*credentials*)
@@ -483,8 +492,8 @@
 (defn- best-method
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
-  [methods & arg-seq]
-  (let [args (first arg-seq)]
+  [methods & arg]
+  (let [args (args-from arg)]
     (some 
       (fn [method]
         (let [types (.getParameterTypes method)

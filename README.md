@@ -66,8 +66,7 @@ and the following dependency:
         [amazonica.aws.ec2]))
 
   (def cred {:access-key "aws-access-key"
-             :secret-key "aws-secret-key"
-             :endpoint   "us-west-1"})
+             :secret-key "aws-secret-key"})
   
   (describe-instances cred)
 
@@ -194,7 +193,8 @@ can be used to set the pattern supplied to the underlying `java.text.SimpleDateF
 
 In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
-(describe-availability-zones cred 
+(describe-availability-zones
+  cred 
   :filters [
     {:name "environment"
      :values ["dev" "qa" "staging"]}])
@@ -248,7 +248,7 @@ Note that either form will work. This allows contributors to the library to incr
 
 
 ### Authentication
-All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint.  
+All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1") 
 
 ```clj
 (def cred {:access-key "aws-access-key"

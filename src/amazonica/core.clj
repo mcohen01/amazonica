@@ -121,6 +121,14 @@
       
 (defn- amazon-client*
   [clazz credentials]
+  (assert (contains? credentials :access-key)
+          "You must call defcredential before using the api,
+           or pass a map with key :access-key as the first
+           argument to any api function calls.")
+  (assert (contains? credentials :secret-key)
+          "You must call defcredential before using the api,
+           or pass a map with key :secret-key as the first
+           argument to any api function calls.")           
   (let [aws-creds (BasicAWSCredentials.
                     (:access-key credentials)
                     (:secret-key credentials))
@@ -342,7 +350,8 @@
    Amazon*Client class. (Note that we assume all AWS
    service calls take at most a single argument.)"
   [method args]
-  (-> (get (.getParameterTypes method) 0)
+  (-> (.getParameterTypes method)
+      (get 0)
       new-instance
       (set-fields args)))
 
@@ -458,21 +467,29 @@
             ))))))
 
 (defn- args-from
+  "Function arguments take an optional first parameter map
+  of AWS credentials. Addtional parameters are either a map,
+  or seq of keys and values."
   [args]
   (let [a (first args)]
-    (if (and (= 1 (count a)) 
-             (map? (first a)))
-      (interleave (keys (first a)) 
-                  (vals (first a)))
-      a)))
+    (if (map? (first a))
+      (if (contains? (first a) :access-key)
+        {:args (rest a) :credential (first a)}
+        {:args (interleave (keys (first a)) 
+                           (vals (first a)))})
+      {:args a})))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
    clazz with supplied args (if any). The 'method' here is
    the Java method on the Amazon*Client class."
   [clazz method & arg]
-  (let [client  (delay (amazon-client clazz @credential))
-        arg-arr (prepare-args method (args-from arg))]
+  (let [args    (args-from arg)
+        arg-arr (prepare-args method (:args args))
+        client  (delay 
+                  (amazon-client 
+                    clazz 
+                    (or (:credential args) @credential)))]
     (fn []
       (try 
         (let [c (if (thread-bound? #'*credentials*)
@@ -493,12 +510,12 @@
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
-  (let [args (args-from arg)]
+  (let [args (:args (args-from arg))]
     (some 
       (fn [method]
         (let [types (.getParameterTypes method)
               num   (count types)]
-          (if (and (not args) (= 0 num))
+          (if (and (or (not args) (empty args)) (= 0 num))
             method
             (if (use-aws-request-bean? method args)
               method
@@ -529,7 +546,7 @@
   [client]
   (reduce
     (fn [col method]
-      (let [fname     (camel->keyword (.getName method))]
+      (let [fname (camel->keyword (.getName method))]
         (if (contains? excluded fname)
           col
           (if (contains? col fname)

@@ -67,7 +67,7 @@ and the following dependency:
 
   (def cred {:access-key "aws-access-key"
              :secret-key "aws-secret-key"
-             :endpoint "us-west-1"})
+             :endpoint   "us-west-1"})
   
   (describe-instances cred)
 
@@ -253,7 +253,7 @@ All of the functions take as their first argument an explicit map of credentials
 ```clj
 (def cred {:access-key "aws-access-key"
            :secret-key "aws-secret-key"
-           :endpoint "us-west-1"})
+           :endpoint   "us-west-1"})
 
 (describe-instances cred)
 ```  

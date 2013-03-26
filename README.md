@@ -248,7 +248,17 @@ Note that either form will work. This allows contributors to the library to incr
 
 
 ### Authentication
-All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint. As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
+All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint.  
+
+```clj
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"
+           :endpoint "us-west-1"})
+
+(describe-instances cred)
+```  
+
+As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
 ```  

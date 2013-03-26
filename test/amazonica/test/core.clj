@@ -51,12 +51,12 @@
 ; config file contains space-separated AWS credential key pair
 ; and optional third param of AWS endpoint (e.g. for different
 ; region than the default US_East)
-(apply defcredential 
-  (seq (.split (slurp "aws.config") " ")))
-
-
-(clojure.pprint/pprint
-(describe-instances))
+(def cred 
+  (apply 
+    hash-map 
+      (interleave 
+        [:access-key :secret-key :endpoint]
+        (seq (.split (slurp "aws.config") " ")))))
 
 (deftest s3 []
   
@@ -69,18 +69,24 @@
   (.createNewFile upload-file)
   (spit upload-file (Date.))
 
-  (get-s3account-owner)
+  (get-s3account-owner cred)
 
-  (let [b (:s3bucket (create-storage-location))
+  (let [b (:s3bucket (create-storage-location cred))
       _ (println "created bucket" b)]
-  (delete-bucket b))
+  (delete-bucket cred b))
 
-  (list-buckets)
+  (list-buckets cred)
 
-  (create-bucket bucket1)
-  (create-bucket bucket2 "us-west-1")
+  (create-bucket cred bucket1)
+  (create-bucket cred bucket2 "us-west-1")
 
-  (let [etag (put-object 
+  (put-object cred
+              :bucket-name bucket1
+              :key "jenny"
+              :file upload-file)
+
+
+  (let [etag (put-object cred
                 :bucket-name bucket1
                 :key "jenny"
                 :file upload-file)]
@@ -88,7 +94,7 @@
 
   
   (is "text/plain" 
-    (get-in (get-object bucket1 "jenny")
+    (get-in (get-object cred bucket1 "jenny")
             [:object-metadata :raw-metadata :Content-Type]))
 
   #_(get-object :bucket-name bucket1
@@ -96,26 +102,27 @@
                 download-file)
   
 
-  (copy-object bucket1 "jenny" bucket2 "jenny")
-  (delete-object bucket2 "jenny")
+  (copy-object cred bucket1 "jenny" bucket2 "jenny")
+  (delete-object cred bucket2 "jenny")
 
-  (copy-object :source-bucket-name bucket1
+  (copy-object cred 
+               :source-bucket-name bucket1
                :source-key "jenny" 
                :destination-bucket-name bucket2
                :destination-key "jenny")
 
-  (generate-presigned-url bucket1 "jenny" date)
-  (generate-presigned-url bucket2 "jenny" date)
+  (generate-presigned-url cred bucket1 "jenny" date)
+  (generate-presigned-url cred bucket2 "jenny" date)
 
-  (delete-object bucket1 "jenny")
-  (delete-object bucket2 "jenny")
+  (delete-object cred bucket1 "jenny")
+  (delete-object cred bucket2 "jenny")
 
-  (delete-bucket bucket1)
-  (delete-bucket bucket2)
+  (delete-bucket cred bucket1)
+  (delete-bucket cred bucket2)
 
   
   #_(clojure.pprint/pprint
-    (list-objects bucket1))
+    (list-objects cred bucket1))
 
   (.delete upload-file)
   (if (.exists download-file)
@@ -125,6 +132,13 @@
 
 
 (deftest redshift []
+
+  ; config file contains space-separated AWS credential key pair
+  ; and optional third param of AWS endpoint (e.g. for different
+  ; region than the default US_East)
+  (apply defcredential 
+    (seq (.split (slurp "aws.config") " ")))
+
 
   (println (describe-cluster-versions))
   (println (describe-clusters))
@@ -167,7 +181,8 @@
 
 (deftest dynamodb []  
 
-  (create-table :table-name "TestTable"
+  (create-table cred 
+                :table-name "TestTable"
                 :key-schema {
                   :hash-key-element {
                     :attribute-name "id"
@@ -179,7 +194,8 @@
                   :write-capacity-units 1
                 })
 
-  (create-table :table-name "TestTable2"
+  (create-table cred
+                :table-name "TestTable2"
                 :key-schema {
                   :hash-key-element {
                     :attribute-name "id"
@@ -195,7 +211,8 @@
                   :write-capacity-units 1
                 })
 
-  (create-table :table-name "TestTable3"
+  (create-table cred
+                :table-name "TestTable3"
                 :key-schema {
                   :hash-key-element {
                     :attribute-name "id"
@@ -205,51 +222,55 @@
                 :provisioned-throughput [1 1])
 
   ; wait for the tables to be created
-  (doseq [table (:table-names (list-tables))]
-    (loop [status (get-in (describe-table :table-name table)
+  (doseq [table (:table-names (list-tables cred))]
+    (loop [status (get-in (describe-table cred :table-name table)
                           [:table :table-status])]
       (if-not (= "ACTIVE" status)
         (do 
           (println "waiting for status" status "to be active")
           (Thread/sleep 1000)
-          (recur (get-in (describe-table :table-name table)
+          (recur (get-in (describe-table cred :table-name table)
                           [:table :table-status]))))))
  
 
   (set-root-unwrapping! true)
 
   (is "id" (get-in 
-            (describe-table :table-name "TestTable")
+            (describe-table cred :table-name "TestTable")
             [:key-schema :hash-key-element :attribute-name]))
 
   (set-root-unwrapping! false)
 
   (is "id" (get-in 
-            (describe-table :table-name "TestTable")
+            (describe-table cred :table-name "TestTable")
             [:table :key-schema :hash-key-element :attribute-name]))
   
-  (list-tables)
-  (list-tables :limit 3)
+  (list-tables cred)
+  (list-tables cred :limit 3)
 
   (dotimes [x 10] 
     (let [m {:id (str "1234" x) :text "joey t"}]
-      (put-item :table-name "TestTable" 
+      (put-item cred 
+                :table-name "TestTable" 
                 :item m)))
 
-  (put-item :table-name "TestTable"
+  (put-item cred
+            :table-name "TestTable"
             :item {
               :id "foo" 
               :text "barbaz"
             })
 
-  (put-item :table-name "TestTable2"
+  (put-item cred
+            :table-name "TestTable2"
             :item {
               :id { :s "foo" }
               :range { :s "foo" } 
               :text { :s "zonica" }
             })
   (try
-    (get-item :table-name "TestTableXXX"
+    (get-item cred
+              :table-name "TestTableXXX"
               :key "foo")
   (catch Exception e
     (let [error-map (ex->map e)]
@@ -258,7 +279,8 @@
       (is (contains? error-map :service-name))
       (is (contains? error-map :message)))))
 
-  (query :table-name "TestTable2"
+  (query cred
+         :table-name "TestTable2"
          :limit 1
          :hash-key-value "mofo"
          :range-key-condition {
@@ -267,11 +289,11 @@
           })
 
   (clojure.pprint/pprint
-    (scan :table-name "TestTable"))
+    (scan cred :table-name "TestTable"))
 
   (set-root-unwrapping! false)
 
-  (clojure.pprint/pprint (batch-get-item :request-items {
+  (clojure.pprint/pprint (batch-get-item cred :request-items {
      "TestTable" { :keys [
                      {:hash-key-element {:s "foo"}}
                      {:hash-key-element {:s "1234"}}
@@ -280,8 +302,8 @@
                    :attributes-to-get ["id" "text"]}}))
 
   
-  (try
-    (batch-write-item :request-items {
+  #_(try
+    (batch-write-item cred :request-items {
     "TestTable" [
       {:put-request {
         :item {
@@ -295,16 +317,22 @@
       (println (.printStackTrace e))))
 
   (clojure.pprint/pprint 
-    (describe-table :table-name "TestTable"))
+    (describe-table cred :table-name "TestTable"))
 
-  (delete-table :table-name "TestTable")
-  (delete-table :table-name "TestTable2")
-  (delete-table :table-name "TestTable3")
+  (delete-table cred :table-name "TestTable")
+  (delete-table cred :table-name "TestTable2")
+  (delete-table cred :table-name "TestTable3")
 
 )
 
 
 (deftest ec2 []
+
+  ; config file contains space-separated AWS credential key pair
+  ; and optional third param of AWS endpoint (e.g. for different
+  ; region than the default US_East)
+  (apply defcredential 
+    (seq (.split (slurp "aws.config") " ")))
 
   (clojure.pprint/pprint
     (list-available-solution-stacks))
@@ -315,7 +343,7 @@
   (clojure.pprint/pprint
     (describe-dhcp-options))
 
-  (clojure.pprint/pprint
+  #_(clojure.pprint/pprint
     (describe-images :owners ["self"]))
 
   (clojure.pprint/pprint

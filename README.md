@@ -65,11 +65,14 @@ and the following dependency:
   (:use [amazonica.core]
         [amazonica.aws.ec2]))
 
-  (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
+  (def cred {:access-key "aws-access-key"
+             :secret-key "aws-secret-key"
+             :endpoint "us-west-1"})
   
-  (describe-instances)
+  (describe-instances cred)
 
-  (create-snapshot :volume-id   "vol-8a4857fa"
+  (create-snapshot cred
+                   :volume-id   "vol-8a4857fa"
                    :description "my_new_snapshot")
 ```  
 
@@ -77,7 +80,8 @@ Amazonica reflectively delegates to the Java client library, as such it supports
 
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
-(create-snapshot :volume-id "vol-8a4857fa"
+(create-snapshot cred
+                 :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
 which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.   
@@ -86,11 +90,12 @@ All of the AWS Java apis (except S3) follow this pattern, either having a single
 
 For example, AmazonEC2Client's [describeImages()] [7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest] [8]. So the Clojure invocation would look like
 ```clj
-(describe-images)
+(describe-images cred)
 ```
 or
 ```clj
-(describe-images :owners ["self"]
+(describe-images cred
+                 :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
 
@@ -104,7 +109,7 @@ Amazon AWS object types are returned as Clojure maps, with conversion taking pla
 
 For example, a call to 
 ```clj
-(describe-instances)
+(describe-instances cred)
 ```
 invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services.ec2.model.DescribeInstancesResult`. However, this is recursively converted to Clojure data, yielding a map of `Reservations`, like so:
 ```clj
@@ -155,7 +160,7 @@ If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` re
 Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling 
 ```clj
 ; dynamodb
-(list-tables)
+(list-tables cred)
 ```
 by default would return 
 ```clj
@@ -167,7 +172,7 @@ However, if you call
 ```
 then single keyed top level maps will be "unwrapped" like so:
 ```clj
-(list-tables)
+(list-tables cred)
 => ["TableOne" "TableTwo" "TableThree"]
 ```
 
@@ -189,7 +194,7 @@ can be used to set the pattern supplied to the underlying `java.text.SimpleDateF
 
 In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
-(describe-availability-zones 
+(describe-availability-zones cred 
   :filters [
     {:name "environment"
      :values ["dev" "qa" "staging"]}])
@@ -227,12 +232,14 @@ Clojure apis built specifically to wrap a Java client, such as this one, often p
 ``` 
 function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
 ```clj
-(get-item :table-name "MyTable"
+(get-item cred
+          :table-name "MyTable"
           :key "foo")
 ```
 The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:  
 ```clj
-(get-item :table-name "TestTable"
+(get-item cred
+          :table-name "TestTable"
           :key {
             :hash-key-element {
               :s "foo"}})
@@ -241,7 +248,7 @@ Note that either form will work. This allows contributors to the library to incr
 
 
 ### Authentication
-You'll note that none of the functions take an explicit credentials (key pair) argument. Typical usage would see users calling `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
+All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint. As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
 ```  

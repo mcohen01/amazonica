@@ -302,7 +302,7 @@
                    :attributes-to-get ["id" "text"]}}))
 
   
-  #_(try
+  #(try
     (batch-write-item cred :request-items {
     "TestTable" [
       {:put-request {

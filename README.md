@@ -301,6 +301,11 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;   at com.amazonaws.services.ec2.AmazonEC2Client.createSnapshot(AmazonEC2Client.java:1531)
 ;   .....
 ```
+## Performance  
+Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]
+![Benchmark results](https://raw.github.com/mcohen01/amazonica-benchmark/master/reflection.png)
+
+
 
 ## Examples
 
@@ -649,3 +654,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [9]: http://blog.fogus.me/2012/08/23/minimum-viable-snippet/
 [10]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/Reservation.html
 [11]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodb/model/GetItemRequest.html
+[12]:https://github.com/mcohen01/amazonica-benchmark
+[13]:https://github.com/weavejester/rotary

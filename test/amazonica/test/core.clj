@@ -246,7 +246,7 @@
             [:table :key-schema :hash-key-element :attribute-name]))
   
   (list-tables cred)
-  (list-tables cred :limit 3)
+  (list-tables cred :limit 1)
 
   (dotimes [x 10] 
     (let [m {:id (str "1234" x) :text "joey t"}]

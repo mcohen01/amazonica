@@ -510,12 +510,12 @@
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
-  (let [args (:args (args-from arg))]
+  (let [args (:args (args-from arg))]    
     (some 
       (fn [method]
         (let [types (.getParameterTypes method)
               num   (count types)]
-          (if (and (or (not args) (empty args)) (= 0 num))
+          (if (and (or (nil? args) (empty? args)) (= 0 num))
             method
             (if (use-aws-request-bean? method args)
               method
@@ -533,7 +533,7 @@
   [client ns fname methods]
   (intern ns (symbol (name fname))
     (fn [& args]
-      (let [method (best-method methods args)]        
+      (let [method (best-method methods args)]
         (if-not args
           ((fn-call client method))
           ((fn-call client method args)))))))

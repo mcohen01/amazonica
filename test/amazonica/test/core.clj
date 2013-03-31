@@ -69,6 +69,33 @@
   (.createNewFile upload-file)
   (spit upload-file (Date.))
 
+  (abort-multipart-upload cred 
+                          :bucket-name "some-bucket"
+                          :key "some-key"
+                          :upload-id "my-upload")
+
+  (change-object-storage-class cred "bucket-name91829189812" "key" "Standard")
+
+  (try
+    (complete-multipart-upload cred 
+                               :bucket-name "some-bucket"
+                               :key "some-key"
+                               :upload-id "my-upload"
+                               :part-etags [
+                                 {:part-number 3
+                                  :etag "my-etag"}])
+  (catch Exception e
+    (.printStackTrace e)))
+
+  
+  (copy-object cred)
+
+  (copy-object cred)
+  
+  (copy-object cred)
+
+  
+
   (get-s3account-owner cred)
 
   (let [b (:s3bucket (create-storage-location cred))

@@ -199,7 +199,12 @@
    Float      float
    BigDecimal bigdec
    BigInteger bigint
-   Date       to-date}))
+   Date       to-date
+   "int"      int
+   "long"     long
+   "double"   double
+   "float"    float
+   "boolean"  boolean}))
 
 (defn register-coercions
   "Accepts key/value pairs of class/function, which defines
@@ -216,19 +221,40 @@
   (if-not (instance? type val)
     (if (= java.lang.Enum (.getSuperclass type))
       (to-enum type value)
-      ((@coercions type) value))
+      (if (.isPrimitive type)
+        ((@coercions (str type)) value)
+        ((@coercions type) value)))
     val))
+
+(defn- default-value
+  [class-name]
+  (get
+    {"boolean" false
+     "double" (double 0.0)
+     "float" (float 0.0)
+     "long" 0
+     "int" (int 0)}
+    class-name))
+
+(defn- constructor-args
+  [ctor]
+  (let [types (.getParameterTypes ctor)]
+    (if (= 0 (count types))
+      (make-array Object 0)
+      (into-array Object
+        (map
+          (comp default-value str)
+          (seq types))))))
 
 (defn- new-instance
   "Create a new instance of a Java bean. S3 neccessitates
   the check for contructor args here, as the rest of the
   AWS api contains strictly no-arg ctor JavaBeans."
   [clazz]
-  (let [ctor  (first (.getConstructors clazz))
-        cnt   (count (.getParameterTypes ctor))
-        args  (take cnt (cycle [nil]))]
-    (.newInstance ctor (into-array Object args))))
-  
+  (let [ctor (first (.getConstructors clazz))
+        arr  (constructor-args ctor)]
+    (.newInstance ctor arr)))
+    
 (defn- unwind-types
   [param]
   (if (instance? java.lang.reflect.ParameterizedType param)
@@ -295,7 +321,7 @@
 
 (defn- populate
   [types key props]
-  (let [type (->> types key last)]
+  (let [type (-> types key last)]
     (if (contains? @coercions type)
       (coerce-value props type)
       (set-fields (new-instance type) props))))
@@ -395,7 +421,7 @@
       (str (.substring name 2) "?")
       (.substring name 3))))
   
-(defn- get-fields
+(defn get-fields
   "Returns a map of all non-null values returned by
   invoking all public getters on the specified object."
   [obj]

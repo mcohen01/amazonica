@@ -11,6 +11,7 @@
            [com.amazonaws.regions
              Region
              Regions]
+           com.amazonaws.services.s3.AmazonS3Client
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -23,10 +24,11 @@
            java.text.SimpleDateFormat
            java.util.Date))
 
-
 (defonce ^:private credential (atom {}))
 
 (def ^:dynamic ^:private *credentials* nil)
+
+(def ^:dynamic ^:private *client-class* nil)
 
 (def ^:private date-format (atom "yyyy-MM-dd"))
 
@@ -309,9 +311,28 @@
         (.toLowerCase (keyword->camel k))
         (empty? v))))
 
+(defn- to-java-coll
+  "Need this only because S3 methods actually try to
+   mutate (e.g. sort) collections passed to them."
+  [col]
+  (when (map? col)
+    (doto 
+      (java.util.HashMap.)
+      (.putAll col)))
+  (when (set? col)
+    (java.util.HashSet. col))
+  (when (or (list? col) (vector? col))
+    (java.util.ArrayList. col)))
+
 (defn- invoke
   [pojo method v]
-  (.invoke method pojo (into-array [v]))
+  (.invoke method pojo
+    (into-array
+      ;; misbehaving S3Client mutates the coll
+      (if (and (coll? v)
+            (= AmazonS3Client *client-class*))
+        [(to-java-coll v)]
+        [v])))
   true)
   
 (declare set-fields)
@@ -510,27 +531,28 @@
    clazz with supplied args (if any). The 'method' here is
    the Java method on the Amazon*Client class."
   [clazz method & arg]
-  (let [args    (args-from arg)
-        arg-arr (prepare-args method (:args args))
-        client  (delay 
-                  (amazon-client 
-                    clazz 
-                    (or (:credential args) @credential)))]
-    (fn []
-      (try 
-        (let [c (if (thread-bound? #'*credentials*)
-                    (amazon-client clazz *credentials*)
-                    @client)
-              java (.invoke method c arg-arr)
-              cloj (marshall java)]
-          (if (and
-                @root-unwrapping
-                (map? cloj)
-                (= 1 (count (keys cloj))))
-            (-> cloj first second)
-            cloj))
-        (catch InvocationTargetException ite          
-          (throw (.getTargetException ite)))))))
+  (binding [*client-class* clazz]
+    (let [args    (args-from arg)
+          arg-arr (prepare-args method (:args args))
+          client  (delay 
+                    (amazon-client 
+                      clazz 
+                      (or (:credential args) @credential)))]
+      (fn []
+        (try 
+          (let [c (if (thread-bound? #'*credentials*)
+                      (amazon-client clazz *credentials*)
+                      @client)
+                java (.invoke method c arg-arr)
+                cloj (marshall java)]
+            (if (and
+                  @root-unwrapping
+                  (map? cloj)
+                  (= 1 (count (keys cloj))))
+              (-> cloj first second)
+              cloj))
+          (catch InvocationTargetException ite          
+            (throw (.getTargetException ite))))))))
 
 (defn- best-method
   "Finds the appropriate method to invoke in cases where

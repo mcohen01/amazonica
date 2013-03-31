@@ -1,7 +1,8 @@
 (ns amazonica.test.core
   (:import org.joda.time.DateTime
            java.text.SimpleDateFormat
-           java.util.Date)
+           java.util.Date
+           java.util.UUID)
   (:require [clojure.string :as str])
   (:use [clojure.test]
         [clojure.pprint]
@@ -60,8 +61,8 @@
 
 (deftest s3 []
   
-  (def bucket1 "amazonica8675309")
-  (def bucket2 (str bucket1 "2"))
+  (def bucket1 (.. (UUID/randomUUID) toString))
+  (def bucket2 (.. (UUID/randomUUID) toString))
   (def date    (.plusDays (DateTime.) 2))
   (def upload-file   (java.io.File. "upload.txt"))
   (def download-file (java.io.File. "download.txt"))
@@ -69,12 +70,23 @@
   (.createNewFile upload-file)
   (spit upload-file (Date.))
 
-  (abort-multipart-upload cred 
-                          :bucket-name "some-bucket"
-                          :key "some-key"
-                          :upload-id "my-upload")
+  (try
+    (abort-multipart-upload cred 
+                            :bucket-name "some-bucket"
+                            :key "some-key"
+                            :upload-id "my-upload")
+    (catch Exception e
+      (is (.startsWith
+            (:message (ex->map e)) 
+            "The specified upload does not exist."))))
 
-  (change-object-storage-class cred "bucket-name91829189812" "key" "Standard")
+  (try
+    (change-object-storage-class 
+      cred "bucket-name91829189812" "key" "Standard")
+    (catch Exception e
+      (is (.startsWith
+            (:message (ex->map e)) 
+            "The specified bucket does not exist"))))  
 
   (try
     (complete-multipart-upload cred 
@@ -84,17 +96,39 @@
                                :part-etags [
                                  {:part-number 3
                                   :etag "my-etag"}])
-  (catch Exception e
-    (.printStackTrace e)))
-
+    (catch Exception e
+      (is (.startsWith
+            (:message (ex->map e)) 
+            "The specified upload does not exist."))))
   
-  (copy-object cred)
+  (create-bucket cred bucket1)
+  (delete-bucket cred bucket1)
+  (def bucket1 (.. (UUID/randomUUID) toString))
+  (create-bucket cred 
+                 :region "us-west-1"
+                 :bucket-name bucket1)  
+  (create-bucket cred bucket2 "us-west-1")
 
-  (copy-object cred)
-  
-  (copy-object cred)
+  (put-object cred
+              :bucket-name bucket1
+              :key "jenny"
+              :file upload-file)
 
+  (copy-object cred 
+               :source-bucket-name bucket1
+               :source-key "jenny" 
+               :destination-bucket-name bucket2
+               :destination-key "jenny")
   
+  (copy-object cred bucket1 "jenny" bucket2 "jenny")
+
+  (delete-bucket-cross-origin-configuration cred bucket1)
+  (delete-bucket-lifecycle-configuration cred bucket1)
+  (delete-bucket-policy cred bucket1)
+  (delete-bucket-tagging-configuration cred bucket1)
+  (delete-bucket-website-configuration cred bucket1)
+
+  (delete-object cred bucket1 "jenny")
 
   (get-s3account-owner cred)
 
@@ -102,15 +136,12 @@
       _ (println "created bucket" b)]
   (delete-bucket cred b))
 
-  (list-buckets cred)
+  (clojure.pprint/pprint
+    (list-buckets cred))
 
-  (create-bucket cred bucket1)
-  (create-bucket cred bucket2 "us-west-1")
+  
 
-  (put-object cred
-              :bucket-name bucket1
-              :key "jenny"
-              :file upload-file)
+  
 
 
   (let [etag (put-object cred
@@ -132,11 +163,7 @@
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
   (delete-object cred bucket2 "jenny")
 
-  (copy-object cred 
-               :source-bucket-name bucket1
-               :source-key "jenny" 
-               :destination-bucket-name bucket2
-               :destination-key "jenny")
+  
 
   (generate-presigned-url cred bucket1 "jenny" date)
   (generate-presigned-url cred bucket2 "jenny" date)
@@ -172,7 +199,8 @@
 
 
   (try
-    (create-cluster-subnet-group :cluster-subnet-group-name "my subnet"
+    (create-cluster-subnet-group cred
+                                 :cluster-subnet-group-name "my subnet"
                                  :description "some desc"
                                  :subnet-ids ["1" "2" "3" "4"])
     (throw (Exception. "create-cluster-subnet-group did not throw exception"))
@@ -281,12 +309,15 @@
                 :table-name "TestTable" 
                 :item m)))
 
-  (put-item cred
+  (try
+    (put-item cred
             :table-name "TestTable"
             :item {
               :id "foo" 
               :text "barbaz"
             })
+    (catch Exception e
+      (.printStackTrace e)))
 
   (put-item cred
             :table-name "TestTable2"
@@ -329,7 +360,7 @@
                    :attributes-to-get ["id" "text"]}}))
 
   
-  #(try
+  #_(try
     (batch-write-item cred :request-items {
     "TestTable" [
       {:put-request {

@@ -211,7 +211,7 @@
     (seq (.split (slurp "aws.config") " ")))
 
 
-  (println (describe-cluster-versions))
+  (println (describe-cluster-versions cred))
   (println (describe-clusters))
 
 
@@ -307,15 +307,17 @@
 
   (set-root-unwrapping! true)
 
-  (is "id" (get-in 
-            (describe-table cred :table-name "TestTable")
-            [:key-schema :hash-key-element :attribute-name]))
+  (is (= "id" 
+         (get-in 
+           (describe-table cred :table-name "TestTable")
+           [:key-schema :hash-key-element :attribute-name])))
 
   (set-root-unwrapping! false)
 
-  (is "id" (get-in 
-            (describe-table cred :table-name "TestTable")
-            [:table :key-schema :hash-key-element :attribute-name]))
+  (is (= "id" 
+         (get-in 
+           (describe-table cred :table-name "TestTable")
+           [:table :key-schema :hash-key-element :attribute-name])))
   
   (list-tables cred)
   (list-tables cred :limit 1)
@@ -410,16 +412,16 @@
     (seq (.split (slurp "aws.config") " ")))
 
   (clojure.pprint/pprint
-    (list-available-solution-stacks))
+    (list-available-solution-stacks cred))
 
   (clojure.pprint/pprint
-    (describe-availability-zones))
+    (describe-availability-zones cred))
 
   (clojure.pprint/pprint
     (describe-dhcp-options))
 
   #_(clojure.pprint/pprint
-    (describe-images :owners ["self"]))
+    (describe-images cred :owners ["self"]))
 
   (clojure.pprint/pprint
     (describe-instances))

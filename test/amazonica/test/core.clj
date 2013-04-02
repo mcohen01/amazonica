@@ -133,16 +133,32 @@
   (get-s3account-owner cred)
 
   (let [b (:s3bucket (create-storage-location cred))
-      _ (println "created bucket" b)]
-  (delete-bucket cred b))
+        _ (println "created bucket" b)]
+    (delete-bucket cred b))
 
   (clojure.pprint/pprint
     (list-buckets cred))
 
-  
+  (does-bucket-exist cred bucket1)
 
-  
+  (generate-presigned-url cred bucket1 "jenny" date)
 
+  (get-bucket-acl cred bucket1)
+
+  (get-bucket-location cred bucket1)
+
+  (get-bucket-policy cred bucket1)
+
+  (get-bucket-website-configuration cred bucket1)
+
+  (get-object cred bucket1 "jenny")
+
+  (let [obj (get-object cred bucket1 "jenny" )
+        in (:input-stream obj)]
+    (clojure.java.io/copy in download-file))
+
+  (is (= (slurp upload-file)
+         (slurp download-file)))          
 
   (let [etag (put-object cred
                 :bucket-name bucket1
@@ -155,9 +171,10 @@
     (get-in (get-object cred bucket1 "jenny")
             [:object-metadata :raw-metadata :Content-Type]))
 
-  #_(get-object :bucket-name bucket1
-                :key "jenny"
-                download-file)
+  #_(get-object cred
+              :bucket-name bucket1
+              :key "jenny"
+              download-file)
   
 
   (copy-object cred bucket1 "jenny" bucket2 "jenny")

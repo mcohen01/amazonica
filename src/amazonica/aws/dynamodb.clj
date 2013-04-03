@@ -14,11 +14,11 @@
 
 (extend-protocol IMarshall
   AttributeValue
-    (marshall [obj]
-      (marshall
-        (some
-          #(.invoke % obj (make-array Object 0))
-          (accessors (class obj) true)))))
+  (marshall [obj]
+    (marshall
+      (some
+        #(.invoke % obj (make-array Object 0))
+        (accessors (class obj) true)))))
 
 (register-coercions
   AttributeValue

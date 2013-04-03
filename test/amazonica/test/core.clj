@@ -78,15 +78,7 @@
     (catch Exception e
       (is (.startsWith
             (:message (ex->map e)) 
-            "The specified upload does not exist."))))
-
-  (try
-    (change-object-storage-class 
-      cred "bucket-name91829189812" "key" "Standard")
-    (catch Exception e
-      (is (.startsWith
-            (:message (ex->map e)) 
-            "The specified bucket does not exist"))))  
+            "The specified upload does not exist."))))  
 
   (try
     (complete-multipart-upload cred 
@@ -102,6 +94,8 @@
             "The specified upload does not exist."))))
   
   (create-bucket cred bucket1)
+    
+
   (delete-bucket cred bucket1)
   (def bucket1 (.. (UUID/randomUUID) toString))
   (create-bucket cred 
@@ -121,6 +115,9 @@
                :destination-key "jenny")
   
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
+
+  (change-object-storage-class 
+      cred bucket1 "jenny" "REDUCED_REDUNDANCY")
 
   (delete-bucket-cross-origin-configuration cred bucket1)
   (delete-bucket-lifecycle-configuration cred bucket1)
@@ -171,11 +168,13 @@
     (get-in (get-object cred bucket1 "jenny")
             [:object-metadata :raw-metadata :Content-Type]))
 
-  #_(get-object cred
-              :bucket-name bucket1
-              :key "jenny"
-              download-file)
-  
+  (try
+    (get-object cred
+                :bucket-name bucket1
+                :key "jenny"
+                download-file)
+    (catch Exception e
+      (.printStackTrace e)))
 
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
   (delete-object cred bucket2 "jenny")
@@ -192,7 +191,7 @@
   (delete-bucket cred bucket2)
 
   
-  #_(clojure.pprint/pprint
+  (clojure.pprint/pprint
     (list-objects cred bucket1))
 
   (.delete upload-file)

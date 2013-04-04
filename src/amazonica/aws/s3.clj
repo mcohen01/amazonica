@@ -41,8 +41,8 @@
         (.grantPermission
           acl
           (coerce-value (first grant) Grantee)
-          (coerce-value (second grant) Permission)
-      acl))))
+          (coerce-value (second grant) Permission)))
+      acl))
   Grant
   (fn [value]
     (Grant. 

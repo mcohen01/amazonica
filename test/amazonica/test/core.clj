@@ -94,7 +94,7 @@
             "The specified upload does not exist."))))
   
   (create-bucket cred bucket1)
-    
+  
 
   (delete-bucket cred bucket1)
   (def bucket1 (.. (UUID/randomUUID) toString))
@@ -103,10 +103,23 @@
                  :bucket-name bucket1)  
   (create-bucket cred bucket2 "us-west-1")
 
+  (put-object cred bucket1 "jenny" upload-file)
+
   (put-object cred
-              :bucket-name bucket1
-              :key "jenny"
-              :file upload-file)
+             :bucket-name bucket1
+             :key "jenny"
+             :file upload-file
+             :access-control-list {
+               :grant-permission ["AllUsers" "Read"]
+             })
+ 
+  (clojure.pprint/pprint
+    (list-objects cred bucket1))
+
+  (clojure.pprint/pprint
+    (get-object-acl cred bucket1 "jenny"))
+
+
 
   (copy-object cred 
                :source-bucket-name bucket1
@@ -132,9 +145,8 @@
   (let [b (:s3bucket (create-storage-location cred))
         _ (println "created bucket" b)]
     (delete-bucket cred b))
-
-  (clojure.pprint/pprint
-    (list-buckets cred))
+  
+  (list-buckets cred )
 
   (does-bucket-exist cred bucket1)
 

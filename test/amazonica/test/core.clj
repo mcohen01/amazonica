@@ -105,6 +105,11 @@
 
   (put-object cred bucket1 "jenny" upload-file)
 
+  (is (= (get-in
+          (get-object-acl cred bucket1 "jenny")
+          [:grants 0 :permission :header-name])
+         "x-amz-grant-full-control"))        
+
   (put-object cred
              :bucket-name bucket1
              :key "jenny"
@@ -112,7 +117,43 @@
              :access-control-list {
                :grant-permission ["AllUsers" "Read"]
              })
- 
+
+  (is (= (get-in
+           (get-object-acl cred bucket1 "jenny")
+           [:grants 0 :permission :header-name])
+         "x-amz-grant-read"))
+
+  (put-object cred
+             :bucket-name bucket1
+             :key "jenny"
+             :file upload-file
+             :access-control-list {
+               :grant-all [
+                 ["AllUsers" "Read"]
+                 ["AuthenticatedUsers" "Write"]                 
+               ]
+             })
+
+  (let [obj (get-object-acl cred bucket1 "jenny")
+        f   #(fn [{{p :header-name} :permission}]
+               (= p %))]
+    (is (= 2 (count (:grants obj))))
+    (is 
+      (->
+        (f "x-amz-grant-read")
+        (filter (:grants obj))
+        first
+        (get-in [:grantee :identifier])
+        (.contains "AllUsers")))
+    (is 
+      (->
+        (f "x-amz-grant-write")
+        (filter (:grants obj))
+        first
+        (get-in [:grantee :identifier])
+        (.contains "AuthenticatedUsers"))))
+
+  
   (clojure.pprint/pprint
     (list-objects cred bucket1))
 

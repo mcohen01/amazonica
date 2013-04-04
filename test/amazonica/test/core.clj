@@ -138,8 +138,7 @@
   (delete-bucket-tagging-configuration cred bucket1)
   (delete-bucket-website-configuration cred bucket1)
 
-  (delete-object cred bucket1 "jenny")
-
+  
   (get-s3account-owner cred)
 
   (let [b (:s3bucket (create-storage-location cred))
@@ -160,7 +159,8 @@
 
   (get-bucket-website-configuration cred bucket1)
 
-  (get-object cred bucket1 "jenny")
+  (clojure.pprint/pprint
+    (get-object cred bucket1 "jenny"))
 
   (let [obj (get-object cred bucket1 "jenny" )
         in (:input-stream obj)]
@@ -189,9 +189,7 @@
       (.printStackTrace e)))
 
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
-  (delete-object cred bucket2 "jenny")
-
-  
+    
 
   (generate-presigned-url cred bucket1 "jenny" date)
   (generate-presigned-url cred bucket2 "jenny" date)
@@ -201,10 +199,6 @@
 
   (delete-bucket cred bucket1)
   (delete-bucket cred bucket2)
-
-  
-  (clojure.pprint/pprint
-    (list-objects cred bucket1))
 
   (.delete upload-file)
   (if (.exists download-file)

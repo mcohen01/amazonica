@@ -178,6 +178,13 @@
       (.. (SimpleDateFormat. @date-format)
           (parse (str date) (ParsePosition. 0))))))
 
+(defn- to-file
+  [file]
+  (if (instance? File file)
+    file
+    (if (string? file)
+      (File. file))))
+
 (defn to-enum
   "Case-insensitive resolution of Enum types by String."
   [type value]
@@ -202,6 +209,7 @@
    BigDecimal bigdec
    BigInteger bigint
    Date       to-date
+   File       to-file
    "int"      int
    "long"     long
    "double"   double
@@ -496,7 +504,7 @@
   [method args]
   (let [types (.getParameterTypes method)
         num   (count types)]
-    (if (and (not args) (= 0 num))
+    (if (and (empty? args) (= 0 num))
       (into-array Object args)
       (if (= num (count args))
         (into-array Object
@@ -506,12 +514,13 @@
         (if (use-aws-request-bean? method args)
           (if (= 1 num)
             (into-array Object 
-              [(create-bean 
+              [(create-bean
                   method 
                   (seq (apply hash-map args)))])
             ; note: AWS api only ever uses custom bean types
             ; as the first or last argument, as of v1.4.0
             ))))))
+
 
 (defn- args-from
   "Function arguments take an optional first parameter map
@@ -563,7 +572,7 @@
       (fn [method]
         (let [types (.getParameterTypes method)
               num   (count types)]
-          (if (and (or (nil? args) (empty? args)) (= 0 num))
+          (if (and (empty? args) (= 0 num))
             method
             (if (use-aws-request-bean? method args)
               method

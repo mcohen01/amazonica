@@ -26,12 +26,13 @@
      :object-metadata   (marshall
                           (.getObjectMetadata obj))}))
 
-(register-coercions  
+(register-coercions
   AccessControlList
   (fn [col]
     (let [acl (AccessControlList.)]
       (if-let [revoked (:revoke-all-permissions col)]
-        (.revokeAllPermissions acl (coerce-value revoked Grantee)))
+        (.revokeAllPermissions acl
+          (coerce-value revoked Grantee)))
       (if-let [grant-all (:grant-all col)]
         (.grantAllPermissions acl
           (into-array
@@ -45,7 +46,7 @@
       acl))
   Grant
   (fn [value]
-    (Grant. 
+    (Grant.
       (coerce-value (first value) Grantee)
       (coerce-value (second value) Permission)))
   Grantee

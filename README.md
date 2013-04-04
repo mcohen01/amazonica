@@ -36,7 +36,7 @@ and the following dependency:
 * [CloudFront] (#cloudfront)
 * [CloudSearch] (#cloudsearch)
 * [CloudWatch] (#cloudwatch)
-* DataPipeline
+* [DataPipeline] (#datapipeline)
 * DirectConnect
 * [DynamoDB] (#dynamodb)
 * [EC2] (#ec2)

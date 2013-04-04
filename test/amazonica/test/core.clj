@@ -153,6 +153,16 @@
         (get-in [:grantee :identifier])
         (.contains "AuthenticatedUsers"))))
 
+  (put-object cred
+             :bucket-name bucket1
+             :key "jenny"
+             :file upload-file
+             :access-control-list {
+               :revoke-all-permissions "AuthenticatedUsers"
+             })
+
+  (let [obj (get-object-acl cred bucket1 "jenny")]
+    (is (= 1 (count (:grants obj)))))
   
   (clojure.pprint/pprint
     (list-objects cred bucket1))

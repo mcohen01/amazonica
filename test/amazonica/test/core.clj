@@ -158,7 +158,7 @@
              :key "jenny"
              :file upload-file
              :access-control-list {
-               :revoke-all-permissions "AuthenticatedUsers"
+               :revoke-all-permissions "AllUsers"
              })
 
   (let [obj (get-object-acl cred bucket1 "jenny")]

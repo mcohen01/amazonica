@@ -523,3 +523,18 @@
   (clojure.pprint/pprint
     (describe-alarm-history :max-records 100))
 )
+
+(deftest datapipeline []
+  
+  (let [pid (:pipeline-id
+              (create-pipeline
+                cred
+                :name "my-pipeline"
+                :unique-id "mp"))]
+    (clojure.pprint/pprint
+      (describe-pipelines cred :pipeline-ids [pid]))
+    (delete-pipeline cred :pipeline-id pid))
+
+  (list-pipelines cred)
+
+)

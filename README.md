@@ -464,6 +464,35 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                   :threshold "50%")
 ```
 
+###DataPipeline  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.datapipeline]))
+
+(defcredential "aws-access-key" "aws-secret-key")
+
+(create-pipeline
+  cred
+  :name "my-pipeline"
+  :unique-id "mp")
+
+(put-pipeline-definition
+  cred
+  :pipeline-id "df-07746012XJFK4DK1D4QW"
+  :pipeline-objects [
+    {:name "my-pipeline-object"
+     :id "my-pl-object-id"
+     :fields [
+       {:key "some-key"
+       :string-value "foobar"}]}])  
+
+(list-pipelines cred)
+
+(delete-pipeline cred :pipeline-id pid)       
+
+```
+
 ###DynamoDB  
 ```clj
 (ns com.example

@@ -317,21 +317,24 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.autoscaling]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-launch-configuration :launch-configuration-name "aws_launch_cfg"
+(create-launch-configuration cred
+                             :launch-configuration-name "aws_launch_cfg"
                              :block-device-mappings [
                               {:device-name "/dev/sda1"
                                :virtual-name "vol-b0e519c3"
-                               :ebs { 
-                                :snapshot-id "snap-36295e51"
-                                :volume-size 32}}]
+                               :ebs
+                                {:snapshot-id "snap-36295e51"
+                                 :volume-size 32}}]
                              :ebs-optimized true
                              :image-id "ami-6fde0d06"
                              :instance-type "m1.large"
                              :spot-price ".10")
 
-(create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
+(create-auto-scaling-group cred
+                           :auto-scaling-group-name "aws_autoscale_grp"
                            :availability-zones ["us-east-1a" "us-east-1b"]
                            :desired-capacity 3
                            :health-check-grace-period 300
@@ -340,7 +343,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                            :min-size 3
                            :max-size 3)
 
-(describe-auto-scaling-instances)
+(describe-auto-scaling-instances cred)  
+
 ```  
 
 ###CloudFormation  
@@ -349,12 +353,15 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.cloudformation]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
       
-(create-stack :stack-name "my-stack"
+(create-stack cred
+              :stack-name "my-stack"
               :template-url "abcd1234.s3.amazonaws.com")
 
-(describe-stack-resources)
+(describe-stack-resources cred)  
+
 ```
 
 ###CloudFront  
@@ -363,49 +370,44 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.cloudfront]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-distribution :distribution-config {
-                     :enabled true
-                     :default-root-object "index.html"
-                     :origins {
-                       :quantity 0
-                       :items []
-                     }
-                     :logging {
-                       :enabled false
-                       :include-cookies false
-                       :bucket "abcd1234.s3.amazonaws.com"
-                       :prefix "cflog_"
-                     }
-                     :caller-reference 12345
-                     :aliases {
-                       :items ["m.example.com" "www.example.com"]
-                       :quantity 2
-                     }
-                     :cache-behaviors {
-                       :quantity 0 
-                       :items []
-                     }
-                     :comment "example"
-                     :default-cache-behavior {
-                       :target-origin-id "MyOrigin"
-                       :forwarded-values {
-                         :query-string false 
-                         :cookies {
-                           :forward "none"
-                         }
-                       }
-                       :trusted-signers {
-                         :enabled false
-                         :quantity 0
-                       }
-                       :viewer-protocol-policy "allow-all"
-                       :min-ttl 3600
-                     }
-                     :price-class "PriceClass_All"})
+(create-distribution 
+  cred
+  :distribution-config {
+  :enabled true
+  :default-root-object "index.html"
+  :origins
+   {:quantity 0
+    :items []}
+  :logging
+   {:enabled false
+    :include-cookies false
+    :bucket "abcd1234.s3.amazonaws.com"
+    :prefix "cflog_"}                     
+  :caller-reference 12345
+  :aliases
+   {:items ["m.example.com" "www.example.com"]
+    :quantity 2}
+  :cache-behaviors
+   {:quantity 0 
+    :items []}
+  :comment "example"
+  :default-cache-behavior
+   {:target-origin-id "MyOrigin"
+    :forwarded-values
+      {:query-string false 
+       :cookies 
+         {:forward "none"}}}
+   :trusted-signers
+     {:enabled false
+      :quantity 0}
+   :viewer-protocol-policy "allow-all"
+   :min-ttl 3600}
+  :price-class "PriceClass_All"})
 
-(list-distributions :max-items 10)
+(list-distributions cred :max-items 10)
 ; {:distribution-list
 ;  {:is-truncated false,
 ;   :quantity 3,
@@ -433,6 +435,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;     :price-class "PriceClass_All",
 ;     :id "E5GB5B26FIF5A",
 ;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
+
 ```
 
 ###CloudSearch  
@@ -441,11 +444,13 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.cloudsearch]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-domain :domain-name "my-index")
+(create-domain cred :domain-name "my-index")
 
-(index-documents :domain-name "my-index")
+(index-documents cred :domain-name "my-index")  
+
 ```
 
 ###CloudWatch  
@@ -454,14 +459,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.cloudwatch]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(put-metric-alarm :alarm-name "my-alarm"
+(put-metric-alarm cred
+                  :alarm-name "my-alarm"
                   :actions-enabled true
                   :evaluation-periods 5
                   :period 60
                   :metric-name "CPU"
-                  :threshold "50%")
+                  :threshold "50%")  
+
 ```
 
 ###DataPipeline  
@@ -470,7 +478,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.datapipeline]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
 (create-pipeline
   cred
@@ -485,11 +494,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
      :id "my-pl-object-id"
      :fields [
        {:key "some-key"
-       :string-value "foobar"}]}])  
+        :string-value "foobar"}]}])  
 
 (list-pipelines cred)
 
-(delete-pipeline cred :pipeline-id pid)       
+(delete-pipeline cred :pipeline-id pid)  
 
 ```
 
@@ -499,32 +508,33 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.dynamodb]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-table :table-name "TestTable"
-              :key-schema {
-                :hash-key-element {
-                  :attribute-name "id"
-                  :attribute-type "S"
-                }
-              }
-              :provisioned-throughput {
-                :read-capacity-units 1
-                :write-capacity-units 1
-              })
+(create-table cred
+              :table-name "TestTable"
+              :key-schema
+                {:hash-key-element
+                 {:attribute-name "id"
+                  :attribute-type "S"}}              
+              :provisioned-throughput
+                {:read-capacity-units 1
+                 :write-capacity-units 1})
 
-(put-item :table-name "TestTable"
-          :item {
-            :id "foo" 
-            :text "barbaz"
-          })              
+(put-item cred
+          :table-name "TestTable"
+          :item
+            {:id "foo" 
+             :text "barbaz"})              
 
-(get-item :table-name "TestTable"
+(get-item cred
+          :table-name "TestTable"
           :key "foo")
 
-(scan :table-name "TestTable")
+(scan cred :table-name "TestTable")
 
-(delete-table :table-name "TestTable")
+(delete-table cred :table-name "TestTable")  
+
 ```
 
 ###EC2
@@ -533,9 +543,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.ec2]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(describe-images :owners ["self"])
+(describe-images cred :owners ["self"])
 ; {:images
 ;  [{:kernel-id "aki-8e5ea7e7",
 ;    :hypervisor "xen",
@@ -563,11 +574,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;    :owner-id "676820690883",
 ;    :product-codes [],
 ;    :description "Use this to spin up development instances",
-;    :tags [{:value "CentOS 6.2", :key "Name"}]}
-; ....
+;    :tags [{:value "CentOS 6.2", :key "Name"}]}  
 
 
-(describe-instances)
+
+(describe-instances cred)
 
 ; {:reservations
 ; [{:owner-id "676820690883",
@@ -614,9 +625,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;     {:value "blog/homepage", :key "purpose"}]}],
 ;  :group-names ["web"],
 ;  :groups [{:group-name "web", :group-id "sg-2582484c"}]}
-;  ....
+;  ....  
 
-(create-image 
+(create-image
+  cred
   :name "my_test_image"
   :instance-id "i-1b9a9f71"
   :description "test image - safe to delete"
@@ -628,8 +640,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
        :volume-type "standard"
        :delete-on-termination true}}])
 
-(create-snapshot :volume-id   "vol-8a4857fa"
-                :description "my_new_snapshot")
+(create-snapshot cred
+                 :volume-id   "vol-8a4857fa"
+                 :description "my_new_snapshot")  
+
 ```
 
 
@@ -660,7 +674,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   :vault-name "my-vault"
   :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")
   
-(delete-vault cred :vault-name "my-vault")
+(delete-vault cred :vault-name "my-vault")  
+
  ```  
 
 
@@ -670,14 +685,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.redshift]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-cluster :availability-zone "us-east-1a"
+(create-cluster cred
+                :availability-zone "us-east-1a"
                 :cluster-type "multi-node"
                 :db-name "dw"
                 :master-username "scott"
                 :master-user-password "tiger"
-                :number-of-nodes 3)
+                :number-of-nodes 3)  
+
 ```
 
 ###S3  
@@ -686,17 +704,21 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (:use [amazonica.core]
         [amazonica.aws.s3]))
 
-(defcredential "aws-access-key" "aws-secret-key")
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-(create-bucket "two-peas")
+(create-bucket cred "two-peas")
 
-(put-object :bucket-name "two-peas"
+(put-object cred 
+            :bucket-name "two-peas"
             :key "foo"
             :file upload-file)
 
-(copy-object bucket1 "key-1" bucket2 "key-2")            
+(copy-object
+  cred bucket1 "key-1" bucket2 "key-2")            
 
-(generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
+(generate-presigned-url
+  cred bucket1 "key-1" (-> 6 hours from-now))  
 
 ```
 
@@ -733,7 +755,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (unsubscribe
   cred
   :subscription-arn
-  "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")
+  "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")  
 
 ```
 

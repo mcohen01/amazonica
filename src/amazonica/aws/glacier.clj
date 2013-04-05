@@ -13,14 +13,14 @@
 (defn- file-hash->map
   [file]
   {:content-length (.length file)
-   :checksum (->> file
-                  (TreeHash/computeSHA256TreeHash)
-                  (TreeHash/toHex))
-   :body (-> file 
+   :checksum (-> file
+                 TreeHash/computeSHA256TreeHash
+                 TreeHash/toHex)
+   :body (-> file
              (FileInputStream.) 
              (BufferedInputStream.))})
 
-(defn hasher
+(defn tree-hash
   [f cred & args]
   (let [m    (apply hash-map args)
         file (to-file (:body m))        
@@ -31,4 +31,4 @@
         rval (interleave (keys mm) (vals mm))]
     (apply (partial f cred) rval)))
 
-(add-hook #'upload-archive #'hasher)
+(add-hook #'upload-archive #'tree-hash)

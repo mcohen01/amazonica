@@ -547,10 +547,12 @@
   (def upload-file (java.io.File. "upload.txt"))
   
   (create-vault cred :vault-name "my-vault")
-  ; "/676820690883/vaults/my-vault"
-  (describe-vault cred :vault-name "my-vault")
   
-  (list-vaults cred :limit 10)
+  (clojure.pprint/pprint
+    (describe-vault cred :vault-name "my-vault"))
+  
+  (clojure.pprint/pprint
+    (list-vaults cred :limit 10))
 
   (upload-archive
     cred
@@ -564,5 +566,33 @@
     :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")    
 
   (.delete upload-file)
+
+)
+
+(deftest sns []
+
+  (create-topic cred :name "my-topic")
   
+  (list-topics cred)
+
+  (subscribe
+    cred
+    :protocol "email"
+    :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+    :endpoint "mcohen01@gmail.com")
+
+  (clojure.pprint/pprint
+    (list-subscriptions cred))
+
+  (publish
+    cred
+    :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+    :subject "test"
+    :message (str "Todays is " (java.util.Date.)))
+
+  (unsubscribe
+    cred
+    :subscription-arn
+    "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")
+
 )

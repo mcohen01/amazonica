@@ -700,6 +700,43 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+###SNS  
+```clj
+
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.sns]))
+
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
+
+
+(create-topic cred :name "my-topic")
+
+(list-topics cred)
+
+(subscribe
+  cred
+  :protocol "email"
+  :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+  :endpoint "mcohen01@gmail.com")
+
+(clojure.pprint/pprint
+  (list-subscriptions cred))
+
+(publish
+  cred
+  :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+  :subject "test"
+  :message (str "Todays is " (java.util.Date.)))
+
+(unsubscribe
+  cred
+  :subscription-arn
+  "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")
+
+```
+
 ### License
 
 Copyright (C) 2013 Michael Cohen

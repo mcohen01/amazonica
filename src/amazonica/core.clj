@@ -178,7 +178,7 @@
       (.. (SimpleDateFormat. @date-format)
           (parse (str date) (ParsePosition. 0))))))
 
-(defn- to-file
+(defn to-file
   [file]
   (if (instance? File file)
     file
@@ -543,9 +543,9 @@
   (binding [*client-class* clazz]
     (let [args    (args-from arg)
           arg-arr (prepare-args method (:args args))
-          client  (delay 
-                    (amazon-client 
-                      clazz 
+          client  (delay
+                    (amazon-client
+                      clazz
                       (or (:credential args) @credential)))]
       (fn []
         (try 

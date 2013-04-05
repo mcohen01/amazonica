@@ -44,7 +44,7 @@ and the following dependency:
 * ElasticBeanstalk
 * ElasticLoadBalancing
 * ElasticMapReduce
-* Glacier
+* [Glacier] (#glacier)
 * IdentityManagement
 * OpsWorks
 * RDS
@@ -631,6 +631,39 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (create-snapshot :volume-id   "vol-8a4857fa"
                 :description "my_new_snapshot")
 ```
+
+
+###Glacier  
+
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.glacier]))
+
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
+
+(create-vault cred :vault-name "my-vault")
+  
+(describe-vault cred :vault-name "my-vault")
+  
+(list-vaults cred :limit 10)
+
+(upload-archive
+  cred
+  :vault-name "my-vault"
+  :body "upload.txt")
+  
+(delete-archive
+  cred
+  :account-id "-"
+  :vault-name "my-vault"
+  :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")
+  
+(delete-vault cred :vault-name "my-vault")
+ ```  
+
+
 ###Redshift  
 ```clj
 (ns com.example

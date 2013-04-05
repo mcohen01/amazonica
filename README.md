@@ -53,7 +53,7 @@ and the following dependency:
 * [S3] (#s3)
 * SimpleDB
 * SimpleEmail
-* SNS
+* [SNS] (#sns)
 * SQS
 * StorageGateway
 

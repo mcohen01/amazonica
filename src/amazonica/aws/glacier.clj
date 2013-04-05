@@ -10,16 +10,24 @@
 
 (set-client AmazonGlacierClient *ns*)
 
+(defn- file-hash->map
+  [file]
+  {:content-length (.length file)
+   :checksum (->> file
+                  (TreeHash/computeSHA256TreeHash)
+                  (TreeHash/toHex))
+   :body (-> file 
+             (FileInputStream.) 
+             (BufferedInputStream.))})
+
 (defn hasher
   [f cred & args]
   (let [m    (apply hash-map args)
-        file (to-file (:body m))
-        mm (merge-with
-             #(do {% %2} %2)
-             m
-             {:content-length (.length file)
-              :checksum (TreeHash/toHex (TreeHash/computeSHA256TreeHash file))
-              :body (-> file (FileInputStream.) (BufferedInputStream.))})
+        file (to-file (:body m))        
+        mm   (merge-with
+               #(do {% %2} %2)
+               m
+               (file-hash->map file))
         rval (interleave (keys mm) (vals mm))]
     (apply (partial f cred) rval)))
 

@@ -24,8 +24,8 @@
   [f cred & args]
   (let [m    (apply hash-map args)
         file (to-file (:body m))        
-        mm   (merge-with
-               #(do {% %2} %2)
+        mm   (merge-with               
+               (fn [_ e] e)
                m
                (file-hash->map file))
         rval (interleave (keys mm) (vals mm))]

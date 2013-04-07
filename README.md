@@ -43,7 +43,7 @@ and the following dependency:
 * ElastiCache
 * ElasticBeanstalk
 * ElasticLoadBalancing
-* ElasticMapReduce
+* [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
 * IdentityManagement
 * OpsWorks
@@ -645,6 +645,56 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                  :description "my_new_snapshot")  
 
 ```
+
+
+###ElasticMapReduce  
+
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws
+          elasticmapreduce
+          s3]))
+
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
+
+(create-bucket
+  cred 
+  :bucket-name "emr-logs"
+  :access-control-list
+    {:grant-permission ["LogDelivery" "Write"]})
+
+(set-bucket-logging-configuration
+  cred
+  :bucket-name "emr-logs"
+  :logging-configuration
+    {:log-file-prefix "hadoop-job_"
+     :destination-bucket-name "emr-logs"})
+
+(run-job-flow
+  cred 
+  :name "my-job-flow"
+  :log-uri "s3n://emr-logs/logs"
+  :instances 
+    {:instance-groups [
+       {:instance-type "m1.large"
+        :instance-role "MASTER"
+        :instance-count 1
+        :market "SPOT"
+        :bid-price "0.10"}]}
+  :steps [
+    {:name "my-step"
+     :hadoop-jar-step
+       {:jar "s3.amazonaws.com/beee0534-ad04-4143-9894-8ddb0e4ebd31/hadoop-jobs/bigml.jar"
+        :main-class "bigml.core"
+        :args ["s3.amazonaws.com/beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
+
+(describe-job-flows
+  cred 
+  :job-flow-ids ["j-38BW9W0NN8YGV"])
+  
+```  
 
 
 ###Glacier  

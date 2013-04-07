@@ -1,5 +1,6 @@
 (ns amazonica.aws.s3
-  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions)]
+  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions 
+                               to-date kw->str)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.s3
               AmazonS3Client]
@@ -10,6 +11,7 @@
               Grant
               Grantee
               GroupGrantee
+              ObjectMetadata
               Permission
               S3Object]))
 
@@ -27,6 +29,35 @@
                           (.getObjectMetadata obj))}))
 
 (register-coercions
+  ObjectMetadata
+  (fn [col]
+    (let [om (ObjectMetadata.)]
+      (when-let [cc (:cache-control col)]
+        (.setCacheControl om cc))
+      (when-let [cd (:content-disposition col)]
+        (.setContentDisposition om cd))
+      (when-let [ce (:content-encoding col)]
+        (.setContentEncoding om ce))
+      (when-let [cl (:content-length col)]
+        (.setContentLength om cl))
+      (when-let [cm (:content-md5 col)]
+        (.setContentMD5 om cm))
+      (when-let [ct (:content-type col)]
+        (.setContentType om ct))
+      (when-let [et (:expiration-time col)]
+        (.setExpirationTime om (to-date et)))
+      (when-let [id (:expiration-time-rule-id col)]
+        (.setExpirationTimeRuleId om id))
+      (when-let [rt (:restore-expiration-time col)]
+        (.setRestoreExpirationTime om (to-date rt)))
+      (when-let [sse (:server-side-encryption col)]
+        (.setServerSideEncryption om sse))
+      (when-let [metadata (:user-metadata col)]
+        (doseq [[k v] metadata]
+          (.addUserMetadata om
+            (kw->str k)
+            (str v))))
+      om))
   AccessControlList
   (fn [col]
     (let [acl (AccessControlList.)]

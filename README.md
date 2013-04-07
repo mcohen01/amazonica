@@ -65,14 +65,14 @@ and the following dependency:
   (:use [amazonica.core]
         [amazonica.aws.ec2]))
 
-  (def cred {:access-key "aws-access-key"
-             :secret-key "aws-secret-key"})
-  
-  (describe-instances cred)
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
-  (create-snapshot cred
-                   :volume-id   "vol-8a4857fa"
-                   :description "my_new_snapshot")
+(describe-instances cred)
+
+(create-snapshot cred
+                 :volume-id   "vol-8a4857fa"
+                 :description "my_new_snapshot")
 ```  
 
 Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].  

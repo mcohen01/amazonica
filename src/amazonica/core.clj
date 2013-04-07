@@ -169,14 +169,14 @@
   [clazz]
   (re-find #"com\.amazonaws\.services" (.getName clazz)))
 
-(defn- to-date
+(defn to-date
   [date]
-  (if (instance? AbstractInstant date)
-    (.toDate date)
-    (if (integer? date)
-      (java.util.Date. date)
-      (.. (SimpleDateFormat. @date-format)
-          (parse (str date) (ParsePosition. 0))))))
+  (cond
+    (instance? java.util.Date date) date
+    (instance? AbstractInstant date) (.toDate date)
+    (integer? date) (java.util.Date. date)
+    true (.. (SimpleDateFormat. @date-format)
+           (parse (str date) (ParsePosition. 0)))))
 
 (defn to-file
   [file]
@@ -319,18 +319,19 @@
         (.toLowerCase (keyword->camel k))
         (empty? v))))
 
-(defn- to-java-coll
+(defn to-java-coll
   "Need this only because S3 methods actually try to
    mutate (e.g. sort) collections passed to them."
   [col]
-  (when (map? col)
-    (doto 
-      (java.util.HashMap.)
-      (.putAll col)))
-  (when (set? col)
-    (java.util.HashSet. col))
-  (when (or (list? col) (vector? col))
-    (java.util.ArrayList. col)))
+  (cond 
+    (map? col)
+      (doto 
+        (java.util.HashMap.)
+        (.putAll col))
+    (set? col)
+      (java.util.HashSet. col)
+    (or (list? col) (vector? col))
+      (java.util.ArrayList. col)))
 
 (defn- invoke
   [pojo method v]
@@ -345,7 +346,7 @@
   
 (declare set-fields)
 
-(defn- kw->str [k]
+(defn kw->str [k]
   (if (keyword? k) (name k) k))
 
 (defn- populate

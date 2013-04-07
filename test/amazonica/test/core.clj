@@ -72,7 +72,7 @@
   (def download-file (java.io.File. "download.txt"))
 
   (.createNewFile upload-file)
-  (spit upload-file (Date.))
+  (spit upload-file (Date.))  
 
   (try
     (abort-multipart-upload cred 
@@ -109,6 +109,24 @@
 
   (put-object cred bucket1 "jenny" upload-file)
 
+  (copy-object 
+    cred 
+    :source-bucket-name bucket1
+    :destination-bucket-name bucket2
+    :source-key "jenny" 
+    :destination-key "jenny" 
+    :new-object-metadata 
+      {:content-type "text/html" 
+       :user-metadata 
+         {:foo "bar"
+          :baz "barry"}})
+
+  (is (= {:foo "bar"
+          :baz "barry"}
+        (get-in
+          (get-object cred bucket2 "jenny")
+          [:object-metadata :user-metadata])))
+  
   (is (= (get-in
           (get-object-acl cred bucket1 "jenny")
           [:grants 0 :permission :header-name])
@@ -199,9 +217,9 @@
   (let [b (:s3bucket (create-storage-location cred))
         _ (println "created bucket" b)]
     (delete-bucket cred b))
-  
-  (list-buckets cred )
 
+  (list-buckets cred)
+  
   (does-bucket-exist cred bucket1)
 
   (generate-presigned-url cred bucket1 "jenny" date)

@@ -686,9 +686,9 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   :steps [
     {:name "my-step"
      :hadoop-jar-step
-       {:jar "s3.amazonaws.com/beee0534-ad04-4143-9894-8ddb0e4ebd31/hadoop-jobs/bigml"
+       {:jar "s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/hadoop-jobs/bigml"
         :main-class "bigml.core"
-        :args ["s3.amazonaws.com/beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
+        :args ["s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
 
 (describe-job-flows
   cred 

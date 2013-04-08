@@ -136,9 +136,8 @@
              :bucket-name bucket1
              :key "jenny"
              :file upload-file
-             :access-control-list {
-               :grant-permission ["AllUsers" "Read"]
-             })
+             :access-control-list
+               {:grant-permission ["AllUsers" "Read"]})
 
   (is (= (get-in
            (get-object-acl cred bucket1 "jenny")
@@ -152,9 +151,7 @@
              :access-control-list {
                :grant-all [
                  ["AllUsers" "Read"]
-                 ["AuthenticatedUsers" "Write"]                 
-               ]
-             })
+                 ["AuthenticatedUsers" "Write"]]})
 
   (let [obj (get-object-acl cred bucket1 "jenny")
         f   #(fn [{{p :header-name} :permission}]
@@ -179,9 +176,8 @@
              :bucket-name bucket1
              :key "jenny"
              :file upload-file
-             :access-control-list {
-               :revoke-all-permissions "AllUsers"
-             })
+             :access-control-list
+               {:revoke-all-permissions "AllUsers"})
 
   (let [obj (get-object-acl cred bucket1 "jenny")]
     (is (= 1 (count (:grants obj)))))

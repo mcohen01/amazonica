@@ -256,12 +256,24 @@
           (comp default-value str)
           (seq types))))))
 
+(defn best-constructor
+  "Prefer no-arg ctor if one exists, else the first found."
+  [clazz]
+  (let [ctors (.getConstructors clazz)]
+    (or
+      (some 
+        #(if (= 0 (count (.getParameterTypes %)))
+          %
+          nil)
+        ctors)
+      (first ctors))))
+
 (defn- new-instance
   "Create a new instance of a Java bean. S3 neccessitates
   the check for contructor args here, as the rest of the
   AWS api contains strictly no-arg ctor JavaBeans."
   [clazz]
-  (let [ctor (first (.getConstructors clazz))
+  (let [ctor (best-constructor clazz)
         arr  (constructor-args ctor)]
     (.newInstance ctor arr)))
     

@@ -628,20 +628,17 @@
   (send-message
     cred
     :queue-url q
-    :message-body "test")
+    :delay-seconds 0
+    :message-body (str "test" (java.util.Date.)))
   
+  (clojure.pprint/pprint
   (receive-message
     cred
     :queue-url q
     :wait-time-seconds 6
+    :max-number-of-messages 10
     :delete true
-    :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
-
-  (delete-message
-    cred
-    :queue-url q
-    :receipt-handle "0NNAq8PwvXulJxMVu6RcqUgcGK0dlCiy9fUaroa0xEzNx0DcgHGm99pKac5gMlvHp1VYo3u5oiYXDdPjU8k+bslA5vEBEK/HMaQCqAkT/ziNexvsPu/AJ8atVMivDzsmcxyZWk5A1qFB7guq+U/Ch8Sc9XcIFqp7+dELbHqT50cBHUL2nHzic5RW12Il8bqk3fx1DEhorGNcRyDOFZJ1SOZ9IvOxa5pWD9XMSInwYMSdy4IGLiskCjrGy6j5+v+YKRkpc9SMqqcKnhHptBNXJlLr3//NHQS11z9OdHsr1+4="
-    )
+    :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"]))
 
   (delete-queue
     cred

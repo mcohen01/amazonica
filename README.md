@@ -827,13 +827,15 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (send-message
   cred
   :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-  :message-body "test")
+  :delay-seconds 0
+  :message-body (str "test" (java.util.Date.)))
 
 (receive-message
   cred
   :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
   :wait-time-seconds 6
-  :delete true
+  :max-number-of-messages 10
+  :delete true ;; deletes any received messages after receipt
   :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
 
 (delete-message

@@ -54,7 +54,7 @@ and the following dependency:
 * SimpleDB
 * SimpleEmail
 * [SNS] (#sns)
-* SQS
+* [SQS] (#sqs)
 * StorageGateway
 
     
@@ -808,6 +808,44 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")  
 
 ```
+
+###SQS  
+```clj  
+
+
+(create-queue
+  cred
+  :queue-name "my-queue"
+  :attributes
+    {:VisibilityTimeout 30 ; sec
+     :MaximumMessageSize 65536 ; bytes
+     :MessageRetentionPeriod 1209600 ; sec
+     :ReceiveMessageWaitTimeSeconds 10}) ; sec
+
+(list-queues cred)
+
+(send-message
+  cred
+  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+  :message-body "test")
+
+(receive-message
+  cred
+  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+  :wait-time-seconds 6
+  :delete true
+  :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
+
+(delete-message
+  cred
+  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+  :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")
+
+(delete-queue
+  cred
+  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue")  
+
+```  
 
 ### License
 

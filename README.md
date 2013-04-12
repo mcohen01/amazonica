@@ -49,7 +49,7 @@ and the following dependency:
 * OpsWorks
 * RDS
 * [Redshift] (#redshift)
-* Route53
+* [Route53] (#route53)
 * [S3] (#s3)
 * SimpleDB
 * SimpleEmail
@@ -748,6 +748,48 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+
+###Route53  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.route53]))
+
+(create-health-check
+  cred
+  :health-check-config
+    {:port 80,
+     :type "HTTP",
+     :ipaddress "127.0.0.1",
+     :fully-qualified-domain-name "example.com"})
+
+(get-health-check
+  cred
+  :health-check-id "ce6a4aeb-acf1-4923-a116-cd9ae2c30ee3")
+
+(create-hosted-zone
+  cred
+  :name "example.com.")
+
+(get-hosted-zone cred :id "Z3TKY0VR5CH45U")
+
+(list-hosted-zones cred)
+
+(list-health-checks cred)
+
+(list-resource-record-sets
+  cred
+  :hosted-zone-id "ZN8D0HXQLVRRL")
+
+(delete-health-check
+  cred
+  :health-check-id "99999999-1234-4923-a116-cd9ae2c30ee3")
+
+(delete-hosted-zone cred :id "my-bogus-hosted-zone")  
+
+```  
+
+
 ###S3  
 ```clj
 (ns com.example
@@ -766,6 +808,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (copy-object
   cred bucket1 "key-1" bucket2 "key-2")            
+
+(get-object cred bucket2 "key-2"))
 
 (generate-presigned-url
   cred bucket1 "key-1" (-> 6 hours from-now))  

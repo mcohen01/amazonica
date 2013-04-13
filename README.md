@@ -856,6 +856,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###SQS  
 ```clj  
 
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.sqs]))
+
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
 
 (create-queue
   cred

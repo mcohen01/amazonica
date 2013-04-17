@@ -408,33 +408,6 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   :price-class "PriceClass_All"})
 
 (list-distributions cred :max-items 10)
-; {:distribution-list
-;  {:is-truncated false,
-;   :quantity 3,
-;   :marker "",
-;   :items
-;   [{:status "Deployed",
-;     :enabled true,
-;     :comment "wordfront",
-;     :origins
-;     {:quantity 1,
-;      :items
-;      [{:s3origin-config {:origin-access-identity ""},
-;        :id "MyOrigin",
-;        :domain-name "myblog.s3.amazonaws.com"}]},
-;     :last-modified-time #<DateTime 2010-10-13T13:56:46.556-07:00>,
-;     :cache-behaviors {:quantity 0, :items []},
-;     :domain-name "dhpz2lx23abcd.cloudfront.net",
-;     :default-cache-behavior
-;     {:target-origin-id "MyOrigin",
-;      :forwarded-values
-;      {:query-string false, :cookies {:forward "none"}},
-;      :trusted-signers {:quantity 0, :enabled false, :items []},
-;      :viewer-protocol-policy "allow-all",
-;      :min-ttl 3600},
-;     :price-class "PriceClass_All",
-;     :id "E5GB5B26FIF5A",
-;     :aliases {:quantity 1, :items ["blogcdn.example.com"]}}]}}  
 
 ```
 
@@ -547,85 +520,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
            :secret-key "aws-secret-key"})
 
 (describe-images cred :owners ["self"])
-; {:images
-;  [{:kernel-id "aki-8e5ea7e7",
-;    :hypervisor "xen",
-;    :state "available",
-;    :name "CentOS 6.2 (dev deploy)",
-;    :root-device-name "/dev/sda1",
-;    :virtualization-type "paravirtual",
-;    :root-device-type "ebs",
-;    :block-device-mappings
-;    [{:device-name "/dev/sda",
-;      :ebs
-;      {:snapshot-id "snap-36295e51",
-;       :volume-type "standard",
-;       :delete-on-termination true,
-;       :volume-size 6}}
-;     {:device-name "/dev/sdf",
-;      :ebs
-;      {:snapshot-id "snap-32295e55",
-;       :volume-type "standard",
-;       :volume-size 5}}],
-;    :image-location "676820690883/CentOS 6.2 (dev deploy)",
-;    :image-type "machine",
-;    :architecture "x86_64",
-;    :image-id "ami-6fde0d06",
-;    :owner-id "676820690883",
-;    :product-codes [],
-;    :description "Use this to spin up development instances",
-;    :tags [{:value "CentOS 6.2", :key "Name"}]}  
-
-
 
 (describe-instances cred)
-
-; {:reservations
-; [{:owner-id "676820690883",
-;  :reservation-id "r-8a7463e1",
-;  :instances
-;  [{:instance-type "m1.small",
-;    :kernel-id "aki-92ba58fb",
-;    :hypervisor "xen",
-;    :state {:code 16, :name "running"},
-;    :ebs-optimized false,
-;    :public-dns-name "ec2-184-73-212-155.compute-1.amazonaws.com",
-;    :root-device-name "/dev/sda1",
-;    :virtualization-type "paravirtual",
-;    :root-device-type "ebs",
-;    :block-device-mappings
-;    [{:device-name "/dev/sda1",
-;      :ebs
-;      {:attach-time #<DateTime 2010-09-24T01:30:19.000-07:00>,
-;       :delete-on-termination true,
-;       :volume-id "vol-d0745eb9",
-;       :status "attached"}}],
-;    :network-interfaces [],
-;    :public-ip-address "164.73.212.155",
-;    :placement
-;    {:tenancy "default",
-;     :availability-zone "us-east-1a",
-;     :group-name ""},
-;    :private-ip-address "10.194.22.227",
-;    :security-groups [{:group-name "web", :group-id "sg-2582484c"}],
-;    :state-transition-reason "",
-;    :ramdisk-id "ari-94ba58fd",
-;    :private-dns-name "ip-10-194-22-227.ec2.internal",
-;    :instance-id "i-1b9a9f71",
-;    :key-name "bootstrap",
-;    :architecture "i386",
-;    :client-token "",
-;    :image-id "ami-cb8d61a2",
-;    :ami-launch-index 0,
-;    :monitoring {:state "enabled"},
-;    :product-codes [],
-;    :launch-time #<DateTime 2010-10-07T06:04:41.000-07:00>,
-;    :tags
-;    [{:value "Flowtown Blog", :key "Name"}
-;     {:value "blog/homepage", :key "purpose"}]}],
-;  :group-names ["web"],
-;  :groups [{:group-name "web", :group-id "sg-2582484c"}]}
-;  ....  
 
 (create-image
   cred

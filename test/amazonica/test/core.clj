@@ -82,7 +82,13 @@
        :number-of-disks 1
        :size 50}])
 
-  (describe-stacks cred :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
+  (describe-stacks
+    cred
+    :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
+  
+  (describe-layers 
+    cred
+    :stack-id "dafa328e-c529-41af-89d3-12840a31abad")
 )
 
 (deftest s3 []

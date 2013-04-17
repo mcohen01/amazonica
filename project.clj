@@ -3,7 +3,7 @@
   :url "https://github.com/mcohen01/amazonica"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :java-source-paths ["src/main/java"]            
+  :java-source-paths ["src/main/java"]
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [com.amazonaws/aws-java-sdk "1.4.1"]
                  [org.clojure/algo.generic "0.1.0"]

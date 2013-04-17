@@ -46,7 +46,7 @@ and the following dependency:
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
 * IdentityManagement
-* OpsWorks
+* [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
 * [Route53] (#route53)
@@ -727,6 +727,71 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (delete-vault cred :vault-name "my-vault")  
 
  ```  
+
+
+###OpsWorks  
+```clj
+(ns com.example
+  (:use [amazonica.core]
+        [amazonica.aws.opsworks]))
+
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"})
+
+ (create-stack
+  cred
+  :name "my-stack"
+  :region "us-east-1"
+  :default-os "Ubuntu 12.04 LTS"
+  :service-role-arn "arn:aws:iam::676820690883:role/aws-opsworks-service-role")
+
+(create-layer
+  cred
+  :name "webapp-layer"
+  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+  :enable-auto-healing true
+  :auto-assign-elastic-ips true
+  :volume-configurations [
+    {:mount-point "/data"
+     :number-of-disks 1
+     :size 50}])
+
+(create-instance
+  cred
+  :hostname "node-app-1"
+  :instance-type "m1.large"
+  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+  :layer-ids ["660d00da-c533-43d4-8c7f-2df240fd563f"]
+  :availability-zone "us-east-1a"
+  :autoscaling-type "LoadBasedAutoScaling"
+  :os "Ubuntu 12.04 LTS"
+  :ssh-key-name "admin")  
+
+(describe-stacks
+  cred
+  :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
+
+(describe-layers 
+  cred
+  :stack-id "dafa328e-c529-41af-89d3-12840a31abad")
+
+(describe-instances
+  cred
+  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+  :layer-id "660d00da-c533-43d4-8c7f-2df240fd563f"
+  :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")
+
+(start-stack
+  cred
+  :stack-id "660d00da-c533-43d4-8c7f-2df240fd563f")
+
+(start-instance
+  cred
+  :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")  
+
+```  
+
+
 
 
 ###Redshift  

@@ -63,33 +63,7 @@
         [:access-key :secret-key :endpoint]
         (seq (.split (slurp "aws.config") " ")))))
 
-(deftest opsworks []
-  (create-stack
-    cred
-    :name "my-stack"
-    :region "us-east-1"
-    :default-os "Ubuntu 12.04 LTS"
-    :service-role-arn "arn:aws:iam::676820690883:role/aws-opsworks-service-role")
 
-  (create-layer
-    cred
-    :name "webapp-layer"
-    :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
-    :enable-auto-healing true
-    :auto-assign-elastic-ips true
-    :volume-configurations [
-      {:mount-point "/data"
-       :number-of-disks 1
-       :size 50}])
-
-  (describe-stacks
-    cred
-    :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
-  
-  (describe-layers 
-    cred
-    :stack-id "dafa328e-c529-41af-89d3-12840a31abad")
-)
 
 (deftest s3 []
   

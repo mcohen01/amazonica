@@ -1,5 +1,5 @@
 (ns amazonica.aws.dynamodbv2
-  "Amazon DyanmoDB support."
+  "Amazon DyanmoDBV2 support - Local Secondary Indexes"
   (:use [amazonica.core :only (accessors coerce-value marshall
                                register-coercions set-fields IMarshall)]
         [clojure.algo.generic.functor :only (fmap)])

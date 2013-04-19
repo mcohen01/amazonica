@@ -107,24 +107,27 @@
     :select "ALL_ATTRIBUTES"
     :scan-index-forward true
     :key-conditions 
-     {"id"      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
-      "column1" {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
+     {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
+      :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
   (clojure.pprint/pprint
     (scan cred :table-name "TestTable"))
 
   (set-root-unwrapping! false)
 
+(try
   (clojure.pprint/pprint 
     (batch-get-item
       cred 
+      :return-consumed-capacity "TOTAL"
       :request-items {
       "TestTable" {:keys
-                    [{:hash-key-element {:s "foo"}}
-                     {:hash-key-element {:s "1234"}}]
+                    [{"id" {:s "foo"}
+                     "date" {:n 12345}}]
                    :consistent-read true
                    :attributes-to-get ["id" "text"]}}))
-
+(catch Exception e
+  (.printStackTrace e)))
   
   (clojure.pprint/pprint 
     (describe-table cred :table-name "TestTable"))

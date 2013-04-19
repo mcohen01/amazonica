@@ -576,19 +576,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   :select "ALL_ATTRIBUTES"
   :scan-index-forward true
   :key-conditions 
-   {"id"      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
-    "column1" {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
+   {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
+    :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
 (scan cred :table-name "TestTable")
-
-(batch-get-item
-  cred 
-  :request-items {
-  "TestTable" {:keys
-                [{:hash-key-element {:s "foo"}}
-                 {:hash-key-element {:s "1234"}}]
-               :consistent-read true
-               :attributes-to-get ["id" "text"]}})
 
 (describe-table cred :table-name "TestTable")
 

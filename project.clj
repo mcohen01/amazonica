@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :java-source-paths ["src/main/java"]
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [com.amazonaws/aws-java-sdk "1.4.1"]
+                 [com.amazonaws/aws-java-sdk "1.4.2"]
                  [org.clojure/algo.generic "0.1.0"]
                  [joda-time "2.1"]
                  [robert/hooke "1.3.0"]])

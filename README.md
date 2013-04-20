@@ -101,7 +101,7 @@ or
 
 ### Conversion of Returned Types  
 
-`java.util.Collections` are converted to the corresponding Clojure collection type. `java.util.Maps` are converted to `clojure.lang.IPersistenMaps`, `java.util.Lists` are converted to `clojure.lang.IPersistenVectors`, etc.  
+`java.util.Collections` are converted to the corresponding Clojure collection type. `java.util.Maps` are converted to `clojure.lang.IPersistentMaps`, `java.util.Lists` are converted to `clojure.lang.IPersistentVectors`, etc.  
 
 `java.util.Dates` are automatically converted to Joda Time `DateTime` instances.   
 

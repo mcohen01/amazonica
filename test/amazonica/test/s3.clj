@@ -23,7 +23,7 @@
         (seq (.split (slurp "aws.config") " ")))))
 
 (deftest s3 []
-  
+
   (def bucket1 (.. (UUID/randomUUID) toString))
   (def bucket2 (.. (UUID/randomUUID) toString))
   (def date    (.plusDays (DateTime.) 2))
@@ -67,7 +67,7 @@
 
   (put-object cred bucket1 "jenny" upload-file)
 
-  (copy-object 
+  (copy-object
     cred 
     :source-bucket-name bucket1
     :destination-bucket-name bucket2
@@ -211,9 +211,11 @@
             [:object-metadata :raw-metadata :Content-Type]))
 
   (try
-    (get-object cred
-                :bucket-name bucket1
-                :key "jenny")
+    (get-object
+      cred
+      :bucket-name bucket1
+      :key "jenny"
+      download-file)
     (catch Exception e
       (.printStackTrace e)))
 

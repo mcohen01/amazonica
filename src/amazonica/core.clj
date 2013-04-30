@@ -507,8 +507,12 @@
     (and (< 1 (count args))
          (< 0 (count types))
          (and
-            (or (even? (count args))
-                (= java.io.File (last types))) ; s3 getObject() support
+            (or (and
+                  (even? (count args))
+                  (not= java.io.File (last types)))
+                (and
+                  (odd? (count args))
+                  (= java.io.File (last types)))) ; s3 getObject() support
             (some keyword? args))
          (or (aws-package? (first types))
              (and (aws-package? (last types))

@@ -511,7 +511,8 @@
                 (= java.io.File (last types))) ; s3 getObject() support
             (some keyword? args))
          (or (aws-package? (first types))
-             (aws-package? (last types))))))
+             (and (aws-package? (last types))
+                  (not (< (count types) (count args))))))))
 
 (defn- prepare-args
   [method args]
@@ -580,20 +581,19 @@
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
-  (let [args (:args (args-from arg))]    
-    (some 
+  (let [args (:args (args-from arg))]
+    (some
       (fn [method]
         (let [types (.getParameterTypes method)
               num   (count types)]
-          (if (and (empty? args) (= 0 num))
+          (if (or
+                (and (empty? args) (= 0 num))
+                (use-aws-request-bean? method args)
+                (and
+                  (= num (count args))
+                  (not (aws-package? (first types)))))
             method
-            (if (use-aws-request-bean? method args)
-              method
-              (if (and 
-                    (= num (count args))
-                    (not (aws-package? (first types))))
-                method
-                false)))))
+            false)))
       methods)))
 
 (defn- intern-function

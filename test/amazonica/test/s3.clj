@@ -210,15 +210,13 @@
     (get-in (get-object cred bucket1 "jenny")
             [:object-metadata :raw-metadata :Content-Type]))
 
-  (try
-    (get-object
-      cred
-      :bucket-name bucket1
-      :key "jenny"
-      download-file)
-    (catch Exception e
-      (.printStackTrace e)))
+  (get-object
+    cred
+    :bucket-name bucket1
+    :key "jenny")
 
+  (get-object cred bucket1 "jenny")
+  
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
     
 

@@ -18,6 +18,7 @@
            java.io.PrintWriter
            java.io.StringWriter
            java.lang.reflect.InvocationTargetException
+           java.lang.reflect.ParameterizedType
            java.math.BigDecimal
            java.math.BigInteger
            java.text.ParsePosition
@@ -279,17 +280,19 @@
     
 (defn- unwind-types
   [param]
-  (if (instance? java.lang.reflect.ParameterizedType param)
-    (unwind-types (last (.getActualTypeArguments param)))
+  (if (instance? ParameterizedType param)
+    (-> param
+        (.getActualTypeArguments)
+        last
+        unwind-types)
     [param]))
 
 (defn- paramter-types
   [method]
-  (let [clazz java.lang.reflect.ParameterizedType
-        types (seq (.getGenericParameterTypes method))
+  (let [types (seq (.getGenericParameterTypes method))
         param (first types)
         rval  {:generic types}]
-    (if (instance? clazz param)
+    (if (instance? ParameterizedType param)
       (merge rval
         {:actual (unwind-types param)
          :raw    (.getRawType param)})

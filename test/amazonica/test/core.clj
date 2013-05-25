@@ -50,6 +50,7 @@
           identitymanagement
           route53
           s3
+          securitytoken
           simpleemail
           sqs]))
 

@@ -4,6 +4,7 @@
         [amazonica.core]
         [amazonica.aws 
           identitymanagement
+          s3
           securitytoken]))
 
 ; config file contains space-separated AWS credential key pair

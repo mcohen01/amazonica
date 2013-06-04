@@ -7,7 +7,8 @@
            com.amazonaws.services.dynamodb.model.AttributeValue
            [com.amazonaws.auth
              AWSCredentials
-             BasicAWSCredentials]
+             BasicAWSCredentials
+             BasicSessionCredentials]
            [com.amazonaws.regions
              Region
              Regions]
@@ -132,9 +133,14 @@
           "You must call defcredential before using the api,
            or pass a map with key :secret-key as the first
            argument to any api function calls.")           
-  (let [aws-creds (BasicAWSCredentials.
-                    (:access-key credentials)
-                    (:secret-key credentials))
+  (let [aws-creds (if (contains? credentials :session-token)
+                      (BasicSessionCredentials.
+                        (:access-key credentials)
+                        (:secret-key credentials)
+                        (:session-token credentials))
+                      (BasicAWSCredentials.
+                        (:access-key credentials)
+                        (:secret-key credentials)))
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
       (->> (-> (str/upper-case endpoint)

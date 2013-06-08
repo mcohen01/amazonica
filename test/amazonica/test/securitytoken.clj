@@ -20,8 +20,8 @@
 (deftest securitytoken []
 
   (let [session (:credentials (get-session-token cred))]
-    (is (= true (contains? session :access-key-id)))
-    (is (= true (contains? session :secret-access-key)))
+    (is (= true (contains? session :access-key)))
+    (is (= true (contains? session :secret-key)))
     (is (= true (contains? session :session-token))))
 
   (assume-role 

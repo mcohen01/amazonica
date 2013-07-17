@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.1.11"]
+[amazonica "0.1.12"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.11</version>
+  <version>0.1.12</version>
 </dependency>
 ```
 
@@ -277,6 +277,14 @@ All subsequent API calls will use the specified credential. If you need to execu
 (describe-images :owners ["self"])
 ; returns images belonging to account-1
 ```  
+
+#### Using IAM Role-based Instance Metadata on EC2
+If your code is running on EC2 and the instance was launched with a specified IAM role, then no explicit credentials map needs to be passed to any of the functions. In such cases credentials will be looked up transparently by the underlying Java AWS SDK class, and the same permissions as the IAM Role the instance was launched with will apply. 
+
+Note that you must not have previously called `(defcredential)` for the EC2 Instance Metadata to be used.
+
+See the [AWS docs] [14] for reference.
+
 
 ### Exception Handling  
 All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catch exceptions you can convert the AWS object to a Clojure map like so:
@@ -958,3 +966,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [11]: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodb/model/GetItemRequest.html
 [12]:https://github.com/mcohen01/amazonica-benchmark
 [13]:https://github.com/weavejester/rotary
+[14]:http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html

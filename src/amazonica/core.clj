@@ -95,8 +95,6 @@
   [access-key secret-key endpoint]
   (let [credential {:access-key access-key
                     :secret-key secret-key}]
-    ;(assert (not (nil? secret-key))
-    ;        "secret-key is required")
     (if-not (empty? endpoint)
       (merge credential {:endpoint (first endpoint)})
       credential)))

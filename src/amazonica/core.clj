@@ -95,8 +95,8 @@
   [access-key secret-key endpoint]
   (let [credential {:access-key access-key
                     :secret-key secret-key}]
-    (assert (not (nil? secret-key))
-            "secret-key is required")
+    ;(assert (not (nil? secret-key))
+    ;        "secret-key is required")
     (if-not (empty? endpoint)
       (merge credential {:endpoint (first endpoint)})
       credential)))
@@ -117,30 +117,29 @@
   `(binding [*credentials* ~(keys->cred a b c)]
     (do ~@body)))
 
+(declare new-instance)
+
 (defn- create-client
-  [aws-client credentials]  
-  (Reflector/invokeConstructor
-    aws-client
-    (into-array [credentials])))
+  [aws-client credentials]
+  (if (nil? credentials)
+      (new-instance aws-client)
+      (Reflector/invokeConstructor
+        aws-client
+        (into-array [credentials]))))
       
 (defn- amazon-client*
   [clazz credentials]
-  (assert (contains? credentials :access-key)
-          "You must call defcredential before using the api,
-           or pass a map with key :access-key as the first
-           argument to any api function calls.")
-  (assert (contains? credentials :secret-key)
-          "You must call defcredential before using the api,
-           or pass a map with key :secret-key as the first
-           argument to any api function calls.")           
-  (let [aws-creds (if (contains? credentials :session-token)
-                      (BasicSessionCredentials.
+  (let [aws-creds (cond
+                    (contains? credentials :session-token)
+                    (BasicSessionCredentials.
                         (:access-key credentials)
                         (:secret-key credentials)
                         (:session-token credentials))
-                      (BasicAWSCredentials.
+                    (contains? credentials :access-key)
+                    (BasicAWSCredentials.
                         (:access-key credentials)
-                        (:secret-key credentials)))
+                        (:secret-key credentials))
+                    :else nil)
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
       (->> (-> (str/upper-case endpoint)

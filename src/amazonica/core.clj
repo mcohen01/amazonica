@@ -313,12 +313,22 @@
       (.toLowerCase)))
   
 (defn- matches?
+  "We exclude any mutators of the bean which
+   expect a java.util.Map$Entry as the first
+   argument, as we won't be dealing in these
+   from Clojure. Specifically, this is meant
+   to address the various setKey() methods
+   in the DynamoDBV2Client.
+   http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/DeleteItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)
+   http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/GetItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)"
   [method name getter?]
-  (and
-    (= name (normalized-name (.getName method)))
-    (case getter? 
-      true  (= 0 (count (.getParameterTypes method)))
-      false (< 0 (count (.getParameterTypes method))))))
+  (let [args (.getParameterTypes method)]
+    (and (= name (normalized-name (.getName method)))
+         (case getter?
+           true  (= 0 (count args))
+           false (and (< 0 (count args))
+                      (not= (first args)
+                            java.util.Map$Entry))))))
 
 (defn- accessor-methods
   [class-methods name getter?]

@@ -951,6 +951,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 YourKit is kindly supporting the Amazonica open source project with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products: [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).
 
+![YourKit logo] (https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR_CQwZIosvDJU0Ntmt_70HsbwcrJpROK4Jbf35mQcsjXN0MXzU)
 
 ### License
 

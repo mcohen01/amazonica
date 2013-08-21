@@ -20,6 +20,7 @@
            java.io.StringWriter
            java.lang.reflect.InvocationTargetException
            java.lang.reflect.ParameterizedType
+           java.lang.reflect.Modifier
            java.math.BigDecimal
            java.math.BigInteger
            java.text.ParsePosition
@@ -601,7 +602,8 @@
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
-  (let [args (:args (args-from arg))]
+  (let [args (:args (args-from arg))
+        methods (filter #(not (Modifier/isPrivate (.getModifiers %))) methods)]
     (some
       (fn [method]
         (let [types (.getParameterTypes method)

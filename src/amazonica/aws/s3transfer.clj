@@ -11,9 +11,18 @@
             TransferProgress
             Upload]))
 
+(defn add-listener
+  [obj]
+  (fn [f]
+    (let [listener (reify ProgressListener
+                     (progressChanged [this event]
+                       (f (marshall event))))]
+      (.addProgressListener obj listener)
+      listener)))
+
 (defn transfer
   [obj]
-  {:add-progress-listener    #(.addProgressListener obj %)
+  {:add-progress-listener    (add-listener obj)
    :get-description          #(.getDescription obj)
    :get-progress             #(marshall (.getProgress obj))
    :get-state                #(str (.getState obj))
@@ -56,18 +65,4 @@
               ProgressEvent/PART_FAILED_EVENT_CODE    :part-failed
               nil)}))
 
-(register-coercions
-  ProgressListener
-  (fn [col]
-    (reify ProgressListener
-      (progressChanged [this event]
-        ((:progress-changed col) (marshall event))))))
-
 (amazonica.core/set-client TransferManager *ns*)
-
-(defn new-progress-listener
-  "This helper function returns an object implementing the ProgressListener interface.
-  The argument progress-changed is a function taking a single ProgressEvent argument."
-  [progress-changed]
-  (let [col {:progress-changed progress-changed}]
-    (coerce-value col ProgressListener)))

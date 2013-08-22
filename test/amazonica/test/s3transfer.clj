@@ -13,7 +13,7 @@
 
 (deftest s3transfer []
 
-  (def file "big-jar.jar")
+  (def file "some-big.jar")
   (def down-dir (java.io.File. (str "/tmp/" file)))
   (def bucket "my-bucket")
   
@@ -21,18 +21,13 @@
                     bucket
                     file
                     down-dir)]
-    ((:add-progress-listener upl)
-      (new-progress-listener #(println %))))
+    ((:add-progress-listener upl) #(println %)))
   
   (let [dl  (download cred
                       bucket
                       file
                       down-dir)
         listener #(if (= :completed (:event %))
-                      (do
-                        (println ((:object-metadata dl)))
-                        (is (= bucket ((:bucket-name dl))))
-                        (is (= file ((:key dl)))))
+                      (println ((:object-metadata dl)))
                       (println %))]
-    ((:add-progress-listener dl)
-      (new-progress-listener listener))))
+    ((:add-progress-listener dl) listener)))

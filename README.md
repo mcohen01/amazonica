@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.1.13"]
+[amazonica "0.1.14"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.13</version>
+  <version>0.1.14</version>
 </dependency>
 ```
 
@@ -842,7 +842,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```clj
 (ns com.example
   (:use [amazonica.core]
-        [amazonica.aws.s3]))
+        [amazonica.aws.s3]
+        [amazonica.aws.s3transfer]))
 
 (def cred {:access-key "aws-access-key"
            :secret-key "aws-secret-key"})
@@ -860,7 +861,29 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (get-object cred bucket2 "key-2"))
 
 (generate-presigned-url
-  cred bucket1 "key-1" (-> 6 hours from-now))  
+  cred bucket1 "key-1" (-> 6 hours from-now))
+
+
+(def file "big-file.jar")
+(def down-dir (java.io.File. (str "/tmp/" file)))
+(def bucket "my-bucket")
+
+(let [upl (upload cred
+                  bucket
+                  file
+                  down-dir)]
+  ((:add-progress-listener upl)
+    (new-progress-listener #(println %))))
+
+(let [dl  (download cred
+                    bucket
+                    file
+                    down-dir)
+      listener #(if (= :completed (:event %))
+                    (println ((:object-metadata dl)))
+                    (println %))]
+  ((:add-progress-listener dl)
+    (new-progress-listener listener)))
 
 ```
 

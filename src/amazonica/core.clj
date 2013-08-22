@@ -141,11 +141,14 @@
                     :else nil)
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
-      (->> (-> (str/upper-case endpoint)
-               (.replaceAll "-" "_"))
-           Regions/valueOf
-           Region/getRegion
-           (.setRegion client)))
+      (try
+        (.getDeclaredMethod clazz "setRegion" (make-array Class 0))
+        (->> (-> (str/upper-case endpoint)
+                 (.replaceAll "-" "_"))
+             Regions/valueOf
+             Region/getRegion
+             (.setRegion client))
+        (catch NoSuchMethodException e)))
     client))
 
 (def ^:private amazon-client
@@ -328,9 +331,10 @@
          (case getter?
            true  (= 0 (count args))
            false (and (< 0 (count args))
-                      (not= (first args)
-                            java.util.Map$Entry))))))
-
+                      (not (and (= 2 (count args))
+                                (every? (partial = java.util.Map$Entry) 
+                                        args))))))))
+                      
 (defn- accessor-methods
   [class-methods name getter?]
   (reduce

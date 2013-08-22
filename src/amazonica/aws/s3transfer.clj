@@ -59,9 +59,8 @@
 (register-coercions
   ProgressListener
   (fn [col]
-    (proxy
-      [ProgressListener] []
-      (progressChanged [event]
+    (reify ProgressListener
+      (progressChanged [this event]
         ((:progress-changed col) (marshall event))))))
 
 (amazonica.core/set-client TransferManager *ns*)

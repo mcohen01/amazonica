@@ -872,8 +872,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                   bucket
                   file
                   down-dir)]
-  ((:add-progress-listener upl)
-    (new-progress-listener #(println %))))
+  ((:add-progress-listener upl) #(println %)))
 
 (let [dl  (download cred
                     bucket
@@ -882,8 +881,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
       listener #(if (= :completed (:event %))
                     (println ((:object-metadata dl)))
                     (println %))]
-  ((:add-progress-listener dl)
-    (new-progress-listener listener)))
+  ((:add-progress-listener dl) listener))
 
 ```
 

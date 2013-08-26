@@ -7,9 +7,10 @@
            [com.amazonaws.services.s3.transfer            
             Download
             TransferManager
-            Transfer
             TransferProgress
-            Upload]))
+            Upload
+            MultipleFileUpload
+            MultipleFileDownload]))
 
 (defn add-listener
   [obj]
@@ -31,7 +32,6 @@
    :wait-for-completion      #(.waitForCompletion obj)
    :wait-for-exception       #(marshall (.waitForException obj))})
 
-
 (extend-protocol IMarshall
   TransferProgress
   (marshall [obj]
@@ -51,6 +51,19 @@
             :abort           #(.abort obj)
             :key             #(.getKey obj)
             :object-metadata #(marshall (.getObjectMetadata obj))}))
+
+  MultipleFileUpload
+  (marshall [obj]
+    (merge (transfer obj)
+      {:bucket-name #(.getBucketName obj)
+       :key-prefix  #(.getKeyPrefix obj)}))
+
+  MultipleFileDownload
+  (marshall [obj]
+    (merge (transfer obj)
+      {:abort       #(.abort obj)
+       :bucket-name #(.getBucketName obj)
+       :key-prefix  #(.getKeyPrefix obj)}))
   
   ProgressEvent
   (marshall [obj]

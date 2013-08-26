@@ -13,6 +13,7 @@
              Region
              Regions]
            com.amazonaws.services.s3.AmazonS3Client
+           com.amazonaws.handlers.AsyncHandler
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -176,6 +177,10 @@
 (defn- aws-package?
   [clazz]
   (re-find #"com\.amazonaws\.services" (.getName clazz)))
+
+(defn- async-client?
+  [method]
+  (boolean (re-find #"Async.*Client" (str method))))
 
 (defn to-date
   [date]
@@ -444,7 +449,6 @@
       new-instance
       (set-fields args)))
 
-
 (defprotocol IMarshall
   "Defines the contract for converting Java types to Clojure
   data. All return values from AWS service calls are 
@@ -522,11 +526,34 @@
         (get-fields obj)
         obj)))
 
+(defn- new-async-handler
+  [interface args]
+  ;; wish I could pass interface to reify
+  (reify AsyncHandler
+    (onSuccess [this request result]
+      (when-let [on-success (:on-success args)]
+        (on-success (marshall request) (marshall result))))
+    (onError [this exception]
+      (when-let [on-error (:on-error args)]
+        (on-error exception)))))
+
+(defn- create-async-handler
+  "Create a new instance of an AWS AsyncHandler passed
+   as the argument to a method call on the
+   Amazon*Client class. (Note that we assume all AWS
+   service calls take at most a single argument.)"
+  [method args]
+  (-> (.getParameterTypes method)
+      (get 1)
+      (new-async-handler args)))
+
 (defn- use-aws-request-bean?
   [method args]
   (let [types (.getParameterTypes method)]
     (and (< 1 (count args))
-         (< 0 (count types))
+         (if (async-client? method)
+           (= 2 (count types)) ;; when async client, force use of ctor(Request,asyncHandler) and not ctor(Request), so you can pass :on-success and :on-error
+           (< 0 (count types)))
          (and
             (or (and
                   (even? (count args))
@@ -545,20 +572,23 @@
         num   (count types)]
     (if (and (empty? args) (= 0 num))
       (into-array Object args)
-      (if (= num (count args))
+      (if (and (= num (count args))
+               (not (async-client? method)))
         (into-array Object
           (map #(coerce-value % %2) 
                (apply vector args) 
                types))
         (if (use-aws-request-bean? method args)
-          (if (= 1 num)
-            (into-array Object 
-              [(create-bean
-                  method 
-                  (seq (apply hash-map args)))])
-            ; note: AWS api only ever uses custom bean types
-            ; as the first or last argument, as of v1.4.0
-            ))))))
+          (let [margs (apply hash-map args)
+                bean-args (dissoc margs :on-success :on-error)
+                handler-args (select-keys margs [:on-success :on-error])]
+            (case num
+              1 (into-array Object [(create-bean method (seq bean-args))])
+              2 (into-array Object [(create-bean method (seq bean-args))
+                                    (create-async-handler method handler-args)])
+              ; note: AWS api only ever uses custom bean types
+              ; as the first or last argument, as of v1.4.0
+              )))))))
 
 
 (defn- args-from

@@ -1,15 +1,16 @@
 (ns amazonica.aws.s3transfer
-  (:use [amazonica.core :only (IMarshall marshall register-coercions coerce-value)]
-        [clojure.algo.generic.functor :only (fmap)])
+  (:use [amazonica.core :only (IMarshall marshall coerce-value)])
   (:import [com.amazonaws.services.s3.model             
             ProgressEvent
             ProgressListener]
            [com.amazonaws.services.s3.transfer            
-            Download
-            TransferManager
-            Transfer
-            TransferProgress
-            Upload]))
+              Download
+              MultipleFileUpload
+              MultipleFileDownload
+              Upload
+              TransferManager
+              Transfer
+              TransferProgress]))
 
 (defn add-listener
   [obj]
@@ -52,6 +53,19 @@
             :key             #(.getKey obj)
             :object-metadata #(marshall (.getObjectMetadata obj))}))
   
+  MultipleFileUpload
+  (marshall [obj]
+    (merge (transfer obj)
+           {:bucket-name #(.getBucketName obj)
+            :key-prefix  #(.getKeyPrefix obj)}))
+  
+  MultipleFileDownload
+  (marshall [obj]
+    (merge (transfer obj)
+           {:abort       #(.abort obj)
+            :bucket-name #(.getBucketName obj)
+            :key-prefix  #(.getKeyPrefix obj)}))
+
   ProgressEvent
   (marshall [obj]
     {:bytes-transferred (.getBytesTransferred obj)

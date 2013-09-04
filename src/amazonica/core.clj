@@ -523,6 +523,10 @@
   java.util.Date
     (marshall [obj]
       (DateTime. (.getTime obj)))
+  ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
+  ; .doesBucketExist, which wreak havoc on Clojure truthiness
+  Boolean
+    (marshall [obj] (.booleanValue obj))
   Object
     (marshall [obj]
       (if (aws-package? (class obj))

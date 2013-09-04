@@ -239,9 +239,13 @@
   (if-not (instance? type val)
     (if (= java.lang.Enum (.getSuperclass type))
       (to-enum type value)
-      (if (.isPrimitive type)
-        ((@coercions (str type)) value)
-        ((@coercions type) value)))
+      (if-let [coercion (@coercions (if (.isPrimitive type)
+                                      (str type)
+                                      type))]
+        (coercion value)
+        (throw (IllegalArgumentException.
+                 (format "No coercion is available to turn %s into an object of type %s"
+                         value type)))))
     val))
 
 (defn- default-value
@@ -629,10 +633,13 @@
   [client ns fname methods]
   (intern ns (symbol (name fname))
     (fn [& args]
-      (let [method (best-method methods args)]
+      (if-let [method (best-method methods args)]
         (if-not args
           ((fn-call client method))
-          ((fn-call client method args)))))))
+          ((fn-call client method args)))
+        (throw (IllegalArgumentException.
+                 (format "Could not determine best method to invoke for %s using arguments %s"
+                         (name fname) args)))))))
 
 (defn- client-methods
   "Returns a map with keys of idiomatic Clojure hyphenated

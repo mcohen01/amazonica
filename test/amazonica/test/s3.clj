@@ -159,6 +159,13 @@
   (change-object-storage-class 
       cred bucket1 "jenny" "REDUCED_REDUNDANCY")
 
+  (let [config {:rules [{:id "rm after 14 days"
+                         :expiration-in-days 14
+                         :prefix "some-prefix/"
+                         :status "Enabled"}]}]
+    (set-bucket-lifecycle-configuration cred bucket1 config)
+    (is (= config (get-bucket-lifecycle-configuration cred bucket1))))
+
   (delete-bucket-cross-origin-configuration cred bucket1)
   (delete-bucket-lifecycle-configuration cred bucket1)
   (delete-bucket-policy cred bucket1)

@@ -239,9 +239,13 @@
   (if-not (instance? type val)
     (if (= java.lang.Enum (.getSuperclass type))
       (to-enum type value)
-      (if (.isPrimitive type)
-        ((@coercions (str type)) value)
-        ((@coercions type) value)))
+      (if-let [coercion (@coercions (if (.isPrimitive type)
+                                      (str type)
+                                      type))]
+        (coercion value)
+        (throw (IllegalArgumentException.
+                 (format "No coercion is available to turn %s into an object of type %s"
+                         value type)))))
     val))
 
 (defn- default-value
@@ -434,15 +438,18 @@
   pojo)
 
 (defn- create-bean
+  [clazz args]
+  (-> clazz new-instance (set-fields args)))
+
+(defn- create-request-bean
   "Create a new instance of an AWS *Request style Java
    bean passed as the argument to a method call on the
    Amazon*Client class. (Note that we assume all AWS
    service calls take at most a single argument.)"
   [method args]
   (-> (.getParameterTypes method)
-      (get 0)
-      new-instance
-      (set-fields args)))
+      first
+      (create-bean args)))
 
 
 (defprotocol IMarshall
@@ -516,6 +523,10 @@
   java.util.Date
     (marshall [obj]
       (DateTime. (.getTime obj)))
+  ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
+  ; .doesBucketExist, which wreak havoc on Clojure truthiness
+  Boolean
+    (marshall [obj] (.booleanValue obj))
   Object
     (marshall [obj]
       (if (aws-package? (class obj))
@@ -547,13 +558,16 @@
       (into-array Object args)
       (if (= num (count args))
         (into-array Object
-          (map #(coerce-value % %2) 
-               (apply vector args) 
+          (map #(if (and (aws-package? %2) (seq (.getConstructors %2)))
+                  ; must be a concrete, instantiatable class
+                  (create-bean %2 %)
+                  (coerce-value % %2))
+               (vec args) 
                types))
         (if (use-aws-request-bean? method args)
           (if (= 1 num)
             (into-array Object 
-              [(create-bean
+              [(create-request-bean
                   method 
                   (seq (apply hash-map args)))])
             ; note: AWS api only ever uses custom bean types
@@ -629,10 +643,13 @@
   [client ns fname methods]
   (intern ns (symbol (name fname))
     (fn [& args]
-      (let [method (best-method methods args)]
+      (if-let [method (best-method methods args)]
         (if-not args
           ((fn-call client method))
-          ((fn-call client method args)))))))
+          ((fn-call client method args)))
+        (throw (IllegalArgumentException.
+                 (format "Could not determine best method to invoke for %s using arguments %s"
+                         (name fname) args)))))))
 
 (defn- client-methods
   "Returns a map with keys of idiomatic Clojure hyphenated

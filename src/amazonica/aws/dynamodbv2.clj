@@ -20,12 +20,12 @@
 (extend-protocol IMarshall
   AttributeValue
   (marshall [obj]
-    (marshall
-      (let [[type val] (some #(when (val %) %) (dissoc (bean obj) :class))]
-        (marshall (case type
-                    (:s :b :SS :BS) val
-                    :n (parse-number val)
-                    :NS (into #{} (map parse-number val))))))))
+    (let [[type val] (some #(when (val %) %) (dissoc (bean obj) :class))]
+      (marshall (case type
+                  (:s :b) val
+                  (:SS :BS) (into #{} val)
+                  :n (parse-number val)
+                  :NS (into #{} (map parse-number val)))))))
 
 (def ^:private byte-array-type (class (byte-array 0)))
 

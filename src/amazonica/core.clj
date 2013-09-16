@@ -519,7 +519,9 @@
                 (apply vector (vals obj)))))))
   java.util.Collection
     (marshall [obj]
-      (fmap marshall (apply vector obj)))
+      (if (instance? clojure.lang.IPersistentSet obj)
+        obj
+        (fmap marshall (apply vector obj))))
   java.util.Date
     (marshall [obj]
       (DateTime. (.getTime obj)))

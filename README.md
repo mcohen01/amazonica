@@ -63,16 +63,11 @@ and the following dependency:
 [Minimum Viable Snippet] [9]:  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.ec2]))
+  (:use [amazonica.aws.ec2]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(describe-instances)
 
-(describe-instances cred)
-
-(create-snapshot cred
-                 :volume-id   "vol-8a4857fa"
+(create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```  
 
@@ -80,8 +75,7 @@ Amazonica reflectively delegates to the Java client library, as such it supports
 
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
-(create-snapshot cred
-                 :volume-id "vol-8a4857fa"
+(create-snapshot :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
 which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.   
@@ -90,12 +84,11 @@ All of the AWS Java apis (except S3) follow this pattern, either having a single
 
 For example, AmazonEC2Client's [describeImages()] [7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest] [8]. So the Clojure invocation would look like
 ```clj
-(describe-images cred)
+(describe-images)
 ```
 or
 ```clj
-(describe-images cred
-                 :owners ["self"]
+(describe-images :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
 ```   
 
@@ -109,7 +102,7 @@ Amazon AWS object types are returned as Clojure maps, with conversion taking pla
 
 For example, a call to 
 ```clj
-(describe-instances cred)
+(describe-instances)
 ```
 invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services.ec2.model.DescribeInstancesResult`. However, this is recursively converted to Clojure data, yielding a map of `Reservations`, like so:
 ```clj
@@ -160,7 +153,7 @@ If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` re
 Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling 
 ```clj
 ; dynamodb
-(list-tables cred)
+(list-tables)
 ```
 by default would return 
 ```clj
@@ -172,7 +165,7 @@ However, if you call
 ```
 then single keyed top level maps will be "unwrapped" like so:
 ```clj
-(list-tables cred)
+(list-tables)
 => ["TableOne" "TableTwo" "TableThree"]
 ```
 
@@ -194,11 +187,8 @@ can be used to set the pattern supplied to the underlying `java.text.SimpleDateF
 
 In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
-(describe-availability-zones
-  cred 
-  :filters [
-    {:name "environment"
-     :values ["dev" "qa" "staging"]}])
+(describe-availability-zones :filters [{:name   "environment"
+                                        :values ["dev" "qa" "staging"]}])
 ```
 and return the following Clojure collection:
 ```clj
@@ -233,23 +223,29 @@ Clojure apis built specifically to wrap a Java client, such as this one, often p
 ``` 
 function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
 ```clj
-(get-item cred
-          :table-name "MyTable"
+(get-item :table-name "MyTable"
           :key "foo")
 ```
 The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:  
 ```clj
-(get-item cred
-          :table-name "TestTable"
-          :key {
-            :hash-key-element {
-              :s "foo"}})
+(get-item :table-name "TestTable"
+          :key {:hash-key-element {:s "foo"}})
 ```  
 Note that either form will work. This allows contributors to the library to incrementally evolve the api independently from the core of the library, as well as maintain backward compatibility of existing code written against prior versions of the library which didn't contain the conveniences. 
 
 
 ### Authentication
-All of the functions take as their first argument an explicit map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1") 
+The default authentication scheme is to use the [chained Provider class] [15] from the AWS SDK, whereby authentication is attempted in the following order:
+- Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_KEY
+- Java System Properties - aws.accessKeyId and aws.secretKey
+- Instance profile credentials delivered through the Amazon EC2 metadata service
+
+Note that in order for the Instance Profile Metadata to be found, you must have launched the instance with a provided IAM role, and the same permissions as the IAM Role the instance was launched with will apply. 
+
+See the [AWS docs] [14] for reference.
+
+
+Addtionally, all of the functions may take as their first argument an optional map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1"). This is primarily for legacy support or to set the region endpoint.
 
 ```clj
 (def cred {:access-key "aws-access-key"
@@ -277,13 +273,6 @@ All subsequent API calls will use the specified credential. If you need to execu
 (describe-images :owners ["self"])
 ; returns images belonging to account-1
 ```  
-
-#### Using IAM Role-based Instance Metadata on EC2
-If your code is running on EC2 and the instance was launched with a specified IAM role, then no explicit credentials map needs to be passed to any of the functions. In such cases credentials will be looked up transparently by the underlying Java AWS SDK class, and the same permissions as the IAM Role the instance was launched with will apply. 
-
-Note that you must not have previously called `(defcredential)` for the EC2 Instance Metadata to be used.
-
-See the [AWS docs] [14] for reference.
 
 
 ### Exception Handling  
@@ -323,27 +312,20 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.autoscaling]))
+  (:use [amazonica.aws.autoscaling]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
-
-(create-launch-configuration cred
-                             :launch-configuration-name "aws_launch_cfg"
+(create-launch-configuration :launch-configuration-name "aws_launch_cfg"
                              :block-device-mappings [
                               {:device-name "/dev/sda1"
                                :virtual-name "vol-b0e519c3"
-                               :ebs
-                                {:snapshot-id "snap-36295e51"
-                                 :volume-size 32}}]
+                               :ebs {:snapshot-id "snap-36295e51"
+                                     :volume-size 32}}]
                              :ebs-optimized true
                              :image-id "ami-6fde0d06"
                              :instance-type "m1.large"
                              :spot-price ".10")
 
-(create-auto-scaling-group cred
-                           :auto-scaling-group-name "aws_autoscale_grp"
+(create-auto-scaling-group :auto-scaling-group-name "aws_autoscale_grp"
                            :availability-zones ["us-east-1a" "us-east-1b"]
                            :desired-capacity 3
                            :health-check-grace-period 300
@@ -352,100 +334,80 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                            :min-size 3
                            :max-size 3)
 
-(describe-auto-scaling-instances cred)  
+(describe-auto-scaling-instances)
 
 ```  
 
 ###CloudFormation  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.cloudformation]))
-
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+  (:use [amazonica.aws.cloudformation]))
       
-(create-stack cred
-              :stack-name "my-stack"
+(create-stack :stack-name "my-stack"
               :template-url "abcd1234.s3.amazonaws.com")
 
-(describe-stack-resources cred)  
+(describe-stack-resources)  
 
 ```
 
 ###CloudFront  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.cloudfront]))
+  (:use [amazonica.aws.cloudfront]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-distribution  :distribution-config {
+                      :enabled true
+                      :default-root-object "index.html"
+                      :origins
+                       {:quantity 0
+                        :items []}
+                      :logging
+                       {:enabled false
+                        :include-cookies false
+                        :bucket "abcd1234.s3.amazonaws.com"
+                        :prefix "cflog_"}                     
+                      :caller-reference 12345
+                      :aliases
+                       {:items ["m.example.com" "www.example.com"]
+                        :quantity 2}
+                      :cache-behaviors
+                       {:quantity 0 
+                        :items []}
+                      :comment "example"
+                      :default-cache-behavior
+                       {:target-origin-id "MyOrigin"
+                        :forwarded-values
+                          {:query-string false 
+                           :cookies 
+                             {:forward "none"}}}
+                       :trusted-signers
+                         {:enabled false
+                          :quantity 0}
+                       :viewer-protocol-policy "allow-all"
+                       :min-ttl 3600}
+                      :price-class "PriceClass_All"})
 
-(create-distribution 
-  cred
-  :distribution-config {
-  :enabled true
-  :default-root-object "index.html"
-  :origins
-   {:quantity 0
-    :items []}
-  :logging
-   {:enabled false
-    :include-cookies false
-    :bucket "abcd1234.s3.amazonaws.com"
-    :prefix "cflog_"}                     
-  :caller-reference 12345
-  :aliases
-   {:items ["m.example.com" "www.example.com"]
-    :quantity 2}
-  :cache-behaviors
-   {:quantity 0 
-    :items []}
-  :comment "example"
-  :default-cache-behavior
-   {:target-origin-id "MyOrigin"
-    :forwarded-values
-      {:query-string false 
-       :cookies 
-         {:forward "none"}}}
-   :trusted-signers
-     {:enabled false
-      :quantity 0}
-   :viewer-protocol-policy "allow-all"
-   :min-ttl 3600}
-  :price-class "PriceClass_All"})
-
-(list-distributions cred :max-items 10)
+(list-distributions :max-items 10)
 
 ```
 
 ###CloudSearch  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.cloudsearch]))
+  (:use [amazonica.aws.cloudsearch]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-domain :domain-name "my-index")
 
-(create-domain cred :domain-name "my-index")
-
-(index-documents cred :domain-name "my-index")  
+(index-documents :domain-name "my-index")  
 
 ```
 
 ###CloudWatch  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.cloudwatch]))
+  (:use [amazonica.aws.cloudwatch]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
-
-(put-metric-alarm cred
-                  :alarm-name "my-alarm"
+(put-metric-alarm :alarm-name "my-alarm"
                   :actions-enabled true
                   :evaluation-periods 5
                   :period 60
@@ -457,65 +419,44 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###DataPipeline  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.datapipeline]))
+  (:use [amazonica.aws.datapipeline]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-pipeline :name "my-pipeline"
+                 :unique-id "mp")
 
-(create-pipeline
-  cred
-  :name "my-pipeline"
-  :unique-id "mp")
+(put-pipeline-definition  :pipeline-id "df-07746012XJFK4DK1D4QW"
+                          :pipeline-objects [{:name "my-pipeline-object"
+                                              :id "my-pl-object-id"
+                                              :fields [{:key "some-key"
+                                                        :string-value "foobar"}]}])  
 
-(put-pipeline-definition
-  cred
-  :pipeline-id "df-07746012XJFK4DK1D4QW"
-  :pipeline-objects [
-    {:name "my-pipeline-object"
-     :id "my-pl-object-id"
-     :fields [
-       {:key "some-key"
-        :string-value "foobar"}]}])  
+(list-pipelines)
 
-(list-pipelines cred)
-
-(delete-pipeline cred :pipeline-id pid)  
+(delete-pipeline :pipeline-id pid)  
 
 ```
 
 ###DynamoDB  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.dynamodb]))
+  (:use [amazonica.aws.dynamodb]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-table :table-name "TestTable"
+              :key-schema {:hash-key-element {:attribute-name "id"
+                                              :attribute-type "S"}}              
+              :provisioned-throughput {:read-capacity-units 1
+                                       :write-capacity-units 1})
 
-(create-table cred
-              :table-name "TestTable"
-              :key-schema
-                {:hash-key-element
-                 {:attribute-name "id"
-                  :attribute-type "S"}}              
-              :provisioned-throughput
-                {:read-capacity-units 1
-                 :write-capacity-units 1})
+(put-item :table-name "TestTable"
+          :item {:id "foo" 
+                 :text "barbaz"})              
 
-(put-item cred
-          :table-name "TestTable"
-          :item
-            {:id "foo" 
-             :text "barbaz"})              
-
-(get-item cred
-          :table-name "TestTable"
+(get-item :table-name "TestTable"
           :key "foo")
 
-(scan cred :table-name "TestTable")
+(scan :table-name "TestTable")
 
-(delete-table cred :table-name "TestTable")  
+(delete-table :table-name "TestTable")  
 
 ```
 
@@ -523,75 +464,62 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###DynamoDBV2  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.dynamodbv2]))
+  (:use [amazonica.aws.dynamodbv2]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-table :table-name "TestTable"
+              :key-schema 
+                [{:attribute-name "id"   :key-type "HASH"}
+                 {:attribute-name "date" :key-type "RANGE"}]
+              :attribute-definitions 
+                [{:attribute-name "id"      :attribute-type "S"}
+                 {:attribute-name "date"    :attribute-type "N"}
+                 {:attribute-name "column1" :attribute-type "S"}
+                 {:attribute-name "column2" :attribute-type "S"}]
+              :local-secondary-indexes
+                [{:index-name "column1_idx"
+                  :key-schema
+                   [{:attribute-name "id"   :key-type "HASH"}
+                    {:attribute-name "column1" :key-type "RANGE"}]
+                 :projection
+                   {:projection-type "INCLUDE"
+                    :non-key-attributes ["id" "date" "column1"]}}
+                 {:index-name "column2_idx"
+                  :key-schema
+                   [{:attribute-name "id"   :key-type "HASH"}
+                    {:attribute-name "column2" :key-type "RANGE"}]
+                 :projection {:projection-type "ALL"}}]
+              :provisioned-throughput
+                {:read-capacity-units 1
+                 :write-capacity-units 1})
 
-(create-table 
-  cred 
-  :table-name "TestTable"
-  :key-schema 
-    [{:attribute-name "id"   :key-type "HASH"}
-     {:attribute-name "date" :key-type "RANGE"}]
-  :attribute-definitions 
-    [{:attribute-name "id"      :attribute-type "S"}
-     {:attribute-name "date"    :attribute-type "N"}
-     {:attribute-name "column1" :attribute-type "S"}
-     {:attribute-name "column2" :attribute-type "S"}]
-  :local-secondary-indexes
-    [{:index-name "column1_idx"
-      :key-schema
-       [{:attribute-name "id"   :key-type "HASH"}
-        {:attribute-name "column1" :key-type "RANGE"}]
-     :projection
-       {:projection-type "INCLUDE"
-        :non-key-attributes ["id" "date" "column1"]}}
-     {:index-name "column2_idx"
-      :key-schema
-       [{:attribute-name "id"   :key-type "HASH"}
-        {:attribute-name "column2" :key-type "RANGE"}]
-     :projection {:projection-type "ALL"}}]
-  :provisioned-throughput
-    {:read-capacity-units 1
-     :write-capacity-units 1})
+(put-item :table-name "TestTable"
+          :return-consumed-capacity "TOTAL"
+          :return-item-collection-metrics "SIZE"
+          :item {
+            :id "foo"
+            :date 123456
+            :text "barbaz"
+            :column1 "first name"
+            :column2 "last name"})
 
-(put-item
-  cred
-  :table-name "TestTable"
-  :return-consumed-capacity "TOTAL"
-  :return-item-collection-metrics "SIZE"
-  :item {
-    :id "foo"
-    :date 123456
-    :text "barbaz"
-    :column1 "first name"
-    :column2 "last name"})
-
-(get-item
-    cred
-    :table-name "TestTable"
-    :key 
-      {:id {:s "foo"}
-       :date {:n 123456}})
+(get-item :table-name "TestTable"
+          :key {:id {:s "foo"}
+                :date {:n 123456}})
     
-(query
-  cred
-  :table-name "TestTable"
-  :limit 1
-  :index-name "column1_idx"
-  :select "ALL_ATTRIBUTES"
-  :scan-index-forward true
-  :key-conditions 
-   {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
-    :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
+(query :table-name "TestTable"
+       :limit 1
+       :index-name "column1_idx"
+       :select "ALL_ATTRIBUTES"
+       :scan-index-forward true
+       :key-conditions 
+        {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
+         :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
-(scan cred :table-name "TestTable")
+(scan :table-name "TestTable")
 
-(describe-table cred :table-name "TestTable")
+(describe-table :table-name "TestTable")
 
-(delete-table cred :table-name "TestTable")
+(delete-table :table-name "TestTable")
 
 ```  
 
@@ -600,31 +528,24 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###EC2
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.ec2]))
+  (:use [amazonica.aws.ec2]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(describe-images :owners ["self"])
 
-(describe-images cred :owners ["self"])
+(describe-instances)
 
-(describe-instances cred)
+(create-image :name "my_test_image"
+              :instance-id "i-1b9a9f71"
+              :description "test image - safe to delete"
+              :block-device-mappings [
+                {:device-name  "/dev/sda1"
+                 :virtual-name "myvirtual"
+                 :ebs {
+                   :volume-size 8
+                   :volume-type "standard"
+                   :delete-on-termination true}}])
 
-(create-image
-  cred
-  :name "my_test_image"
-  :instance-id "i-1b9a9f71"
-  :description "test image - safe to delete"
-  :block-device-mappings [
-    {:device-name  "/dev/sda1"
-     :virtual-name "myvirtual"
-     :ebs {
-       :volume-size 8
-       :volume-type "standard"
-       :delete-on-termination true}}])
-
-(create-snapshot cred
-                 :volume-id   "vol-8a4857fa"
+(create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")  
 
 ```
@@ -634,48 +555,35 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws
+  (:use [amazonica.aws
           elasticmapreduce
           s3]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-bucket :bucket-name "emr-logs"
+               :access-control-list {:grant-permission ["LogDelivery" "Write"]})
 
-(create-bucket
-  cred 
-  :bucket-name "emr-logs"
-  :access-control-list
-    {:grant-permission ["LogDelivery" "Write"]})
+(set-bucket-logging-configuration :bucket-name "emr-logs"
+                                  :logging-configuration
+                                    {:log-file-prefix "hadoop-job_"
+                                     :destination-bucket-name "emr-logs"})
 
-(set-bucket-logging-configuration
-  cred
-  :bucket-name "emr-logs"
-  :logging-configuration
-    {:log-file-prefix "hadoop-job_"
-     :destination-bucket-name "emr-logs"})
+(run-job-flow :name "my-job-flow"
+              :log-uri "s3n://emr-logs/logs"
+              :instances 
+                {:instance-groups [
+                   {:instance-type "m1.large"
+                    :instance-role "MASTER"
+                    :instance-count 1
+                    :market "SPOT"
+                    :bid-price "0.10"}]}
+              :steps [
+                {:name "my-step"
+                 :hadoop-jar-step
+                   {:jar "s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/hadoop-jobs/bigml"
+                    :main-class "bigml.core"
+                    :args ["s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
 
-(run-job-flow
-  cred 
-  :name "my-job-flow"
-  :log-uri "s3n://emr-logs/logs"
-  :instances 
-    {:instance-groups [
-       {:instance-type "m1.large"
-        :instance-role "MASTER"
-        :instance-count 1
-        :market "SPOT"
-        :bid-price "0.10"}]}
-  :steps [
-    {:name "my-step"
-     :hadoop-jar-step
-       {:jar "s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/hadoop-jobs/bigml"
-        :main-class "bigml.core"
-        :args ["s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
-
-(describe-job-flows
-  cred 
-  :job-flow-ids ["j-38BW9W0NN8YGV"])
+(describe-job-flows :job-flow-ids ["j-38BW9W0NN8YGV"])
   
 ```  
 
@@ -684,30 +592,22 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.glacier]))
+  (:use [amazonica.aws.glacier]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-vault :vault-name "my-vault")
+  
+(describe-vault :vault-name "my-vault")
+  
+(list-vaults :limit 10)
 
-(create-vault cred :vault-name "my-vault")
+(upload-archive :vault-name "my-vault"
+                :body "upload.txt")
   
-(describe-vault cred :vault-name "my-vault")
+(delete-archive :account-id "-"
+                :vault-name "my-vault"
+                :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")
   
-(list-vaults cred :limit 10)
-
-(upload-archive
-  cred
-  :vault-name "my-vault"
-  :body "upload.txt")
-  
-(delete-archive
-  cred
-  :account-id "-"
-  :vault-name "my-vault"
-  :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")
-  
-(delete-vault cred :vault-name "my-vault")  
+(delete-vault :vault-name "my-vault")  
 
  ```  
 
@@ -715,62 +615,42 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###OpsWorks  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.opsworks]))
+  (:use [amazonica.aws.opsworks]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+ (create-stack :name "my-stack"
+               :region "us-east-1"
+               :default-os "Ubuntu 12.04 LTS"
+               :service-role-arn "arn:aws:iam::676820690883:role/aws-opsworks-service-role")
 
- (create-stack
-  cred
-  :name "my-stack"
-  :region "us-east-1"
-  :default-os "Ubuntu 12.04 LTS"
-  :service-role-arn "arn:aws:iam::676820690883:role/aws-opsworks-service-role")
+(create-layer :name "webapp-layer"
+              :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+              :enable-auto-healing true
+              :auto-assign-elastic-ips true
+              :volume-configurations [
+                {:mount-point "/data"
+                 :number-of-disks 1
+                 :size 50}])
 
-(create-layer
-  cred
-  :name "webapp-layer"
-  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
-  :enable-auto-healing true
-  :auto-assign-elastic-ips true
-  :volume-configurations [
-    {:mount-point "/data"
-     :number-of-disks 1
-     :size 50}])
+(create-instance :hostname "node-app-1"
+                 :instance-type "m1.large"
+                 :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+                 :layer-ids ["660d00da-c533-43d4-8c7f-2df240fd563f"]
+                 :availability-zone "us-east-1a"
+                 :autoscaling-type "LoadBasedAutoScaling"
+                 :os "Ubuntu 12.04 LTS"
+                 :ssh-key-name "admin")  
 
-(create-instance
-  cred
-  :hostname "node-app-1"
-  :instance-type "m1.large"
-  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
-  :layer-ids ["660d00da-c533-43d4-8c7f-2df240fd563f"]
-  :availability-zone "us-east-1a"
-  :autoscaling-type "LoadBasedAutoScaling"
-  :os "Ubuntu 12.04 LTS"
-  :ssh-key-name "admin")  
+(describe-stacks :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
 
-(describe-stacks
-  cred
-  :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
+(describe-layers :stack-id "dafa328e-c529-41af-89d3-12840a31abad")
 
-(describe-layers 
-  cred
-  :stack-id "dafa328e-c529-41af-89d3-12840a31abad")
+(describe-instances :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
+                    :layer-id "660d00da-c533-43d4-8c7f-2df240fd563f"
+                    :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")
 
-(describe-instances
-  cred
-  :stack-id "dafa328e-c529-41af-89d3-12840a31abad"
-  :layer-id "660d00da-c533-43d4-8c7f-2df240fd563f"
-  :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")
+(start-stack :stack-id "660d00da-c533-43d4-8c7f-2df240fd563f")
 
-(start-stack
-  cred
-  :stack-id "660d00da-c533-43d4-8c7f-2df240fd563f")
-
-(start-instance
-  cred
-  :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")  
+(start-instance :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")  
 
 ```  
 
@@ -780,14 +660,9 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###Redshift  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.redshift]))
+  (:use [amazonica.aws.redshift]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
-
-(create-cluster cred
-                :availability-zone "us-east-1a"
+(create-cluster :availability-zone "us-east-1a"
                 :cluster-type "multi-node"
                 :db-name "dw"
                 :master-username "scott"
@@ -800,40 +675,28 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###Route53  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.route53]))
+  (:use [amazonica.aws.route53]))
 
-(create-health-check
-  cred
-  :health-check-config
-    {:port 80,
-     :type "HTTP",
-     :ipaddress "127.0.0.1",
-     :fully-qualified-domain-name "example.com"})
+(create-health-check :health-check-config {:port 80,
+                                           :type "HTTP",
+                                           :ipaddress "127.0.0.1",
+                                           :fully-qualified-domain-name "example.com"})
 
-(get-health-check
-  cred
-  :health-check-id "ce6a4aeb-acf1-4923-a116-cd9ae2c30ee3")
+(get-health-check :health-check-id "ce6a4aeb-acf1-4923-a116-cd9ae2c30ee3")
 
-(create-hosted-zone
-  cred
-  :name "example.com.")
+(create-hosted-zone :name "example.com.")
 
-(get-hosted-zone cred :id "Z3TKY0VR5CH45U")
+(get-hosted-zone :id "Z3TKY0VR5CH45U")
 
-(list-hosted-zones cred)
+(list-hosted-zones)
 
-(list-health-checks cred)
+(list-health-checks)
 
-(list-resource-record-sets
-  cred
-  :hosted-zone-id "ZN8D0HXQLVRRL")
+(list-resource-record-sets :hosted-zone-id "ZN8D0HXQLVRRL")
 
-(delete-health-check
-  cred
-  :health-check-id "99999999-1234-4923-a116-cd9ae2c30ee3")
+(delete-health-check :health-check-id "99999999-1234-4923-a116-cd9ae2c30ee3")
 
-(delete-hosted-zone cred :id "my-bogus-hosted-zone")  
+(delete-hosted-zone :id "my-bogus-hosted-zone")  
 
 ```  
 
@@ -841,41 +704,31 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###S3  
 ```clj
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.s3]
+  (:use [amazonica.aws.s3]
         [amazonica.aws.s3transfer]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-bucket "two-peas")
 
-(create-bucket cred "two-peas")
-
-(put-object cred 
-            :bucket-name "two-peas"
+(put-object :bucket-name "two-peas"
             :key "foo"
             :file upload-file)
 
-(copy-object
-  cred bucket1 "key-1" bucket2 "key-2")            
+(copy-object bucket1 "key-1" bucket2 "key-2")            
 
-(get-object cred bucket2 "key-2"))
+(get-object bucket2 "key-2"))
 
-(generate-presigned-url
-  cred bucket1 "key-1" (-> 6 hours from-now))
-
+(generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
 
 (def file "big-file.jar")
 (def down-dir (java.io.File. (str "/tmp/" file)))
 (def bucket "my-bucket")
 
-(let [upl (upload cred
-                  bucket
+(let [upl (upload bucket
                   file
                   down-dir)]
   ((:add-progress-listener upl) #(println %)))
 
-(let [dl  (download cred
-                    bucket
+(let [dl  (download bucket
                     file
                     down-dir)
       listener #(if (= :completed (:event %))
@@ -889,36 +742,24 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```clj
 
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.sns]))
+  (:use [amazonica.aws.sns]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-topic :name "my-topic")
 
+(list-topics)
 
-(create-topic cred :name "my-topic")
-
-(list-topics cred)
-
-(subscribe
-  cred
-  :protocol "email"
-  :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
-  :endpoint "mcohen01@gmail.com")
+(subscribe :protocol "email"
+           :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+           :endpoint "mcohen01@gmail.com")
 
 (clojure.pprint/pprint
-  (list-subscriptions cred))
+  (list-subscriptions))
 
-(publish
-  cred
-  :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
-  :subject "test"
-  :message (str "Todays is " (java.util.Date.)))
+(publish :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+         :subject "test"
+         :message (str "Todays is " (java.util.Date.)))
 
-(unsubscribe
-  cred
-  :subscription-arn
-  "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")  
+(unsubscribe :subscription-arn "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")  
 
 ```
 
@@ -926,45 +767,31 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```clj  
 
 (ns com.example
-  (:use [amazonica.core]
-        [amazonica.aws.sqs]))
+  (:use [amazonica.aws.sqs]))
 
-(def cred {:access-key "aws-access-key"
-           :secret-key "aws-secret-key"})
+(create-queue :queue-name "my-queue"
+              :attributes
+                {:VisibilityTimeout 30 ; sec
+                 :MaximumMessageSize 65536 ; bytes
+                 :MessageRetentionPeriod 1209600 ; sec
+                 :ReceiveMessageWaitTimeSeconds 10}) ; sec
 
-(create-queue
-  cred
-  :queue-name "my-queue"
-  :attributes
-    {:VisibilityTimeout 30 ; sec
-     :MaximumMessageSize 65536 ; bytes
-     :MessageRetentionPeriod 1209600 ; sec
-     :ReceiveMessageWaitTimeSeconds 10}) ; sec
+(list-queues)
 
-(list-queues cred)
+(send-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+              :delay-seconds 0
+              :message-body (str "test" (java.util.Date.)))
 
-(send-message
-  cred
-  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-  :delay-seconds 0
-  :message-body (str "test" (java.util.Date.)))
+(receive-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+                 :wait-time-seconds 6
+                 :max-number-of-messages 10
+                 :delete true ;; deletes any received messages after receipt
+                 :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
 
-(receive-message
-  cred
-  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-  :wait-time-seconds 6
-  :max-number-of-messages 10
-  :delete true ;; deletes any received messages after receipt
-  :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
+(delete-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+                :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")
 
-(delete-message
-  cred
-  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-  :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")
-
-(delete-queue
-  cred
-  :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue")  
+(delete-queue :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue")  
 
 ```  
 
@@ -994,3 +821,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [12]:https://github.com/mcohen01/amazonica-benchmark
 [13]:https://github.com/weavejester/rotary
 [14]:http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html
+[15]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html

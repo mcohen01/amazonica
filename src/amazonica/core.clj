@@ -7,12 +7,14 @@
            com.amazonaws.services.dynamodb.model.AttributeValue
            [com.amazonaws.auth
              AWSCredentials
+             AWSCredentialsProvider
              BasicAWSCredentials
              BasicSessionCredentials]
            [com.amazonaws.regions
              Region
              Regions]
            com.amazonaws.services.s3.AmazonS3Client
+           com.amazonaws.services.s3.transfer.TransferManager  
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -121,14 +123,22 @@
 (defn- create-client
   [aws-client credentials]
   (if (nil? credentials)
-      (new-instance aws-client)
+    (new-instance aws-client)
+    ; TransferManager is the only client to date that doesn't
+    ; accept AWSCredentialsProviders
+    (let [credentials (if (= aws-client TransferManager)
+                        (AmazonS3Client. credentials)    
+                        credentials)]
       (Reflector/invokeConstructor
         aws-client
-        (into-array [credentials]))))
+        (into-array [credentials])))))
       
 (defn- amazon-client*
   [clazz credentials]
   (let [aws-creds (cond
+                    (or (instance? AWSCredentialsProvider credentials)
+                        (instance? AWSCredentials credentials))
+                    credentials
                     (contains? credentials :session-token)
                     (BasicSessionCredentials.
                         (:access-key credentials)
@@ -583,12 +593,16 @@
   or seq of keys and values."
   [args]
   (let [a (first args)]
-    (if (map? (first a))
-      (if (contains? (first a) :access-key)
-        {:args (rest a) :credential (first a)}
-        {:args (interleave (keys (first a)) 
-                           (vals (first a)))})
-      {:args a})))
+    (cond
+      (or (and (map? (first a))
+               (contains? (first a) :access-key))
+          (instance? AWSCredentialsProvider (first a))
+          (instance? AWSCredentials (first a)))
+      {:args (rest a) :credential (first a)}
+      (map? (first a))
+      {:args (interleave (keys (first a)) 
+                         (vals (first a)))}
+      :default {:args a})))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on

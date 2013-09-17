@@ -5,6 +5,7 @@
            java.util.UUID)
   (:require [clojure.string :as str])
   (:use [clojure.test]
+        amazonica.core
         [amazonica.aws
           dynamodbv2]))
 
@@ -80,24 +81,27 @@
   (list-tables cred)
   (list-tables cred :limit 1)
 
-  (put-item
-    cred
-    :table-name table
-    :return-consumed-capacity "TOTAL"
-    :return-item-collection-metrics "SIZE"
-    :item {
-      :id "foo"
-      :date 123456
-      :text "barbaz"
-      :column1 "first name"
-      :column2 "last name"})
-
-  (get-item
-    cred
-    :table-name table
-    :key 
-      {:id {:s "foo"}
-       :date {:n 123456}})
+  (let [item {:id "foo"
+              :date 123456
+              :text "barbaz"
+              :column1 "first name"
+              :column2 "last name"
+              :bytes (.getBytes "some bytes")}]
+    (put-item
+      cred
+      :table-name table
+      :return-consumed-capacity "TOTAL"
+      :return-item-collection-metrics "SIZE"
+      :item item)
+    (let [ret-item (:item (get-item
+                            cred
+                            :table-name table
+                            :key 
+                            {:id {:s "foo"}
+                             :date {:n 123456}}))]
+      (is (= (dissoc item :bytes) (dissoc ret-item :bytes)))
+      (is (= (-> item :bytes String.)
+             (-> ret-item :bytes .array String.)))))
     
   (query
     cred

@@ -9,7 +9,8 @@
              AWSCredentials
              AWSCredentialsProvider
              BasicAWSCredentials
-             BasicSessionCredentials]
+             BasicSessionCredentials
+             DefaultAWSCredentialsProviderChain]
            [com.amazonaws.regions
              Region
              Regions]
@@ -148,7 +149,8 @@
                     (BasicAWSCredentials.
                         (:access-key credentials)
                         (:secret-key credentials))
-                    :else nil)
+                    :else
+                    (DefaultAWSCredentialsProviderChain.))
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
       (try

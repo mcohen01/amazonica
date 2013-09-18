@@ -656,7 +656,6 @@
           (let [c (if (thread-bound? #'*credentials*)
                       (amazon-client clazz *credentials*)
                       @client)
-                _ (println c)
                 java (.invoke method c arg-arr)
                 cloj (marshall java)]
             (if (and

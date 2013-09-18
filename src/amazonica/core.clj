@@ -633,14 +633,14 @@
 
 (defn- candidate-client
   [clazz args]
-    (if (and (= clazz AmazonS3Client)
-             (even? (count args))
-             (contains? (apply hash-map (:args args)) :encryption))
-        (encryption-client (:encryption (apply hash-map (:args args)))
-                           (or (:credential args) @credential))
-        (amazon-client
-          clazz
-          (or (:credential args) @credential))))
+  (if (and (= clazz AmazonS3Client)
+           (even? (count (:args args)))
+           (contains? (apply hash-map (:args args)) :encryption))
+      (encryption-client (:encryption (apply hash-map (:args args)))
+                         (or (:credential args) @credential))
+      (amazon-client
+        clazz
+        (or (:credential args) @credential))))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
@@ -656,6 +656,7 @@
           (let [c (if (thread-bound? #'*credentials*)
                       (amazon-client clazz *credentials*)
                       @client)
+                _ (println c)
                 java (.invoke method c arg-arr)
                 cloj (marshall java)]
             (if (and

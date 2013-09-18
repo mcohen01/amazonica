@@ -14,8 +14,14 @@
            [com.amazonaws.regions
              Region
              Regions]
-           com.amazonaws.services.s3.AmazonS3Client
-           com.amazonaws.services.s3.transfer.TransferManager  
+           [com.amazonaws.services.s3
+             AmazonS3Client
+             AmazonS3EncryptionClient]
+           [com.amazonaws.services.s3.model
+             CryptoConfiguration
+             EncryptionMaterials
+             StaticEncryptionMaterialsProvider]
+           com.amazonaws.services.s3.transfer.TransferManager           
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -133,24 +139,40 @@
       (Reflector/invokeConstructor
         aws-client
         (into-array [credentials])))))
+
+(defn- get-credentials
+  [credentials]
+  (cond
+    (or (instance? AWSCredentialsProvider credentials)
+        (instance? AWSCredentials credentials))
+    credentials
+    (contains? credentials :session-token)
+    (BasicSessionCredentials.
+        (:access-key credentials)
+        (:secret-key credentials)
+        (:session-token credentials))
+    (contains? credentials :access-key)
+    (BasicAWSCredentials.
+        (:access-key credentials)
+        (:secret-key credentials))
+    :else
+    (DefaultAWSCredentialsProviderChain.)))
+
+(defn- encryption-client*
+  [materials credentials]
+  (let [creds    (get-credentials credentials)
+        key      (or (:secret-key materials)
+                     (:key-pair materials))
+        crypto   (CryptoConfiguration.)
+        em       (EncryptionMaterials. key)
+        enc-mat  (StaticEncryptionMaterialsProvider. em)]
+    (if-let [provider (:provider materials)]
+        (.withCryptoProvider crypto provider))
+    (AmazonS3EncryptionClient. creds enc-mat crypto)))
       
 (defn- amazon-client*
   [clazz credentials]
-  (let [aws-creds (cond
-                    (or (instance? AWSCredentialsProvider credentials)
-                        (instance? AWSCredentials credentials))
-                    credentials
-                    (contains? credentials :session-token)
-                    (BasicSessionCredentials.
-                        (:access-key credentials)
-                        (:secret-key credentials)
-                        (:session-token credentials))
-                    (contains? credentials :access-key)
-                    (BasicAWSCredentials.
-                        (:access-key credentials)
-                        (:secret-key credentials))
-                    :else
-                    (DefaultAWSCredentialsProviderChain.))
+  (let [aws-creds (get-credentials credentials)
         client    (create-client clazz aws-creds)]
     (when-let [endpoint (:endpoint credentials)]
       (try
@@ -162,6 +184,9 @@
              (.setRegion client))
         (catch NoSuchMethodException e)))
     client))
+
+(def ^:private encryption-client
+  (memoize encryption-client*))
 
 (def ^:private amazon-client
   (memoize amazon-client*))
@@ -606,6 +631,17 @@
                          (vals (first a)))}
       :default {:args a})))
 
+(defn- candidate-client
+  [clazz args]
+    (if (and (= clazz AmazonS3Client)
+             (even? (count args))
+             (contains? (apply hash-map (:args args)) :encryption))
+        (encryption-client (:encryption (apply hash-map (:args args)))
+                           (or (:credential args) @credential))
+        (amazon-client
+          clazz
+          (or (:credential args) @credential))))
+
 (defn- fn-call
   "Returns a function that reflectively invokes method on
    clazz with supplied args (if any). The 'method' here is
@@ -614,10 +650,7 @@
   (binding [*client-class* clazz]
     (let [args    (args-from arg)
           arg-arr (prepare-args method (:args args))
-          client  (delay
-                    (amazon-client
-                      clazz
-                      (or (:credential args) @credential)))]
+          client  (delay (candidate-client clazz args))]
       (fn []
         (try 
           (let [c (if (thread-bound? #'*credentials*)

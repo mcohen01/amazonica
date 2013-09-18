@@ -5,7 +5,9 @@
            java.io.FileInputStream
            java.text.SimpleDateFormat
            java.util.Date
-           java.util.UUID)
+           java.util.UUID
+           java.security.KeyPairGenerator
+           java.security.SecureRandom)
   (:require [clojure.string :as str])
   (:use [clojure.test]
         [clojure.pprint]
@@ -30,6 +32,47 @@
   (def upload-file   (java.io.File. "upload.txt"))
   (def download-file (java.io.File. "download.txt"))
 
+  (spit upload-file "hello world")
+  
+  (def key-pair
+    (let [kg (KeyPairGenerator/getInstance "RSA")]
+      (.initialize kg 1024 (SecureRandom.))
+      (.generateKeyPair kg)))
+  
+  (create-bucket bucket1)
+  
+  ;; encrypted upload
+  (put-object :bucket-name bucket1
+              :key "jenny"
+              :encryption {:key-pair key-pair}
+              :file upload-file)
+  
+  ;; UNencrypted download
+  (is (not= "hello world"
+            (slurp (:input-stream
+              (get-object :bucket-name bucket1
+                          :key "jenny")))))
+  
+  ;; encrypted download
+  (is (= "hello world"
+         (slurp (:input-stream
+           (get-object :bucket-name bucket1
+                       :encryption {:key-pair key-pair}
+                       :key "jenny")))))
+  
+  ;; server-side, not client side encryption
+  (put-object :bucket-name bucket1
+              :key "jenny"
+              :metadata {:server-side-encryption "AES256"}
+              :file upload-file)
+  
+  ;; client side UNdecrypted, but server side decrypted download
+  (is (= "hello world"
+         (slurp (:input-stream
+           (get-object :bucket-name bucket1
+                       :key "jenny")))))
+  
+  
   (.createNewFile upload-file)
   (spit upload-file (Date.))  
 
@@ -56,8 +99,9 @@
             (:message (ex->map e)) 
             "The specified upload does not exist."))))
   
-  (create-bucket cred bucket1)
-  (delete-bucket cred bucket1)
+  
+  (delete-object bucket1 "jenny")
+  (delete-bucket bucket1)
   
   (def bucket1 (.. (UUID/randomUUID) toString))
   (create-bucket cred 

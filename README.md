@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.1.15"]
+[amazonica "0.1.16"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.15</version>
+  <version>0.1.16</version>
 </dependency>
 ```
 
@@ -709,8 +709,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (create-bucket "two-peas")
 
+;; put object with server side encryption
 (put-object :bucket-name "two-peas"
             :key "foo"
+            :metadata {:server-side-encryption "AES256"}
             :file upload-file)
 
 (copy-object bucket1 "key-1" bucket2 "key-2")            
@@ -722,6 +724,26 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (def file "big-file.jar")
 (def down-dir (java.io.File. (str "/tmp/" file)))
 (def bucket "my-bucket")
+
+
+
+(def key-pair
+    (let [kg (KeyPairGenerator/getInstance "RSA")]
+      (.initialize kg 1024 (SecureRandom.))
+      (.generateKeyPair kg)))
+
+;; put object with client side encryption
+(put-object :bucket-name bucket1
+            :key "foo"
+            :encryption {:key-pair key-pair}
+            :file upload-file)
+
+;; get object and decrypt
+(get-object :bucket-name bucket1
+            :encryption {:key-pair key-pair}
+            :key "foo")))))            
+
+
 
 (let [upl (upload bucket
                   file

@@ -556,11 +556,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```clj
 (ns com.example
   (:use [amazonica.aws.elasticloadbalancing]))
-  
-(deregister-instances-from-load-balancer :load-balancername "my-ELB"
+
+(deregister-instances-from-load-balancer :load-balancer-name "my-ELB"
                                          :instances [{:instance-id "i-1ed40bad"}])
 
-(register-instances-with-load-balancer :load-balancername "my-ELB"
+(register-instances-with-load-balancer :load-balancer-name "my-ELB"
                                        :instances [{:instance-id "i-1fa370ea"}])
 
 ```

@@ -1,5 +1,5 @@
 (ns amazonica.aws.redshift
-  "Amazon Redshift support."  
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.redshift.AmazonRedshiftClient))
 
-(amazonica.core/set-client AmazonRedshiftClient *ns*)
+(amz/set-client AmazonRedshiftClient *ns*)

@@ -1,4 +1,5 @@
 (ns amazonica.aws.elasticmapreduce
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient))
 
-(amazonica.core/set-client AmazonElasticMapReduceClient *ns*)
+(amz/set-client AmazonElasticMapReduceClient *ns*)

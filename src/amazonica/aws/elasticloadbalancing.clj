@@ -1,4 +1,5 @@
 (ns amazonica.aws.elasticloadbalancing
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient))
 
-(amazonica.core/set-client AmazonElasticLoadBalancingClient *ns*)
+(amz/set-client AmazonElasticLoadBalancingClient *ns*)

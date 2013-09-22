@@ -1,4 +1,5 @@
 (ns amazonica.aws.rds
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.rds.AmazonRDSClient))
 
-(amazonica.core/set-client AmazonRDSClient *ns*)
+(amz/set-client AmazonRDSClient *ns*)

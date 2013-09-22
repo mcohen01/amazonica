@@ -1,4 +1,5 @@
 (ns amazonica.aws.sns
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.sns.AmazonSNSClient))
 
-(amazonica.core/set-client AmazonSNSClient *ns*)
+(amz/set-client AmazonSNSClient *ns*)

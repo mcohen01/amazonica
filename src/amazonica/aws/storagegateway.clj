@@ -1,4 +1,5 @@
 (ns amazonica.aws.storagegateway
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.storagegateway.AWSStorageGatewayClient))
 
-(amazonica.core/set-client AWSStorageGatewayClient *ns*)
+(amz/set-client AWSStorageGatewayClient *ns*)

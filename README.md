@@ -43,7 +43,7 @@ and the following dependency:
 * [EC2] (#ec2)
 * ElastiCache
 * ElasticBeanstalk
-* ElasticLoadBalancing
+* [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
 * IdentityManagement
@@ -550,6 +550,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+
+###ElasticLoadBalancing
+
+```clj
+(deregister-instances-from-load-balancer :load-balancername "my-ELB"
+                                         :instances [{:instance-id "i-1ed40bad"}])
+
+(register-instances-with-load-balancer :load-balancername "my-ELB"
+                                       :instances [{:instance-id "i-1fa370ea"}])
+
+```
 
 ###ElasticMapReduce  
 

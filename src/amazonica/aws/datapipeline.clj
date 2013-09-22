@@ -1,4 +1,5 @@
 (ns amazonica.aws.datapipeline
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.datapipeline.DataPipelineClient))
 
-(amazonica.core/set-client DataPipelineClient *ns*)
+(amz/set-client DataPipelineClient *ns*)

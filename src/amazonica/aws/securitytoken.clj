@@ -1,5 +1,4 @@
 (ns amazonica.aws.securitytoken
-  "Amazon Security Token support."
   (:use [amazonica.core :only (IMarshall marshall)])
   (:import [com.amazonaws.services.securitytoken
               AWSSecurityTokenServiceClient]

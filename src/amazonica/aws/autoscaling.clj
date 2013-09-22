@@ -1,4 +1,5 @@
 (ns amazonica.aws.autoscaling
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.autoscaling.AmazonAutoScalingClient))
 
-(amazonica.core/set-client AmazonAutoScalingClient *ns*)
+(amz/set-client AmazonAutoScalingClient *ns*)

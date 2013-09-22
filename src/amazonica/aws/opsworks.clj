@@ -1,4 +1,5 @@
 (ns amazonica.aws.opsworks
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.opsworks.AWSOpsWorksClient))
 
-(amazonica.core/set-client AWSOpsWorksClient *ns*)
+(amz/set-client AWSOpsWorksClient *ns*)

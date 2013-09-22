@@ -1,4 +1,5 @@
 (ns amazonica.aws.elasticache
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.elasticache.AmazonElastiCacheClient))
 
-(amazonica.core/set-client AmazonElastiCacheClient *ns*)
+(amz/set-client AmazonElastiCacheClient *ns*)

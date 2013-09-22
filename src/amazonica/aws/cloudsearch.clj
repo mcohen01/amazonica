@@ -1,4 +1,5 @@
 (ns amazonica.aws.cloudsearch
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.cloudsearch.AmazonCloudSearchClient))
 
-(amazonica.core/set-client AmazonCloudSearchClient *ns*)
+(amz/set-client AmazonCloudSearchClient *ns*)

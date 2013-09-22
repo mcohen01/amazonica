@@ -1,4 +1,5 @@
 (ns amazonica.aws.cloudformation
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.cloudformation.AmazonCloudFormationClient))
 
-(amazonica.core/set-client AmazonCloudFormationClient *ns*)
+(amz/set-client AmazonCloudFormationClient *ns*)

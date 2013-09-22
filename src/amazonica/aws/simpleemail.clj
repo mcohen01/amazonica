@@ -1,4 +1,5 @@
 (ns amazonica.aws.simpleemail
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClient))
 
-(amazonica.core/set-client AmazonSimpleEmailServiceClient *ns*)
+(amz/set-client AmazonSimpleEmailServiceClient *ns*)

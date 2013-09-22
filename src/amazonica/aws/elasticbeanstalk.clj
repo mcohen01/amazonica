@@ -1,4 +1,5 @@
 (ns amazonica.aws.elasticbeanstalk
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient))
 
-(amazonica.core/set-client AWSElasticBeanstalkClient *ns*)
+(amz/set-client AWSElasticBeanstalkClient *ns*)

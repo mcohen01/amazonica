@@ -1,4 +1,5 @@
 (ns amazonica.aws.simpledb
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.simpledb.AmazonSimpleDBClient))
 
-(amazonica.core/set-client AmazonSimpleDBClient *ns*)
+(amz/set-client AmazonSimpleDBClient *ns*)

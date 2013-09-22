@@ -1,4 +1,5 @@
 (ns amazonica.aws.directconnect
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.directconnect.AmazonDirectConnectClient))
 
-(amazonica.core/set-client AmazonDirectConnectClient *ns*)
+(amz/set-client AmazonDirectConnectClient *ns*)

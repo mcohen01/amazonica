@@ -1,4 +1,5 @@
 (ns amazonica.aws.cloudwatch
+  (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient))
 
-(amazonica.core/set-client AmazonCloudWatchClient *ns*)
+(amz/set-client AmazonCloudWatchClient *ns*)

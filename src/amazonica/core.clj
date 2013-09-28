@@ -140,7 +140,7 @@
         aws-client
         (into-array [credentials])))))
 
-(defn- get-credentials
+(defn get-credentials
   [credentials]
   (cond
     (or (instance? AWSCredentialsProvider credentials)

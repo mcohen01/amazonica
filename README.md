@@ -758,6 +758,14 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
             :key "foo")))))            
 
 
+;; put object from stream
+(def some-bytes (.getBytes "Amazonica" "UTF-8"))
+(def input-stream (java.io.ByteArrayInputStream. some-bytes))
+(put-object :bucket-name bucket1
+            :key "stream"
+            :input-stream input-stream
+            :metadata {:content-length (count some-bytes)})
+
 
 (let [upl (upload bucket
                   file

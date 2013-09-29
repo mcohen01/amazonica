@@ -146,12 +146,14 @@
     (or (instance? AWSCredentialsProvider credentials)
         (instance? AWSCredentials credentials))
     credentials
-    (contains? credentials :session-token)
+    (and (associative? credentials)
+         (contains? credentials :session-token))
     (BasicSessionCredentials.
         (:access-key credentials)
         (:secret-key credentials)
         (:session-token credentials))
-    (contains? credentials :access-key)
+    (and (associative? credentials)
+         (contains? credentials :access-key))
     (BasicAWSCredentials.
         (:access-key credentials)
         (:secret-key credentials))

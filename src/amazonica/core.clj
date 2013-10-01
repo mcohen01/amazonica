@@ -4,6 +4,7 @@
   (:require [clojure.string :as str])
   (:import clojure.lang.Reflector
            com.amazonaws.AmazonServiceException
+           com.amazonaws.ClientConfiguration
            com.amazonaws.services.dynamodb.model.AttributeValue
            [com.amazonaws.auth
              AWSCredentials
@@ -21,7 +22,7 @@
              CryptoConfiguration
              EncryptionMaterials
              StaticEncryptionMaterialsProvider]
-           com.amazonaws.services.s3.transfer.TransferManager           
+           com.amazonaws.services.s3.transfer.TransferManager
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -48,17 +49,17 @@
 
 (defn set-root-unwrapping!
   "Enables JSON-like root unwrapping of singly keyed
-  top level maps. 
+  top level maps.
     {:root {:key 'foo' :name 'bar'}}
-  would become 
+  would become
     {:key 'foo' :name 'bar'}"
   [b]
   (reset! root-unwrapping b))
 
 (defn set-date-format!
   "Sets the java.text.SimpleDateFormat pattern to use
-  for transparent coercion of Strings passed as 
-  arguments where java.util.Dates are required by the 
+  for transparent coercion of Strings passed as
+  arguments where java.util.Dates are required by the
   AWS api."
   [df]
   (reset! date-format df))
@@ -92,7 +93,7 @@
    :stack-trace  (stack->string e)})
 
 ; Java methods on the AWS*Client class which won't be exposed
-(def ^:private excluded 
+(def ^:private excluded
   #{:invoke
     :init
     :set-endpoint
@@ -116,7 +117,7 @@
   (reset!
     credential
     (keys->cred access-key secret-key endpoint)))
-        
+
 (defmacro with-credential
   "Per invocation binding of credentials for ad-hoc
   service calls using alternate user/password combos
@@ -128,17 +129,14 @@
 (declare new-instance)
 
 (defn- create-client
-  [aws-client credentials]
-  (if (nil? credentials)
+  [aws-client credentials configuration]
+  (if (every? nil? [credentials configuration])
     (new-instance aws-client)
     ; TransferManager is the only client to date that doesn't
     ; accept AWSCredentialsProviders
-    (let [credentials (if (= aws-client TransferManager)
-                        (AmazonS3Client. credentials)    
-                        credentials)]
-      (Reflector/invokeConstructor
-        aws-client
-        (into-array [credentials])))))
+    (if (= aws-client TransferManager)
+      (TransferManager. (create-client AmazonS3Client credentials configuration))
+      (Reflector/invokeConstructor aws-client (into-array Object (filter (comp not nil?) [credentials configuration]))))))
 
 (defn get-credentials
   [credentials]
@@ -160,9 +158,17 @@
     :else
     (DefaultAWSCredentialsProviderChain.)))
 
+(declare create-bean)
+
+(defn- get-client-configuration
+  [configuration]
+  (when (associative? configuration)
+    (create-bean ClientConfiguration configuration)))
+
 (defn- encryption-client*
-  [materials credentials]
+  [materials credentials configuration]
   (let [creds    (get-credentials credentials)
+        config   (get-client-configuration configuration)
         key      (or (:secret-key materials)
                      (:key-pair materials))
         crypto   (CryptoConfiguration.)
@@ -170,12 +176,15 @@
         enc-mat  (StaticEncryptionMaterialsProvider. em)]
     (if-let [provider (:provider materials)]
         (.withCryptoProvider crypto provider))
-    (AmazonS3EncryptionClient. creds enc-mat crypto)))
-      
+    (if config
+      (AmazonS3EncryptionClient. creds enc-mat config crypto)
+      (AmazonS3EncryptionClient. creds enc-mat crypto))))
+
 (defn- amazon-client*
-  [clazz credentials]
-  (let [aws-creds (get-credentials credentials)
-        client    (create-client clazz aws-creds)]
+  [clazz credentials configuration]
+  (let [aws-creds  (get-credentials credentials)
+        aws-config (get-client-configuration configuration)
+        client     (create-client clazz aws-creds aws-config)]
     (when-let [endpoint (:endpoint credentials)]
       (try
         (.getDeclaredMethod clazz "setRegion" (make-array Class 0))
@@ -236,7 +245,7 @@
   "Case-insensitive resolution of Enum types by String."
   [type value]
   (some
-    #(if (and 
+    #(if (and
            (not (nil? (.toString %))) ; some aws enums return nil!
            (= (str/upper-case value)
              (str/upper-case (.toString %))))
@@ -265,7 +274,7 @@
 
 (defn register-coercions
   "Accepts key/value pairs of class/function, which defines
-  how data will be converted to the appropriate type 
+  how data will be converted to the appropriate type
   required by the AWS Amazon*Client Java method."
   [& {:as coercion}]
   (swap! coercions merge coercion))
@@ -312,7 +321,7 @@
   [clazz]
   (let [ctors (.getConstructors clazz)]
     (or
-      (some 
+      (some
         #(if (= 0 (count (.getParameterTypes %)))
           %
           nil)
@@ -327,7 +336,7 @@
   (let [ctor (best-constructor clazz)
         arr  (constructor-args ctor)]
     (.newInstance ctor arr)))
-    
+
 (defn- unwind-types
   [param]
   (if (instance? ParameterizedType param)
@@ -351,14 +360,14 @@
 (defn- normalized-name
   [method-name]
   (-> (name method-name)
-      (.replaceFirst     
-        (case (.substring method-name 0 3) 
+      (.replaceFirst
+        (case (.substring method-name 0 3)
           "get" "get"
           "set" "set"
           "default")
       "")
       (.toLowerCase)))
-  
+
 (defn- matches?
   "We exclude any mutators of the bean which
    expect a java.util.Map$Entry as the first
@@ -375,9 +384,9 @@
            true  (= 0 (count args))
            false (and (< 0 (count args))
                       (not (and (= 2 (count args))
-                                (every? (partial = java.util.Map$Entry) 
+                                (every? (partial = java.util.Map$Entry)
                                         args))))))))
-                      
+
 (defn- accessor-methods
   [class-methods name getter?]
   (reduce
@@ -399,9 +408,9 @@
   "Need this only because S3 methods actually try to
    mutate (e.g. sort) collections passed to them."
   [col]
-  (cond 
+  (cond
     (map? col)
-      (doto 
+      (doto
         (java.util.HashMap.)
         (.putAll col))
     (set? col)
@@ -419,7 +428,7 @@
         [(to-java-coll v)]
         [v])))
   true)
-  
+
 (declare set-fields)
 
 (defn kw->str [k]
@@ -457,8 +466,8 @@
   (let [f       (partial invoke pojo method)
         types   (paramter-types method)
         generic (last (:generic types))]
-    (if (and 
-          (coll? v) 
+    (if (and
+          (coll? v)
           (not (contains? @coercions generic)))
       (f (unmarshall types v))
       (if (instance? generic v)
@@ -493,7 +502,7 @@
 
 (defprotocol IMarshall
   "Defines the contract for converting Java types to Clojure
-  data. All return values from AWS service calls are 
+  data. All return values from AWS service calls are
   marshalled. As such, the AWS service-specific namespaces
   will frequently need to implement this protocol in order
   to provide convenient data representations. See also the
@@ -506,7 +515,7 @@
   (let [name (.getName method)
         type (.getName (.getReturnType method))]
     (or (.startsWith name "get")
-        (and 
+        (and
           (.startsWith name "is")
           (= "boolean" type)))))
 
@@ -529,7 +538,7 @@
     (if (.startsWith name "is")
       (str (.substring name 2) "?")
       (.substring name 3))))
-  
+
 (defn get-fields
   "Returns a map of all non-null values returned by
   invoking all public getters on the specified object."
@@ -603,13 +612,13 @@
                   ; must be a concrete, instantiatable class
                   (create-bean %2 %)
                   (coerce-value % %2))
-               (vec args) 
+               (vec args)
                types))
         (if (use-aws-request-bean? method args)
           (if (= 1 num)
-            (into-array Object 
+            (into-array Object
               [(create-request-bean
-                  method 
+                  method
                   (seq (apply hash-map args)))])
             ; note: AWS api only ever uses custom bean types
             ; as the first or last argument, as of v1.4.0
@@ -625,14 +634,15 @@
     (cond
       (or (and (or (map? a)
                    (map? (first a)))
-               (contains? (first a) :access-key))
+               (or (contains? (first a) :access-key)
+                   (contains? (first a) :client-config)))
           (instance? AWSCredentialsProvider (first a))
           (instance? AWSCredentials (first a)))
       {:args (if (-> a rest first map?)
-                 (mapcat identity
-                         (-> a rest args-from :args))
-                 (rest a))
-       :credential (first a)}
+               (mapcat identity
+                       (-> a rest args-from :args))
+               (rest a))
+       :credential (dissoc (first a) :client-config) :client-config (:client-config (first a))}
       (map? (first a))
       {:args (mapcat identity (first a))}
       :default {:args a})))
@@ -643,10 +653,12 @@
            (even? (count (:args args)))
            (contains? (apply hash-map (:args args)) :encryption))
       (encryption-client (:encryption (apply hash-map (:args args)))
-                         (or (:credential args) @credential))
+                         (or (:credential args) @credential)
+                         (:client-config args))
       (amazon-client
         clazz
-        (or (:credential args) @credential))))
+        (or (:credential args) @credential)
+        (:client-config args))))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
@@ -658,7 +670,7 @@
           arg-arr (prepare-args method (:args args))
           client  (delay (candidate-client clazz args))]
       (fn []
-        (try 
+        (try
           (let [c (if (thread-bound? #'*credentials*)
                       (amazon-client clazz *credentials*)
                       @client)
@@ -670,7 +682,7 @@
                   (= 1 (count (keys cloj))))
               (-> cloj first second)
               cloj))
-          (catch InvocationTargetException ite          
+          (catch InvocationTargetException ite
             (throw (.getTargetException ite))))))))
 
 (defn- best-method

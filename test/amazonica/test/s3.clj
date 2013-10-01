@@ -79,6 +79,45 @@
                        :key "jenny")))))
   
   
+
+  ;; upload file with credentials and client options
+  (put-object
+   (assoc cred :client-config {:max-connections 1
+                                :user-agent "Amazonica"})
+   :bucket-name bucket1
+   :key "creds-and-options"
+   :file upload-file)
+
+  (is (= "hello world"
+         (slurp (:input-stream
+                 (get-object :bucket-name bucket1
+                             :key "creds-and-options")))))
+
+  ;; upload file with just creds
+  (put-object
+   cred
+   :bucket-name bucket1
+   :key "creds"
+   :file upload-file)
+
+  (is (= "hello world"
+         (slurp (:input-stream
+                 (get-object :bucket-name bucket1
+                             :key "creds")))))
+
+  ;; upload file without credentials but with client options
+  (put-object
+   {:client-config {:max-connections 1
+                    :user-agent "Amazonica"}}
+   :bucket-name bucket1
+   :key "options"
+   :file upload-file)
+
+  (is (= "hello world"
+         (slurp (:input-stream
+                 (get-object :bucket-name bucket1
+                             :key "options")))))
+
   (.createNewFile upload-file)
   (spit upload-file (Date.))  
 
@@ -107,6 +146,9 @@
   
   
   (delete-object bucket1 "jenny")
+  (delete-object bucket1 "creds-and-options")
+  (delete-object bucket1 "options")
+  (delete-object bucket1 "creds")
   (delete-bucket bucket1)
   
   (def bucket1 (.. (UUID/randomUUID) toString))

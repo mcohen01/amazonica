@@ -21,7 +21,7 @@
                        (FileInputStream.) 
                        (BufferedInputStream.))})
 
-(defn parse-args
+(defn- parse-args
   "Legacy support means credentials may or may not be passed
    as the first argument."
   [cred args]

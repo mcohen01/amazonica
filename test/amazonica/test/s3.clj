@@ -34,6 +34,8 @@
 
   (spit upload-file "hello world")
 
+  (create-bucket bucket1)
+  
   ;; test the various invocations 
   (list-objects :bucket-name bucket1)
   (list-objects {:bucket-name bucket1})
@@ -43,9 +45,7 @@
   (def key-pair
     (let [kg (KeyPairGenerator/getInstance "RSA")]
       (.initialize kg 1024 (SecureRandom.))
-      (.generateKeyPair kg)))
-  
-  (create-bucket bucket1)
+      (.generateKeyPair kg)))    
   
   ;; encrypted upload
   (put-object :bucket-name bucket1

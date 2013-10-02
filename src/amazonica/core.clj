@@ -630,12 +630,11 @@
           (instance? AWSCredentials (first a)))
       {:args (if (-> a rest first map?)
                  (mapcat identity
-                         (-> a rest args-from :args))                 
+                         (-> a rest args-from :args))
                  (rest a))
        :credential (first a)}
       (map? (first a))
-      {:args (interleave (keys (first a)) 
-                         (vals (first a)))}
+      {:args (mapcat identity (first a))}
       :default {:args a})))
 
 (defn- candidate-client

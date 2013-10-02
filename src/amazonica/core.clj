@@ -623,11 +623,16 @@
   [args]
   (let [a (first args)]
     (cond
-      (or (and (map? (first a))
+      (or (and (or (map? a)
+                   (map? (first a)))
                (contains? (first a) :access-key))
           (instance? AWSCredentialsProvider (first a))
           (instance? AWSCredentials (first a)))
-      {:args (rest a) :credential (first a)}
+      {:args (if (-> a rest first map?)
+                 (mapcat identity
+                         (-> a rest args-from :args))                 
+                 (rest a))
+       :credential (first a)}
       (map? (first a))
       {:args (interleave (keys (first a)) 
                          (vals (first a)))}

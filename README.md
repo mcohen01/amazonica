@@ -274,6 +274,14 @@ All subsequent API calls will use the specified credential. If you need to execu
 ; returns images belonging to account-1
 ```  
 
+### Client configuration
+
+You can supply a `:client-config` entry in the credentials map to configure the [ClientConfiguration](http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/ClientConfiguration.html) that the Amazon client uses. This is useful if you need to use a proxy.
+
+```clj
+(describe-images {:client-config {:proxy-host "proxy.address.com" :proxy-port 8080}})
+```
+
 
 ### Exception Handling  
 All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catch exceptions you can convert the AWS object to a Clojure map like so:

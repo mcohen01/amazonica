@@ -1,6 +1,5 @@
 (ns amazonica.test.s3transfer
-  (:use [amazonica.core]
-        [amazonica.aws.s3transfer]
+  (:use [amazonica.aws.s3transfer]
         [clojure.test]))
 
 (def cred 

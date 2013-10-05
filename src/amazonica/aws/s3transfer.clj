@@ -1,6 +1,6 @@
 (ns amazonica.aws.s3transfer
-  (:use [amazonica.core :only (IMarshall marshall coerce-value)])
-  (:import [com.amazonaws.services.s3.model             
+  (:use [amazonica.core :only (IMarshall marshall coerce-value stack->string)])
+  (:import [com.amazonaws.event
             ProgressEvent
             ProgressListener]
            [com.amazonaws.services.s3.transfer            
@@ -12,6 +12,10 @@
               Transfer
               TransferProgress]))
 
+(defn- default-listener [transfer e]
+  (cond (= (:event e) :failed)    (println ((:wait-for-exception transfer)))
+        (= (:event e) :completed) (println "Transfer complete.")))
+      
 (defn add-listener
   [obj]
   (fn [f]
@@ -30,7 +34,7 @@
    :is-done                  #(.isDone obj)
    :remove-progress-listener #(.removeProgressListener obj %)
    :wait-for-completion      #(.waitForCompletion obj)
-   :wait-for-exception       #(marshall (.waitForException obj))})
+   :wait-for-exception       #(stack->string (.waitForException obj))})
 
 
 (extend-protocol IMarshall
@@ -42,16 +46,20 @@
 
   Upload
   (marshall [obj]
-    (merge (transfer obj)
-           {:upload-result #(marshall (.waitForUploadResult obj))}))
+    (let [t (transfer obj)]
+      ((:add-progress-listener t) (partial default-listener t))
+      (merge (transfer obj)
+             {:upload-result #(marshall (.waitForUploadResult obj))})))
   
   Download
   (marshall [obj]
-    (merge (transfer obj)
-           {:bucket-name     #(.getBucketName obj)
-            :abort           #(.abort obj)
-            :key             #(.getKey obj)
-            :object-metadata #(marshall (.getObjectMetadata obj))}))
+    (let [t (transfer obj)]
+      ((:add-progress-listener t) (partial default-listener t))
+      (merge (transfer obj)
+             {:bucket-name     #(.getBucketName obj)
+              :abort           #(.abort obj)
+              :key             #(.getKey obj)
+              :object-metadata #(marshall (.getObjectMetadata obj))})))
   
   MultipleFileUpload
   (marshall [obj]

@@ -3,9 +3,9 @@
   (:use [clojure.algo.generic.functor :only (fmap)])
   (:require [clojure.string :as str])
   (:import clojure.lang.Reflector
-           com.amazonaws.AmazonServiceException
-           com.amazonaws.ClientConfiguration
-           com.amazonaws.services.dynamodb.model.AttributeValue
+           [com.amazonaws
+             AmazonServiceException
+             ClientConfiguration]
            [com.amazonaws.auth
              AWSCredentials
              AWSCredentialsProvider
@@ -135,8 +135,13 @@
     ; TransferManager is the only client to date that doesn't
     ; accept AWSCredentialsProviders
     (if (= aws-client TransferManager)
-      (TransferManager. (create-client AmazonS3Client credentials configuration))
-      (Reflector/invokeConstructor aws-client (into-array Object (filter (comp not nil?) [credentials configuration]))))))
+        (TransferManager. (create-client AmazonS3Client
+                                         credentials
+                                         configuration))
+        (Reflector/invokeConstructor aws-client
+                                     (into-array Object
+                                                 (filter (comp not nil?)
+                                                         [credentials configuration]))))))
 
 (defn get-credentials
   [credentials]
@@ -166,19 +171,19 @@
     (create-bean ClientConfiguration configuration)))
 
 (defn- encryption-client*
-  [materials credentials configuration]
-  (let [creds    (get-credentials credentials)
-        config   (get-client-configuration configuration)
-        key      (or (:secret-key materials)
-                     (:key-pair materials))
-        crypto   (CryptoConfiguration.)
-        em       (EncryptionMaterials. key)
-        enc-mat  (StaticEncryptionMaterialsProvider. em)]
-    (if-let [provider (:provider materials)]
+  [encryption credentials configuration]
+  (let [creds     (get-credentials credentials)
+        config    (get-client-configuration configuration)
+        key       (or (:secret-key encryption)
+                      (:key-pair encryption))
+        crypto    (CryptoConfiguration.)
+        em        (EncryptionMaterials. key)
+        materials (StaticEncryptionMaterialsProvider. em)]
+    (if-let [provider (:provider encryption)]
         (.withCryptoProvider crypto provider))
     (if config
-      (AmazonS3EncryptionClient. creds enc-mat config crypto)
-      (AmazonS3EncryptionClient. creds enc-mat crypto))))
+      (AmazonS3EncryptionClient. creds materials config crypto)
+      (AmazonS3EncryptionClient. creds materials crypto))))
 
 (defn- amazon-client*
   [clazz credentials configuration]
@@ -187,13 +192,13 @@
         client     (create-client clazz aws-creds aws-config)]
     (when-let [endpoint (:endpoint credentials)]
       (try
-        (.getDeclaredMethod clazz "setRegion" (make-array Class 0))
         (->> (-> (str/upper-case endpoint)
                  (.replaceAll "-" "_"))
              Regions/valueOf
              Region/getRegion
              (.setRegion client))
-        (catch NoSuchMethodException e)))
+        (catch NoSuchMethodException e
+          (println e))))
     client))
 
 (def ^:private encryption-client
@@ -223,7 +228,10 @@
 
 (defn- aws-package?
   [clazz]
-  (re-find #"com\.amazonaws\.services" (.getName clazz)))
+  (->> (.getName clazz)
+       (re-find #"com\.amazonaws\.services")
+       nil?
+       not))
 
 (defn to-date
   [date]
@@ -615,46 +623,55 @@
                (vec args)
                types))
         (if (use-aws-request-bean? method args)
-          (if (= 1 num)
+          (cond
+            (= 1 num)
             (into-array Object
-              [(create-request-bean
-                  method
-                  (seq (apply hash-map args)))])
-            ; note: AWS api only ever uses custom bean types
-            ; as the first or last argument, as of v1.4.0
-            ))))))
+                        [(create-request-bean
+                            method
+                            (seq (apply hash-map args)))])
+            (and (aws-package? (first types))
+                 (= 2 num)
+                 (= File (last types)))
+            (into-array Object
+                        [(create-request-bean
+                            method
+                            (seq (apply hash-map (butlast args))))
+                         (last args)])))))))
 
 
 (defn- args-from
   "Function arguments take an optional first parameter map
   of AWS credentials. Addtional parameters are either a map,
   or seq of keys and values."
-  [args]
-  (let [a (first args)]
+  [arg-seq]
+  (let [args (first arg-seq)]
     (cond
-      (or (and (or (map? a)
-                   (map? (first a)))
-               (or (contains? (first a) :access-key)
-                   (contains? (first a) :client-config)))
-          (instance? AWSCredentialsProvider (first a))
-          (instance? AWSCredentials (first a)))
-      {:args (if (-> a rest first map?)
-               (mapcat identity
-                       (-> a rest args-from :args))
-               (rest a))
-       :credential (dissoc (first a) :client-config) :client-config (:client-config (first a))}
-      (map? (first a))
-      {:args (mapcat identity (first a))}
-      :default {:args a})))
+      (or (and (or (map? args)
+                   (map? (first args)))
+               (or (contains? (first args) :access-key)
+                   (contains? (first args) :client-config)))
+          (instance? AWSCredentialsProvider (first args))
+          (instance? AWSCredentials (first args)))
+      {:args (if (-> args rest first map?)
+                 (mapcat identity (-> args rest args-from :args))
+                 (rest args))
+       :credential (dissoc (first args) :client-config)
+       :client-config (:client-config (first args))}
+      (map? (first args))
+      {:args (mapcat identity (first args))}
+      :default {:args args})))
 
 (defn- candidate-client
   [clazz args]
-  (if (and (= clazz AmazonS3Client)
+  (if (and (or (= clazz AmazonS3Client)
+               (= clazz TransferManager))
            (even? (count (:args args)))
            (contains? (apply hash-map (:args args)) :encryption))
-      (encryption-client (:encryption (apply hash-map (:args args)))
-                         (or (:credential args) @credential)
-                         (:client-config args))
+      (if (= clazz TransferManager)
+          (TransferManager. (candidate-client AmazonS3Client args))
+          (encryption-client (:encryption (apply hash-map (:args args)))
+                             (or (:credential args) @credential)
+                                 (:client-config args)))
       (amazon-client
         clazz
         (or (:credential args) @credential)
@@ -667,6 +684,7 @@
   [clazz method & arg]
   (binding [*client-class* clazz]
     (let [args    (args-from arg)
+          _ (println args)
           arg-arr (prepare-args method (:args args))
           client  (delay (candidate-client clazz args))]
       (fn []

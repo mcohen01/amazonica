@@ -12,26 +12,19 @@
 
 (deftest s3transfer []
 
-  (def file "hw.txt")
+  (def file "some-big.jar")
   (def down-dir (java.io.File. (str "/tmp/" file)))
-  (def bucket "pupuserious")
+  (def bucket "my-bucket")
   
-  (import 'java.security.KeyPairGenerator)
-  (import 'java.security.SecureRandom)
-  (def key-pair
-    (let [kg (KeyPairGenerator/getInstance "RSA")]
-      (.initialize kg 1024 (SecureRandom.))
-      (.generateKeyPair kg)))
-
-  (let [upl (upload :bucket-name bucket
-                    :key file
-                    :encryption {:key-pair key-pair}
-                    :file down-dir)]
+  (let [upl (upload cred
+                    bucket
+                    file
+                    down-dir)]
     ((:add-progress-listener upl) #(println %)))
   
-  (let [dl  (download :bucket-name bucket
-                      ;:encryption {:key-pair key-pair}
-                      :key file
+  (let [dl  (download cred
+                      bucket
+                      file
                       down-dir)
         listener #(if (= :completed (:event %))
                       (println ((:object-metadata dl)))

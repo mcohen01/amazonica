@@ -683,8 +683,7 @@
    the Java method on the Amazon*Client class."
   [clazz method & arg]
   (binding [*client-class* clazz]
-    (let [args    (args-from arg)
-          _ (println args)
+    (let [args    (args-from arg)          
           arg-arr (prepare-args method (:args args))
           client  (delay (candidate-client clazz args))]
       (fn []

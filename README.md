@@ -46,7 +46,7 @@ and the following dependency:
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
-* IdentityManagement
+* [IdentityManagement] (#identitymanagement)
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -634,7 +634,23 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
  ```  
 
 
-###OpsWorks  
+###IdentityManagement
+```clj
+(ns com.example
+  (:use [amazonica.aws.identitymanagement]))
+
+(def policy "{\"Version\": \"2012-10-17\", \"Statement\": [{\"Action\": [\"s3:*\"], \"Effect\": \"Allow\", \"Resource\": [\"arn:aws:s3:::bucket-name/*\"]}]}")
+
+(create-user :user-name "amazonica")
+(create-access-key :user-name "amazonica")
+(put-user-policy
+  :user-name "amazonica"
+  :policy-name "s3policy"
+  :policy-document policy)
+
+```
+
+###OpsWorks
 ```clj
 (ns com.example
   (:use [amazonica.aws.opsworks]))

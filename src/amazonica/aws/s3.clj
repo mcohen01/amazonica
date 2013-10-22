@@ -7,6 +7,7 @@
            [com.amazonaws.services.s3.model
               AccessControlList
               CanonicalGrantee
+              DeleteObjectsRequest$KeyVersion
               EmailAddressGrantee
               Grant
               Grantee
@@ -95,6 +96,11 @@
       (CanonicalGrantee. value)))
   Permission
   (fn [value]
-    (Permission/valueOf value)))
+    (Permission/valueOf value))
+  DeleteObjectsRequest$KeyVersion
+  (fn [value]
+    (if (coll? value)
+        (DeleteObjectsRequest$KeyVersion. (first value) (second value))
+        (DeleteObjectsRequest$KeyVersion. value))))
 
 (amazonica.core/set-client AmazonS3Client *ns*)

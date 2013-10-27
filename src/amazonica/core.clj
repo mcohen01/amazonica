@@ -103,20 +103,20 @@
 
 
 (defn- keys->cred
-  [access-key secret-key endpoint]
+  [access-key secret-key region]
   (let [credential {:access-key access-key
                     :secret-key secret-key}]
-    (if-not (empty? endpoint)
-      (merge credential {:endpoint (first endpoint)})
+    (if-not (empty? region)
+      (merge credential {:region (first region)})
       credential)))
 
 (defn defcredential
   "Specify the AWS access key, secret key and optional
-  endpoint to use on subsequent requests."
-  [access-key secret-key & endpoint]
+  region to use on subsequent requests."
+  [access-key secret-key & region]
   (reset!
     credential
-    (keys->cred access-key secret-key endpoint)))
+    (keys->cred access-key secret-key region)))
 
 (defmacro with-credential
   "Per invocation binding of credentials for ad-hoc
@@ -190,15 +190,17 @@
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
         client     (create-client clazz aws-creds aws-config)]
-    (when-let [endpoint (:endpoint credentials)]
+    (when-let [region (:region credentials)]
       (try
-        (->> (-> (str/upper-case endpoint)
+        (->> (-> (str/upper-case region)
                  (.replaceAll "-" "_"))
              Regions/valueOf
              Region/getRegion
              (.setRegion client))
         (catch NoSuchMethodException e
           (println e))))
+    (when-let [endpoint (:endpoint credentials)]
+      (.setEndpoint client endpoint))
     client))
 
 (def ^:private encryption-client
@@ -683,7 +685,7 @@
    the Java method on the Amazon*Client class."
   [clazz method & arg]
   (binding [*client-class* clazz]
-    (let [args    (args-from arg)          
+    (let [args    (args-from arg)
           arg-arr (prepare-args method (:args args))
           client  (delay (candidate-client clazz args))]
       (fn []

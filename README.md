@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.1.27"]
+[amazonica "0.1.28"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.27</version>
+  <version>0.1.28</version>
 </dependency>
 ```
 
@@ -245,7 +245,7 @@ Note that in order for the Instance Profile Metadata to be found, you must have 
 See the [AWS docs] [14] for reference.
 
 
-Addtionally, all of the functions may take as their first argument an optional map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1"). This is primarily for legacy support or to set the region endpoint.
+Addtionally, all of the functions may take as their first argument an optional map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1"). This is primarily for legacy support or to set the region/endpoint. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 
 ```clj
 (def cred {:access-key "aws-access-key"
@@ -474,7 +474,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (ns com.example
   (:use [amazonica.aws.dynamodbv2]))
 
-(create-table :table-name "TestTable"
+(def cred {:access-key "aws-access-key"
+           :secret-key "aws-secret-key"
+           :endpoint   "http://localhost:8000"})
+
+(create-table cred
+              :table-name "TestTable"
               :key-schema 
                 [{:attribute-name "id"   :key-type "HASH"}
                  {:attribute-name "date" :key-type "RANGE"}]
@@ -500,7 +505,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                 {:read-capacity-units 1
                  :write-capacity-units 1})
 
-(put-item :table-name "TestTable"
+(put-item cred
+          :table-name "TestTable"
           :return-consumed-capacity "TOTAL"
           :return-item-collection-metrics "SIZE"
           :item {
@@ -510,7 +516,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
             :column1 "first name"
             :column2 "last name"})
 
-(get-item :table-name "TestTable"
+(get-item cred
+          :table-name "TestTable"
           :key {:id {:s "foo"}
                 :date {:n 123456}})
     
@@ -523,11 +530,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
         {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
          :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
-(scan :table-name "TestTable")
+(scan cred :table-name "TestTable")
 
-(describe-table :table-name "TestTable")
+(describe-table cred :table-name "TestTable")
 
-(delete-table :table-name "TestTable")
+(delete-table cred :table-name "TestTable")
 
 ```  
 
@@ -890,3 +897,6 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [13]:https://github.com/weavejester/rotary
 [14]:http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html
 [15]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html
+[16]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/regions/Regions.html
+[17]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setRegion(com.amazonaws.regions.Region)
+[18]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setEndpoint(java.lang.String)

@@ -191,14 +191,19 @@
         aws-config (get-client-configuration configuration)
         client     (create-client clazz aws-creds aws-config)]
     (when-let [endpoint (:endpoint credentials)]
-      (try
-        (->> (-> (str/upper-case endpoint)
-                 (.replaceAll "-" "_"))
-             Regions/valueOf
-             Region/getRegion
-             (.setRegion client))
-        (catch NoSuchMethodException e
-          (println e))))
+      (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
+                           (apply hash-set (seq (Regions/values))))
+                     (-> (str/upper-case endpoint)
+                         (str/replace "-" "")))
+          (try
+            (->> (-> (str/upper-case endpoint)
+                     (str/replace "-" "_"))
+                 Regions/valueOf
+                 Region/getRegion
+                 (.setRegion client))
+            (catch NoSuchMethodException e
+              (println e)))
+          (.setEndpoint client endpoint)))
     client))
 
 (def ^:private encryption-client

@@ -268,7 +268,7 @@
         (.invoke type (make-array Object 0)))))
 
 ; assoc java Class to Clojure cast functions
-(def ^:private coercions (atom
+(defonce ^:private coercions (atom
   {String     str
    Integer    int
    Long       long
@@ -351,13 +351,15 @@
     (.newInstance ctor arr)))
 
 (defn- unwind-types
-  [param]
+  [depth param]
   (if (instance? ParameterizedType param)
-    (-> param
-        (.getActualTypeArguments)
-        last
-        unwind-types)
-    [param]))
+      (let [f (partial unwind-types (inc depth))]
+        (-> param
+            (.getActualTypeArguments)
+            last
+            f))
+      {:type [param]
+       :depth depth}))
 
 (defn- paramter-types
   [method]
@@ -365,10 +367,11 @@
         param (first types)
         rval  {:generic types}]
     (if (instance? ParameterizedType param)
-      (merge rval
-        {:actual (unwind-types param)
-         :raw    (.getRawType param)})
-      rval)))
+        (let [t (unwind-types 1 param)]
+          (merge rval
+                 {:actual (:type t)
+                  :depth  (:depth t)}))
+        rval)))
 
 (defn- normalized-name
   [method-name]
@@ -459,20 +462,29 @@
   [types col]
   (let [type (last (or (:actual types)
                        (:generic types)))
-        pp   (partial populate types :actual)]
+        pp   (partial populate types :actual)]    
     (if (aws-package? type)
-      (if (map? col)
-        (if (contains? types :actual)
-          (apply assoc {}
-            (interleave
-              (fmap kw->str (apply vector (keys col)))
-              (fmap pp (apply vector (vals col)))))
-          (populate types :generic col))
-        (fmap pp col))
-      (if (and (contains? types :actual)
-               (aws-package? type))
-        (fmap pp col)
-        (fmap #(coerce-value % type) col)))))
+        (if (map? col)
+            (if (contains? types :actual)
+                (if (< (:depth types) 3)
+                    (apply assoc {}
+                           (interleave (fmap kw->str (apply vector (keys col)))
+                                       (fmap pp (apply vector (vals col)))))
+                    (apply assoc {}
+                           (interleave (fmap kw->str (apply vector (keys col)))
+                                       [(fmap #(populate {:generic [type]}
+                                                              :generic 
+                                                              %)
+                                                  (first (apply vector (vals col))))])))
+                (populate types :generic col))
+            (if (and (contains? types :actual)
+                     (= (:depth types) 3))
+                (fmap #(fmap pp %) col)
+                (fmap pp col)))
+        (if (and (contains? types :actual)
+                 (aws-package? type))
+            (fmap pp col)
+            (fmap #(coerce-value % type) col)))))
 
 (defn- invoke-method
   [pojo v method]

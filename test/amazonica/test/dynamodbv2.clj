@@ -68,7 +68,7 @@
     (= "id" 
       (get-in 
         (describe-table cred :table-name table)
-        [:key-schema :hash-key-element :attribute-name])))
+        [:key-schema 0 :attribute-name])))
 
   (set-root-unwrapping! false)
 
@@ -76,7 +76,7 @@
     (= "id" 
       (get-in 
         (describe-table cred :table-name table)
-        [:table :key-schema :hash-key-element :attribute-name])))
+        [:table :key-schema 0 :attribute-name])))
   
   (list-tables cred)
   (list-tables cred :limit 1)
@@ -102,36 +102,50 @@
       (is (= (dissoc item :bytes) (dissoc ret-item :bytes)))
       (is (= (-> item :bytes String.)
              (-> ret-item :bytes .array String.)))))
+  
     
-  (query
-    cred
-    :table-name table
-    :limit 1
-    :index-name "column1_idx"
-    :select "ALL_ATTRIBUTES"
-    :scan-index-forward true
-    :key-conditions 
-     {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
-      :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
+  (query cred
+         :table-name table
+         :limit 1
+         :index-name "column1_idx"
+         :select "ALL_ATTRIBUTES"
+         :scan-index-forward true
+         :key-conditions 
+           {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
+            :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
   (clojure.pprint/pprint
     (scan cred :table-name "TestTable"))
 
   (set-root-unwrapping! false)
 
-(try
-  (clojure.pprint/pprint 
-    (batch-get-item
-      cred 
-      :return-consumed-capacity "TOTAL"
-      :request-items {
-      "TestTable" {:keys
-                    [{"id" {:s "foo"}
-                     "date" {:n 12345}}]
-                   :consistent-read true
-                   :attributes-to-get ["id" "text"]}}))
-(catch Exception e
-  (.printStackTrace e)))
+(let [item (batch-get-item
+             cred 
+             :return-consumed-capacity "TOTAL"
+             :request-items {
+             "TestTable" {:keys [{"id"   {:s "foobar"}
+                                  "date" {:n 3172671}}
+                                 {"id"   {:s "foo"}
+                                  "date" {:n 123456}}]
+                          :consistent-read true
+                          :attributes-to-get ["id" "text" "column1"]}})]
+  (is (= "barbaz" (-> item :responses :TestTable first :text)))
+  (is (= "foo"    (-> item :responses :TestTable first :id))))
+
+(batch-write-item
+  cred
+  :return-consumed-capacity "TOTAL"
+  :return-item-collection-metrics "SIZE"
+  :request-items 
+    {"TestTable"
+      [{:delete-request 
+         {:key {:id "foo"
+                :date 123456}}}
+       {:put-request
+         {:item {:id "foobar"
+                 :date 3172671
+                 :text "bunny"
+                 :column1 "funky"}}}]})
   
   (clojure.pprint/pprint 
     (describe-table cred :table-name "TestTable"))

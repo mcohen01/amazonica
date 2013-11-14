@@ -36,7 +36,14 @@
 
   (create-bucket bucket1)
   
-  ;; test the various invocations 
+  ;; test the various invocations   
+  (list-objects bucket1)
+  
+  (list-objects :bucket-name bucket1 :prefix "")
+  (list-objects {:bucket-name bucket1 :prefix ""})
+  (list-objects cred :bucket-name bucket1 :prefix "")
+  (list-objects cred {:bucket-name bucket1 :prefix ""})
+  
   (list-objects :bucket-name bucket1)
   (list-objects {:bucket-name bucket1})
   (list-objects cred :bucket-name bucket1)

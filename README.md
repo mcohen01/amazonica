@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.1.28"]
+[amazonica "0.1.29"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.1.28</version>
+  <version>0.1.29</version>
 </dependency>
 ```
 
@@ -529,6 +529,32 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
        :key-conditions 
         {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
          :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
+
+(batch-write-item
+  cred
+  :return-consumed-capacity "TOTAL"
+  :return-item-collection-metrics "SIZE"
+  :request-items 
+    {"TestTable"
+      [{:delete-request 
+         {:key {:id "foo"
+                :date 123456}}}
+       {:put-request
+         {:item {:id "foobar"
+                 :date 3172671
+                 :text "bunny"
+                 :column1 "funky"}}}]})
+
+(batch-get-item
+  cred 
+  :return-consumed-capacity "TOTAL"
+  :request-items {
+  "TestTable" {:keys [{"id"   {:s "foobar"}
+                       "date" {:n 3172671}}
+                      {"id"   {:s "foo"}
+                       "date" {:n 123456}}]
+               :consistent-read true
+               :attributes-to-get ["id" "text" "column1"]}})
 
 (scan cred :table-name "TestTable")
 

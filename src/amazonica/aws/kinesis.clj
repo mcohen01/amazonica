@@ -80,7 +80,7 @@
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
 
 (intern *ns*
-        (symbol "worker")
+        (symbol "worker!")
         (fn [{:keys [app stream processor checkpoint credentials]
               :or {checkpoint 60000
                    credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}}]

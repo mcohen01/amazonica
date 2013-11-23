@@ -59,6 +59,7 @@
     (catch ShutdownException se
       true)
     (catch ThrottlingException te
+      (println "sleeping for 3s due to throttling....")
       (Thread/sleep 3000)
       false)
     (catch InvalidStateException ise
@@ -79,26 +80,25 @@
               (do (reset! next-check (+ (System/currentTimeMillis) checkpoint))
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
 
-(intern *ns*
-        (symbol "worker!")
-        (fn [& args]
-          (let [opts (if (associative? (first args))
-                         (first args)
-                         (apply hash-map args))
-                {:keys [app stream processor checkpoint credentials]
-                 :or   {checkpoint   60000
-                        credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}} opts
-                next-check (atom 0)
-                factory  (processor-factory processor checkpoint next-check)
-                uuid     (str (UUID/randomUUID))
-                creds    (amz/get-credentials credentials)
-                provider (if (instance? AWSCredentials creds)
-                             (StaticCredentialsProvider. creds)
-                             creds)
-                config   (KinesisClientLibConfiguration. app
-                                                         stream
-                                                         (:endpoint credentials)
-                                                         provider
-                                                         uuid)]
-            (future (.run (Worker. factory config)))
-            uuid)))
+(defn worker!
+  [& args]
+  (let [opts (if (associative? (first args))
+                 (first args)
+                 (apply hash-map args))
+        {:keys [app stream processor checkpoint credentials]
+         :or   {checkpoint   60000
+                credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}} opts
+        next-check (atom 0)
+        factory  (processor-factory processor checkpoint next-check)
+        uuid     (str (UUID/randomUUID))
+        creds    (amz/get-credentials credentials)
+        provider (if (instance? AWSCredentials creds)
+                     (StaticCredentialsProvider. creds)
+                     creds)
+        config   (KinesisClientLibConfiguration. app
+                                                 stream
+                                                 (:endpoint credentials)
+                                                 provider
+                                                 uuid)]
+    (future (.run (Worker. factory config)))
+    uuid))

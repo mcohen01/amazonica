@@ -720,9 +720,14 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; better way to consume a shard....create and run a worker
 ;; :app :stream and :processor keys are required
 ;; :credential and :checkpoint keys are optional
+
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
+;; for full checkpoint control, set :checkpoint to Long/MAX_VALUE and return true from the 
+;; :processor function only when you want checkpoint to be called 
+
 ;; if no :credentials key is provided the default authentication scheme is used (preferable), 
 ;; see the [Authentication] #(authentication) section above
+
 ;; returns the UUID assigned to this worker
 (worker! :app "app-name"
          :stream "my-stream"

@@ -721,14 +721,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; :app :stream and :processor keys are required
 ;; :credential and :checkpoint keys are optional
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
-;; if no :credential is provided the default authentication scheme is used, 
+;; if no :credentials key is provided the default authentication scheme is used (preferable), 
 ;; see the [Authentication] #(authentication) section above
 ;; returns the UUID assigned to this worker
 (worker! :app "app-name"
          :stream "my-stream"
          :checkpoint 600000
-         :credential {:access-key "aws-access-key"
-                      :secret-key "aws-secret-key"}
          :processor (fn [records]
                       (doseq [row records]
                         (println (:data row)

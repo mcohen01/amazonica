@@ -47,6 +47,7 @@ and the following dependency:
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
+* [Kinesis] (#kinesis)
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -682,6 +683,62 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   :policy-document policy)
 
 ```
+
+
+###Kinesis
+```clj
+(ns com.example
+  (:use [amazonica.aws.kinesis]))
+
+(create-stream "my-stream" 1)
+
+(list-streams)
+
+(describe-stream "my-stream")
+
+(merge-shards "my-stream" "shardId-000000000000" "shardId-000000000001")
+  
+(split-shard "my-stream" "shard-id" "new-starting-hash-key")
+
+
+;; write to the stream
+;; #'put-record takes the name of the stream, any value as data, and the partition key
+(let [data {:name "any data"
+            :col  #{"anything" "at" "all"}
+            :date now}]
+  (put-record "my-stream"
+              data
+              (str (UUID/randomUUID))))
+
+;; manually read from a specific shard
+;; this is not the preferred way to consume a shard
+(get-next-records
+  (get-shard-iterator "my-stream"
+                      shard-id
+                      "TRIM_HORIZON"))
+
+;; better way to consume a shard....create and run a worker
+;; :app :stream and :processor keys are required
+;; :credential and :checkpoint keys are optional
+;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
+;; if no :credential is provided the default authentication scheme is used, 
+;; see the [Authentication] #(authentication) section above
+;; returns the UUID assigned to this worker
+(worker {:app "app-name"
+         :stream "my-stream"
+         :checkpoint 600000
+         :credential {:access-key "aws-access-key"
+                      :secret-key "aws-secret-key"}
+         :processor (fn [records]
+                      (doseq [row records]
+                        (println (:data row)
+                                 (:sequence-number row)
+                                 (:partition-key row))))})
+
+(delete-stream "my-stream")
+
+```
+
 
 ###OpsWorks
 ```clj

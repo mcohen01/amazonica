@@ -724,16 +724,16 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; if no :credential is provided the default authentication scheme is used, 
 ;; see the [Authentication] #(authentication) section above
 ;; returns the UUID assigned to this worker
-(worker! {:app "app-name"
-          :stream "my-stream"
-          :checkpoint 600000
-          :credential {:access-key "aws-access-key"
-                       :secret-key "aws-secret-key"}
-          :processor (fn [records]
-                       (doseq [row records]
-                         (println (:data row)
-                                  (:sequence-number row)
-                                  (:partition-key row))))})
+(worker! :app "app-name"
+         :stream "my-stream"
+         :checkpoint 600000
+         :credential {:access-key "aws-access-key"
+                      :secret-key "aws-secret-key"}
+         :processor (fn [records]
+                      (doseq [row records]
+                        (println (:data row)
+                                 (:sequence-number row)
+                                 (:partition-key row)))))
 
 (delete-stream "my-stream")
 

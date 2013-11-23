@@ -81,10 +81,14 @@
 
 (intern *ns*
         (symbol "worker!")
-        (fn [{:keys [app stream processor checkpoint credentials]
-              :or {checkpoint 60000
-                   credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}}]
-          (let [next-check (atom 0)
+        (fn [& args]
+          (let [opts (if (associative? (first args))
+                         (first args)
+                         (apply hash-map args))
+                {:keys [app stream processor checkpoint credentials]
+                 :or   {checkpoint   60000
+                        credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}} opts
+                next-check (atom 0)
                 factory  (processor-factory processor checkpoint next-check)
                 uuid     (str (UUID/randomUUID))
                 creds    (amz/get-credentials credentials)

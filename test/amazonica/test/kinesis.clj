@@ -30,10 +30,9 @@
   
   (let [data {:name "any data"
               :col  #{"anything" "at" "all"}
-              :date now}]
-    (put-record my-stream
-                data
-                (str (UUID/randomUUID))))
+              :date now}
+        sn (:sequence-number (put-record my-stream data (str (UUID/randomUUID))))]
+    (put-record my-stream data (str (UUID/randomUUID)) sn))
   
   (Thread/sleep 3000)
   

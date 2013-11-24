@@ -26,7 +26,15 @@
 (alter-var-root
   #'amazonica.aws.kinesis/put-record
   (fn [f]
-    #(f %1 (ByteBuffer/wrap (nippy/freeze %2)) %3)))
+    (fn [& args]
+      (let [stream (first args)
+            data   (second args)
+            key    (nth args 2)
+            bytes  (ByteBuffer/wrap (nippy/freeze data))
+            putrec (partial f stream bytes key)]
+      (if (= 3 (count args))
+          (putrec)
+          (putrec (nth args 3)))))))
 
 (defn- unwrap
   [byte-buffer]

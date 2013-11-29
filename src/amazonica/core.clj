@@ -666,6 +666,7 @@
       (or (and (or (map? args)
                    (map? (first args)))
                (or (contains? (first args) :access-key)
+                   (contains? (first args) :endpoint)
                    (contains? (first args) :client-config)))
           (instance? AWSCredentialsProvider (first args))
           (instance? AWSCredentials (first args)))

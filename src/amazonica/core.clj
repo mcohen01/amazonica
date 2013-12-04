@@ -297,7 +297,7 @@
   defined by the AWS method signature. String conversion
   to Enum types (e.g. via valueOf()) is supported."
   [value type]
-  (if-not (instance? type val)
+  (if-not (instance? type value)
     (if (= java.lang.Enum (.getSuperclass type))
       (to-enum type value)
       (if-let [coercion (@coercions (if (.isPrimitive type)

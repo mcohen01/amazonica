@@ -103,17 +103,17 @@
 
 
 (defn- keys->cred
-  [access-key secret-key endpoint]
+  [access-key secret-key & [endpoint]]
   (let [credential {:access-key access-key
                     :secret-key secret-key}]
     (if-not (empty? endpoint)
-      (merge credential {:endpoint (first endpoint)})
+      (merge credential {:endpoint endpoint})
       credential)))
 
 (defn defcredential
   "Specify the AWS access key, secret key and optional
   endpoint to use on subsequent requests."
-  [access-key secret-key & endpoint]
+  [access-key secret-key & [endpoint]]
   (reset!
     credential
     (keys->cred access-key secret-key endpoint)))
@@ -707,7 +707,7 @@
       (fn []
         (try
           (let [c (if (thread-bound? #'*credentials*)
-                      (amazon-client clazz *credentials*)
+                      (amazon-client clazz *credentials* args)
                       @client)
                 java (.invoke method c arg-arr)
                 cloj (marshall java)]

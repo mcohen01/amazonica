@@ -36,6 +36,19 @@
 
   (create-bucket bucket1)
   
+  (list-buckets cred)
+  
+  (defcredential (:access-key cred)
+                    (:secret-key cred)
+                    (:endpoint cred))
+  
+  (list-buckets)
+  
+  (with-credential [(:access-key cred)
+                    (:secret-key cred)
+                    (:endpoint cred)]
+    (list-buckets)) 
+  
   ;; test the various invocations   
   (list-objects bucket1)
   

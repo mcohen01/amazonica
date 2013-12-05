@@ -307,7 +307,7 @@
         (throw (IllegalArgumentException.
                  (format "No coercion is available to turn %s into an object of type %s"
                          value type)))))
-    val))
+    value))
 
 (defn- default-value
   [class-name]

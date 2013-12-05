@@ -690,10 +690,11 @@
           (encryption-client (:encryption (apply hash-map (:args args)))
                              (or (:credential args) @credential)
                                  (:client-config args)))
-      (amazon-client
-        clazz
-        (or (:credential args) @credential)
-        (:client-config args))))
+      (if (= clazz TransferManager)
+          (TransferManager. (candidate-client AmazonS3Client args))
+          (amazon-client clazz
+                         (or (:credential args) @credential)
+                         (:client-config args)))))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
@@ -707,7 +708,7 @@
       (fn []
         (try
           (let [c (if (thread-bound? #'*credentials*)
-                      (amazon-client clazz *credentials* args)
+                      (candidate-client clazz (assoc args :credential *credentials*))
                       @client)
                 java (.invoke method c arg-arr)
                 cloj (marshall java)]

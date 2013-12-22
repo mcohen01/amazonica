@@ -712,10 +712,9 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ;; manually read from a specific shard
 ;; this is not the preferred way to consume a shard
-(get-next-records
-  (get-shard-iterator "my-stream"
-                      shard-id
-                      "TRIM_HORIZON"))
+(get-records :shard-iterator (get-shard-iterator "my-stream"
+                                                 shard-id
+                                                 "TRIM_HORIZON"))
 
 ;; better way to consume a shard....create and run a worker
 ;; :app :stream and :processor keys are required

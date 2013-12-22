@@ -23,9 +23,9 @@
         (recur (get-in (describe-stream my-stream)
                         [:stream-description :stream-status])))))
   
-  ;; (merge-shards my-stream "shardId-000000000000" "shardId-000000000001")
+  ;(split-shard my-stream "shardId-000000000000" "2")
   
-  ;; (split-shard my-stream "shard-already_pathid" "new-starting-hash-key")
+  ;(merge-shards my-stream "shardId-000000000001" "shardId-000000000002")
   
   
   (let [data {:name "any data"
@@ -39,10 +39,10 @@
   (let [shard (-> (describe-stream my-stream)
                   :stream-description
                   :shards
-                  first
+                  last
                   :shard-id)
         iter  (get-shard-iterator my-stream shard "TRIM_HORIZON")
-        resp  (get-next-records iter)
+        resp  (get-records :shard-iterator iter)
         rows  (:records resp)]
     (is (= #{"anything" "at" "all"}
            (-> rows first :data :col)))

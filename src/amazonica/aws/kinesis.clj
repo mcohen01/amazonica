@@ -43,16 +43,22 @@
     (nippy/thaw b)))
 
 (alter-var-root
-  #'amazonica.aws.kinesis/get-next-records
+  #'amazonica.aws.kinesis/get-shard-iterator
   (fn [f]
-    #(let [result (f (:shard-iterator %))
-           rows   (:records result)]
-      (assoc result
-             :records
-             (functor/fmap
-               (fn [record]
-                 (update-in record [:data] (fn [d] (unwrap d))))
-                 rows)))))
+    (fn [& args]
+      (:shard-iterator (apply f args)))))
+
+(alter-var-root
+  #'amazonica.aws.kinesis/get-records
+  (fn [f]
+    (fn [& args]
+      (let [result (apply f args)]
+        (assoc result
+               :records
+               (functor/fmap
+                 (fn [record]
+                   (update-in record [:data] (fn [d] (unwrap d))))
+                   (:records result)))))))
 
 (defn- marshall
   [record]
@@ -105,7 +111,7 @@
                      creds)
         config   (KinesisClientLibConfiguration. app
                                                  stream
-                                                 (:endpoint credentials)
+                                                 ;(:endpoint credentials)
                                                  provider
                                                  uuid)]
     (future (.run (Worker. factory config)))

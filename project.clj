@@ -7,17 +7,8 @@
   :target-path "target"
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/algo.generic "0.1.0"]
+                 [com.amazonaws/aws-java-sdk "1.6.10"]
+                 [com.amazonaws/amazon-kinesis-client "1.0.0"]
                  [joda-time "2.2"]
                  [robert/hooke "1.3.0"]
-                 [com.taoensso/nippy "2.5.0"]
-                 
-                 [local/aws-java-sdk "1.6.4"]
-                 [local/kinesis-client-lib "1.0"]                 
-                 [com.fasterxml.jackson.core/jackson-core "2.1.1"]
-                 [com.fasterxml.jackson.core/jackson-annotations "2.1.1"]
-                 [com.fasterxml.jackson.core/jackson-databind "2.1.1"]
-                 [commons-logging "1.1.1"]
-                 [commons-codec "1.3"]
-                 [commons-lang "2.4"]
-                 [org.apache.httpcomponents/httpclient "4.2"]
-                 [org.apache.httpcomponents/httpcore "4.2"]])
+                 [com.taoensso/nippy "2.5.0"]])

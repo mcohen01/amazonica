@@ -716,6 +716,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                                                  shard-id
                                                  "TRIM_HORIZON"))
 
+
 ;; better way to consume a shard....create and run a worker
 ;; :app :stream and :processor keys are required
 ;; :credentials and :checkpoint keys are optional

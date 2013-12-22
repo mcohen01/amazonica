@@ -25,8 +25,7 @@
   
   ;(split-shard my-stream "shardId-000000000000" "2")
   
-  ;(merge-shards my-stream "shardId-000000000001" "shardId-000000000002")
-  
+  ;(merge-shards my-stream "shardId-000000000001" "shardId-000000000002")  
   
   (let [data {:name "any data"
               :col  #{"anything" "at" "all"}

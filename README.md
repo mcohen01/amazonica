@@ -962,6 +962,8 @@ YourKit is kindly supporting the Amazonica open source project with its full-fea
 
 ![YourKit logo] (https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR_CQwZIosvDJU0Ntmt_70HsbwcrJpROK4Jbf35mQcsjXN0MXzU)
 
+[![Analytics](https://ga-beacon.appspot.com/UA-5925374-11/amazonica/readme?pixel)](https://github.com/mcohen01/amazonica)
+
 ### License
 
 Copyright (C) 2013 Michael Cohen

@@ -722,7 +722,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; :credentials and :checkpoint keys are optional
 
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
-;; for full checkpoint control, set :checkpoint to a suitably large value and return true from the 
+;; alternatively, supply a numeric value for duration in seconds between checkpoints
+;; for full checkpoint control, set :checkpoint to false and return true from the 
 ;; :processor function only when you want checkpoint to be called 
 
 ;; if no :credentials key is provided the default authentication scheme is used (preferable), 
@@ -731,7 +732,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; returns the UUID assigned to this worker
 (worker! :app "app-name"
          :stream "my-stream"
-         :checkpoint 600000
+         :checkpoint false ;; default to disabled checkpointing, can still force
+                           ;; a checkpoint by returning true from the processor function
          :processor (fn [records]
                       (doseq [row records]
                         (println (:data row)

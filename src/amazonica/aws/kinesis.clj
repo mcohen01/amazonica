@@ -90,8 +90,12 @@
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
           (if (or (processor (functor/fmap marshall (vec (seq records))))
-                  (> (System/currentTimeMillis) @next-check))
-              (do (reset! next-check (+' (System/currentTimeMillis) checkpoint))
+                  (and checkpoint
+                       (> (System/currentTimeMillis) @next-check)))
+              (do (if checkpoint
+                      (reset! next-check
+                              (+' (System/currentTimeMillis)
+                                  (*' 1000 checkpoint))))
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
 
 (defn worker!

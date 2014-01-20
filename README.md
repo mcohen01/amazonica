@@ -41,7 +41,7 @@ and the following dependency:
 * [DynamoDB] (#dynamodb)
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
-* ElastiCache
+* [ElastiCache] (#elasticache)
 * ElasticBeanstalk
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
@@ -590,6 +590,28 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")  
+
+```
+
+
+###EC2
+```clj
+(ns com.example
+  (:use [amazonica.aws.elasticache]))
+
+(describe-cache-engine-versions)
+
+(create-cache-cluster :engine "memcached"
+                      :engine-version "1.4.14"
+                      :num-cache-nodes 1
+                      :cache-node-type "cache.t1.micro"
+                      :cache-cluster-id "memcached-cluster")
+
+(describe-cache-clusters)
+
+(describe-events)
+
+(delete-cache-cluster :cache-cluster-id "memcached-cluster")
 
 ```
 

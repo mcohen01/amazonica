@@ -594,7 +594,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```
 
 
-###EC2
+###Elasticache
 ```clj
 (ns com.example
   (:use [amazonica.aws.elasticache]))

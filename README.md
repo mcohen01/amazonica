@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.2.1"]
+[amazonica "0.2.2"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.2.1</version>
+  <version>0.2.2</version>
 </dependency>
 ```
 
@@ -55,6 +55,7 @@ and the following dependency:
 * [S3] (#s3)
 * SimpleDB
 * SimpleEmail
+* [SimpleWorkflow] (#simpleworkflow)
 * [SNS] (#sns)
 * [SQS] (#sqs)
 * StorageGateway
@@ -900,6 +901,40 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   ((:add-progress-listener dl) listener))
 
 ```
+
+###SimpleWorkflow
+```clj
+
+(ns com.example
+  (:use [amazonica.aws.simpleworkflow]))
+
+(def domain "my-wkfl")
+(def version "1.0")
+
+(register-domain :name domain
+                 :workflow-execution-retention-period-in-days "30")
+
+(register-activity-type :domain domain
+                        :name "my-worflow"
+                        :version version)
+
+(register-workflow-type :domain domain
+                        :name "my-worflow"
+                        :version version)
+
+
+(deprecate-activity-type :domain domain
+                         :activity-type {:name "my-worflow"
+                                         :version version})
+
+(deprecate-workflow-type :domain domain
+                         :workflowType {:name "my-worflow"
+                                        :version version})
+
+(deprecate-domain :name domain)
+
+```
+
 
 ###SNS  
 ```clj

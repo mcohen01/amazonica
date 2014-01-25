@@ -1,4 +1,4 @@
-(defproject amazonica "0.2.2"
+(defproject amazonica "0.2.3"
   :description "A comprehensive Clojure client for the entire Amazon AWS api."
   :url "https://github.com/mcohen01/amazonica"
   :license {:name "Eclipse Public License"

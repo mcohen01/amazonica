@@ -30,13 +30,15 @@
       (let [stream (first args)
             data   (second args)
             key    (nth args 2)
-            bytes  (ByteBuffer/wrap (nippy/freeze data))
+            bytes  (if (instance? ByteBuffer data)
+                       data
+                       (ByteBuffer/wrap (nippy/freeze data)))
             putrec (partial f stream bytes key)]
       (if (= 3 (count args))
           (putrec)
           (putrec (nth args 3)))))))
 
-(defn- unwrap
+(defn unwrap
   [byte-buffer]
   (let [b (byte-array (.remaining byte-buffer))]
     (.get byte-buffer b)
@@ -52,19 +54,21 @@
   #'amazonica.aws.kinesis/get-records
   (fn [f]
     (fn [& args]
-      (let [result (apply f args)]
+      (let [deserializer (or (:deserializer (apply hash-map args))
+                             unwrap)
+            result (apply f args)]
         (assoc result
                :records
                (functor/fmap
                  (fn [record]
-                   (update-in record [:data] (fn [d] (unwrap d))))
+                   (update-in record [:data] (fn [d] (deserializer d))))
                    (:records result)))))))
 
-(defn- marshall
-  [record]
+(defn marshall
+  [deserializer record]
   {:sequence-number (.getSequenceNumber record)
    :partition-key   (.getPartitionKey record)
-   :data            (unwrap (.getData record))})
+   :data            (deserializer (.getData record))})
 
 (defn- mark-checkpoint [checkpointer _]
   (try
@@ -80,7 +84,7 @@
       false)))
 
 (defn- processor-factory
-  [processor checkpoint next-check]
+  [processor deserializer checkpoint next-check]
   (reify IRecordProcessorFactory
     (createProcessor [this]
       (reify IRecordProcessor
@@ -89,7 +93,8 @@
           (if (= "TERMINATE" reason)
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
-          (if (or (processor (functor/fmap marshall (vec (seq records))))
+          (if (or (processor (functor/fmap (partial marshall deserializer)
+                                           (vec (seq records))))
                   (and checkpoint
                        (> (System/currentTimeMillis) @next-check)))
               (do (if checkpoint
@@ -103,11 +108,12 @@
   (let [opts (if (associative? (first args))
                  (first args)
                  (apply hash-map args))
-        {:keys [app stream processor checkpoint credentials]
+        {:keys [app stream processor deserializer checkpoint credentials]
          :or   {checkpoint   60000
+                deserializer unwrap
                 credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}} opts
         next-check (atom 0)
-        factory  (processor-factory processor checkpoint next-check)
+        factory  (processor-factory processor deserializer checkpoint next-check)
         uuid     (str (UUID/randomUUID))
         creds    (amz/get-credentials credentials)
         provider (if (instance? AWSCredentials creds)

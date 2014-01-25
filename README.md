@@ -732,12 +732,31 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (put-record "my-stream"
               data
               (str (UUID/randomUUID))))
+;; if anything BUT a java.nio.ByteBuffer is supplied as the second
+;; argument, then the data will be transparently serialized and compressed
+;; using Nippy, and deserialized on calls to (get-records), or via a worker 
+;; (see below), provided that a deserializer function is NOT supplied. If
+;; you do pass a ByteBuffer instance as the data argument, then you'll need
+;; to also provide a deserializer function when fetching records.
+
+
+;; optional :deserializer function which will be passed the raw
+;; java.nio.ByteBuffer representing the data blob of each record
+(defn- get-raw-bytes [byte-buffer]
+  (let [b (byte-array (.remaining byte-buffer))]
+    (.get byte-buffer b)
+    b))
 
 ;; manually read from a specific shard
 ;; this is not the preferred way to consume a shard
-(get-records :shard-iterator (get-shard-iterator "my-stream"
+(get-records :deserializer get-raw-bytes
+             :shard-iterator (get-shard-iterator "my-stream"
                                                  shard-id
                                                  "TRIM_HORIZON"))
+;; if no :deserializer function is supplied then it will be assumed
+;; that the records were put into Kinesis by Amazonica, and hence,
+;; the data was serialized and compressed by Nippy (e.g. Snappy) 
+
 
 
 ;; better way to consume a shard....create and run a worker
@@ -1047,3 +1066,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [16]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/regions/Regions.html
 [17]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setRegion(com.amazonaws.regions.Region)
 [18]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setEndpoint(java.lang.String)
+[19]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/kinesis/model/Record.html#getData()

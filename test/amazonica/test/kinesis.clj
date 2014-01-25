@@ -1,5 +1,6 @@
 (ns amazonica.test.kinesis
   (:import org.joda.time.DateTime
+           java.nio.ByteBuffer
            java.util.UUID)
   (:use [clojure.test]
         [amazonica.aws.kinesis]))
@@ -35,19 +36,45 @@
   
   (Thread/sleep 3000)
   
-  (let [shard (-> (describe-stream my-stream)
-                  :stream-description
-                  :shards
-                  last
-                  :shard-id)
-        iter  (get-shard-iterator my-stream shard "TRIM_HORIZON")
+  (def shard (-> (describe-stream my-stream)
+                 :stream-description
+                 :shards
+                 last
+                 :shard-id))
+  
+  (let [iter  (get-shard-iterator my-stream shard "TRIM_HORIZON")
         resp  (get-records :shard-iterator iter)
         rows  (:records resp)]
     (is (= #{"anything" "at" "all"}
            (-> rows first :data :col)))
     (is (= "any data"
            (-> rows first :data :name)))
-    (is (.equals now (-> rows first :data :date))))
+    (is (.equals now (-> rows first :data :date))))  
+  
+  (def seq-number
+    (:sequence-number (put-record my-stream
+                                  (ByteBuffer/wrap (.getBytes "foobar"))
+                                  (str (UUID/randomUUID)))))
+  
+  (defn get-raw-bytes [byte-buffer]
+    (let [b (byte-array (.remaining byte-buffer))]
+      (.get byte-buffer b)
+      b))
+  
+  (Thread/sleep 3000)
+  
+  (-> (get-records :deserializer get-raw-bytes
+                   :shard-iterator 
+                   (get-shard-iterator my-stream
+                                       shard
+                                       "AT_SEQUENCE_NUMBER"
+                                       seq-number))
+      :records
+      first
+      :data
+      (String.)
+      (= "foobar")
+      (is))
   
   (delete-stream my-stream)
   

@@ -37,6 +37,25 @@
   (create-bucket bucket1)
   
   (list-buckets cred)
+
+  ; (def uuid-regex #"[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}")
+  ; (reduce
+  ;   (fn [m e]
+  ;     (if (re-find uuid-regex (:name e))
+  ;         (do
+  ;           (println (:name e))
+  ;           (reduce
+  ;             (fn [mm ee]
+  ;               (delete-object (:name e) (:key ee))
+  ;               mm)
+  ;             []
+  ;             (:object-summaries 
+  ;               (list-objects :bucket-name (:name e))))
+  ;           (delete-bucket (:name e))))
+  ;     m)
+  ;   []
+  ;   (list-buckets cred))
+  
   
   (defcredential (:access-key cred)
                     (:secret-key cred)

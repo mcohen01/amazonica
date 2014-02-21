@@ -1021,20 +1021,22 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (list-queues)
 
+(def queue (find-queue "my-queue"))
+
 (assign-dead-letter-queue 
-  (find-queue "my-queue")
+  queue
   (find-queue "DLQ")
   10)
 
-(send-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-              :delay-seconds 0
-              :message-body (str "test" (java.util.Date.)))
+(send-message queue "hello world")
+
+(receive-message queue)
 
 (receive-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
                  :wait-time-seconds 6
                  :max-number-of-messages 10
                  :delete true ;; deletes any received messages after receipt
-                 :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])
+                 :attribute-names ["All"])
 
 (delete-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
                 :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")

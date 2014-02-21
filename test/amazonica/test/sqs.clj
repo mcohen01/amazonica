@@ -13,8 +13,7 @@
                    :MaximumMessageSize 65536 ; bytes
                    :MessageRetentionPeriod 1209600 ; sec
                    :ReceiveMessageWaitTimeSeconds 10}) ; sec
-  (create-queue "my-queue")
-
+  
   (while (nil? (find-queue "my-queue")))
 
   (def q (find-queue "my-queue"))
@@ -31,6 +30,9 @@
   (send-message :queue-url q
                 :delay-seconds 0
                 :message-body (str "test" (java.util.Date.)))
+  
+  (send-message q "hello world")  
+  (receive-message q)
 
   (let [msgs (receive-message :queue-url q
                               :wait-time-seconds 6

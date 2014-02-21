@@ -38,7 +38,9 @@
 (defn- delete-on-receive
   [f cred & args]
   (let [arg-map (parse-args cred args)
-        attrs   (apply hash-map (:args arg-map))
+        attrs   (if (even? (count (:args arg-map)))
+                    (apply hash-map (:args arg-map))
+                    (:args arg-map))
         func    (if (contains? arg-map :cred)
                     {:rec-fn (partial f cred)
                      :del-fn (partial delete-message cred)}

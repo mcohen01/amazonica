@@ -15,22 +15,32 @@
         [amazonica.aws.autoscaling      :exclude (delete-tags
                                                   describe-tags
                                                   get-service-abbreviation)]
+        [amazonica.aws.datapipeline     :exclude (adjust-client-configuration)]
+        [amazonica.aws.dynamodbv2       :exclude (adjust-client-configuration)]
         [amazonica.aws.elasticache      :exclude (describe-events )]
         [amazonica.aws.elasticbeanstalk :exclude (describe-events)]
-        [amazonica.aws.rds              :exclude (describe-engine-default-parameters)]
+        [amazonica.aws.rds              :exclude (describe-engine-default-parameters
+                                                  describe-event-categories
+                                                  create-event-subscription
+                                                  delete-event-subscription
+                                                  describe-event-subscriptions
+                                                  modify-event-subscription)]
         [amazonica.aws.redshift         :exclude (describe-events)]
         [amazonica.aws.simpledb         :exclude (create-domain
                                                   delete-domain)]
         [amazonica.aws.sns              :exclude (add-permission
                                                   remove-permission)]
-        [amazonica.aws.storagegateway   :exclude (create-snapshot
+        [amazonica.aws.storagegateway   :exclude (adjust-client-configuration
+                                                  create-snapshot
                                                   delete-volume)]
         [amazonica.aws.glacier          :exclude (abort-multipart-upload
+                                                  adjust-client-configuration
                                                   complete-multipart-upload
                                                   initiate-multipart-upload
                                                   list-multipart-uploads
                                                   list-parts)]
-        [amazonica.aws.opsworks         :exclude (create-stack
+        [amazonica.aws.opsworks         :exclude (adjust-client-configuration
+                                                  create-stack
                                                   delete-stack
                                                   describe-instances
                                                   describe-stacks
@@ -41,9 +51,7 @@
           cloudfront
           cloudsearch
           cloudwatch
-          datapipeline
-          directconnect
-          dynamodb
+          dynamodbv2
           ec2
           elasticloadbalancing
           elasticmapreduce
@@ -54,5 +62,5 @@
           simpleemail
           sqs]))
 
-;; just load the namespace to confirm we don't have
-;; any naming conflicts with interned Vars
+; ;; just load the namespace to confirm we don't have
+; ;; any naming conflicts with interned Vars

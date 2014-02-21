@@ -736,6 +736,7 @@
                 (use-aws-request-bean? method args)
                 (and
                   (= num (count args))
+                  (not (keyword? (first args)))
                   (not (aws-package? (first types)))))
             method
             false)))

@@ -1,33 +1,54 @@
 (ns amazonica.test.sqs
   (:use [clojure.test]
-        [amazonica.aws.sqs]))
+        [amazonica.aws.sqs])
+  (:import com.amazonaws.services.sqs.model.QueueDoesNotExistException))
 
 (deftest sqs []
-  
+
+  (list-queues)
+
   (create-queue :queue-name "my-queue"
                 :attributes
                   {:VisibilityTimeout 30 ; sec
                    :MaximumMessageSize 65536 ; bytes
                    :MessageRetentionPeriod 1209600 ; sec
                    :ReceiveMessageWaitTimeSeconds 10}) ; sec
+  (create-queue "my-queue")
 
-  (def q (get (:queue-urls (list-queues)) 0))
+  (while (nil? (find-queue "my-queue")))
+
+  (def q (find-queue "my-queue"))
+
+  (get-queue-attributes q)
+  (get-queue-attributes q ["All"])
+
+  (create-queue "DLQ")
+  (while (nil? (find-queue "DLQ")))
+  (assign-dead-letter-queue q
+                            (find-queue "DLQ")
+                            10)
 
   (send-message :queue-url q
                 :delay-seconds 0
                 :message-body (str "test" (java.util.Date.)))
-  
+
   (let [msgs (receive-message :queue-url q
                               :wait-time-seconds 6
                               :max-number-of-messages 10
                               :delete true
-                              :attribute-names ["SenderId" "ApproximateFirstReceiveTimestamp" "ApproximateReceiveCount" "SentTimestamp"])]
+                              :attribute-names ["All"])]
     (is (= 1 (count (:messages msgs)))))
 
   (let [msgs (receive-message :queue-url q
                               :wait-time-seconds 6
                               :max-number-of-messages 10)]
     (is (= 0 (count (:messages msgs)))))
-  
+
   (delete-queue :queue-url q)
+  (try
+    (delete-queue q)
+    (catch QueueDoesNotExistException e))
+
+  (-> "DLQ" find-queue delete-queue)
+
 )

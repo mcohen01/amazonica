@@ -21,10 +21,12 @@
         func    (if (contains? arg-map :cred)
                     (partial f cred)
                     f)
-        attrs   (apply hash-map (:args arg-map))]
-    (apply func
-           (mapcat identity
-                   (update-in attrs [:attributes] stringify-keys)))))
+        attrs   (if (even? (count (:args arg-map)))
+                    (mapcat identity
+                            (-> (apply hash-map (:args arg-map))
+                                (update-in [:attributes] stringify-keys)))
+                    (:args arg-map))]
+    (apply func attrs)))
 
 (defn- message-ids
   [messages]
@@ -50,6 +52,30 @@
                        (assoc attrs :receipt-handle id)))))
     rval))
 
+(alter-var-root
+  #'amazonica.aws.sqs/get-queue-attributes
+  (fn [f]
+    (fn [& args]
+      (let [a (if (or (= 1 (count args))
+                      (nil? (last args))
+                      (empty? (last args)))
+                  (seq (vector (first args) ["All"]))
+                  args)]
+      (:attributes (apply f a))))))
+
 (add-hook #'create-queue #'attr-keys->str)
 
 (add-hook #'receive-message #'delete-on-receive)
+
+(defn find-queue [s]
+  (some #(if (.contains % s) %)
+             (:queue-urls (list-queues))))
+
+(defn arn [q] (-> q get-queue-attributes :QueueArn))
+
+(defn assign-dead-letter-queue
+  [queue dlq max-receive-count]
+  (set-queue-attributes
+    queue {"RedrivePolicy" 
+           (str "{\"maxReceiveCount\": " max-receive-count ",
+                  \"deadLetterTargetArn\": \"" (arn dlq) "\"}")}))

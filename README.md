@@ -1014,8 +1014,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                  :MaximumMessageSize 65536 ; bytes
                  :MessageRetentionPeriod 1209600 ; sec
                  :ReceiveMessageWaitTimeSeconds 10}) ; sec
+;; full list of attributes at 
+;; http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/sqs/model/GetQueueAttributesRequest.html
+
+(create-queue "DLQ")
 
 (list-queues)
+
+(assign-dead-letter-queue 
+  (find-queue "my-queue")
+  (find-queue "DLQ")
+  10)
 
 (send-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
               :delay-seconds 0
@@ -1030,7 +1039,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (delete-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
                 :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")
 
-(delete-queue :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue")  
+(-> "my-queue" find-queue delete-queue)
+(-> "DLQ" find-queue delete-queue)
 
 ```  
 

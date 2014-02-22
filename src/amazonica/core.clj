@@ -726,7 +726,7 @@
 (defn- types-match-args
   [args method]
   (let [types (.getParameterTypes method)
-        pairs (apply hash-map (interleave types args))]
+        pairs (partition 2 (interleave types args))]
     (if (and (= (count types) (count args))
              (every? #(instance? (first %) (last %)) pairs))
         method)))

@@ -12,40 +12,41 @@
         [clojure.pprint]
         [clojure.java.shell]
         [amazonica.core]
-        [amazonica.aws.autoscaling      :exclude (delete-tags
+        [amazonica.aws.autoscaling      :exclude [delete-tags
                                                   describe-tags
-                                                  get-service-abbreviation)]
-        [amazonica.aws.datapipeline     :exclude (adjust-client-configuration)]
-        [amazonica.aws.dynamodbv2       :exclude (adjust-client-configuration)]
-        [amazonica.aws.elasticache      :exclude (describe-events )]
-        [amazonica.aws.elasticbeanstalk :exclude (describe-events)]
-        [amazonica.aws.rds              :exclude (describe-engine-default-parameters
+                                                  get-service-abbreviation]]
+        [amazonica.aws.datapipeline     :exclude [adjust-client-configuration]]
+        [amazonica.aws.dynamodbv2       :exclude [adjust-client-configuration]]
+        [amazonica.aws.elasticache      :exclude [describe-events]]
+        [amazonica.aws.elasticbeanstalk :exclude [describe-events]]
+        [amazonica.aws.rds              :exclude [describe-engine-default-parameters
                                                   describe-event-categories
                                                   create-event-subscription
                                                   delete-event-subscription
                                                   describe-event-subscriptions
-                                                  modify-event-subscription)]
-        [amazonica.aws.redshift         :exclude (describe-events)]
-        [amazonica.aws.simpledb         :exclude (create-domain
-                                                  delete-domain)]
-        [amazonica.aws.sns              :exclude (add-permission
-                                                  remove-permission)]
-        [amazonica.aws.storagegateway   :exclude (adjust-client-configuration
+                                                  modify-event-subscription]]
+        [amazonica.aws.redshift         :exclude [describe-events]]
+        [amazonica.aws.simpledb         :exclude [create-domain
+                                                  delete-domain]]
+        [amazonica.aws.sns              :exclude [add-permission
+                                                  remove-permission]]
+        [amazonica.aws.storagegateway   :exclude [adjust-client-configuration
                                                   create-snapshot
-                                                  delete-volume)]
-        [amazonica.aws.glacier          :exclude (abort-multipart-upload
+                                                  delete-volume]]
+        [amazonica.aws.glacier          :exclude [abort-multipart-upload
                                                   adjust-client-configuration
                                                   complete-multipart-upload
                                                   initiate-multipart-upload
                                                   list-multipart-uploads
-                                                  list-parts)]
-        [amazonica.aws.opsworks         :exclude (adjust-client-configuration
+                                                  list-parts]]
+        [amazonica.aws.opsworks         :exclude [adjust-client-configuration
                                                   create-stack
                                                   delete-stack
                                                   describe-instances
                                                   describe-stacks
                                                   describe-volumes
-                                                  update-stack)]
+                                                  update-stack]]
+        [amazonica.aws.elasticmapreduce :exclude [adjust-client-configuration]]
         [amazonica.aws
           cloudformation
           cloudfront
@@ -54,7 +55,6 @@
           dynamodbv2
           ec2
           elasticloadbalancing
-          elasticmapreduce
           identitymanagement
           route53
           s3

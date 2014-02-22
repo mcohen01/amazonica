@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.2.4"]
+[amazonica "0.2.5"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.2.4</version>
+  <version>0.2.5</version>
 </dependency>
 ```
 
@@ -1030,16 +1030,18 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (send-message queue "hello world")
 
-(receive-message queue)
+(def msgs (receive-message queue))
 
-(receive-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
+(delete-message (-> msgs 
+                    :messages 
+                    first
+                    (assoc :queue-url q)))
+
+(receive-message :queue-url queue
                  :wait-time-seconds 6
                  :max-number-of-messages 10
                  :delete true ;; deletes any received messages after receipt
                  :attribute-names ["All"])
-
-(delete-message :queue-url "https://sqs.us-east-1.amazonaws.com/676820690883/my-queue"
-                :receipt-handle "0NNAq8PwvXuydXZkpmJu64SnW7tDdNDFpL5gCqwSvdh+yXfzzX7jRTUXOOiSdDfarBtUFmjwjjwYgsKMdmFxWRIEw/tEGV3baAglZ25IT3CMKwFJEDfufjv1sQIM9BMd9LtxSUD1WBkHK3k4Qq5Qf/a4hn2WONRKeelLH0WldkTkX756soBPSc0YHjB6a2zqNVH04iJmZVJCmy2Hd4sOF0cEaT1GRkSiHzNJzQIVpg4sij0swLEwvt68hM5ogLklfRAbd8Aeow1u7Gd9Y+cwWu7deyfVVxwp1z9OdHsr1+4=")
 
 (-> "my-queue" find-queue delete-queue)
 (-> "DLQ" find-queue delete-queue)

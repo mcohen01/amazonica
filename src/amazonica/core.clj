@@ -635,7 +635,9 @@
         (into-array Object
           (map #(if (and (aws-package? %2) (seq (.getConstructors %2)))
                   ; must be a concrete, instantiatable class
-                  (create-bean %2 %)
+                  (if (contains? @coercions %2)
+                      (coerce-value % %2)
+                      (create-bean %2 %))
                   (coerce-value % %2))
                (vec args)
                types))
@@ -721,26 +723,35 @@
           (catch InvocationTargetException ite
             (throw (.getTargetException ite))))))))
 
+(defn- types-match-args
+  [args method]
+  (let [types (.getParameterTypes method)
+        pairs (apply hash-map (interleave types args))]
+    (if (every? #(instance? (first %) (last %)) pairs)
+        method)))
+        
 (defn- best-method
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
   (let [args (:args (args-from arg))
         methods (filter #(not (Modifier/isPrivate (.getModifiers %))) methods)]
-    (some
-      (fn [method]
-        (let [types (.getParameterTypes method)
-              num   (count types)]
-          (if (or
-                (and (empty? args) (= 0 num))
-                (use-aws-request-bean? method args)
-                (and
-                  (= num (count args))
-                  (not (keyword? (first args)))
-                  (not (aws-package? (first types)))))
-            method
-            false)))
-      methods)))
+    (if-let [m (some (partial types-match-args args) methods)]
+      m
+      (some
+        (fn [method]
+          (let [types (.getParameterTypes method)
+                num   (count types)]
+            (if (or
+                  (and (empty? args) (= 0 num))
+                  (use-aws-request-bean? method args)
+                  (and
+                    (= num (count args))
+                    (not (keyword? (first args)))
+                    (not (aws-package? (first types)))))
+              method
+              false)))
+        methods))))
 
 (defn- intern-function
   "Interns into ns, the symbol mapped to a Clojure function

@@ -727,7 +727,8 @@
   [args method]
   (let [types (.getParameterTypes method)
         pairs (apply hash-map (interleave types args))]
-    (if (every? #(instance? (first %) (last %)) pairs)
+    (if (and (= (count types) (count args))
+             (every? #(instance? (first %) (last %)) pairs))
         method)))
         
 (defn- best-method

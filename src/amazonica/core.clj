@@ -725,10 +725,9 @@
 
 (defn- types-match-args
   [args method]
-  (let [types (.getParameterTypes method)
-        pairs (partition 2 (interleave types args))]
+  (let [types (.getParameterTypes method)]
     (if (and (= (count types) (count args))
-             (every? #(instance? (first %) (last %)) pairs))
+             (every? identity (map #(instance? %1 %2) types args)))
         method)))
         
 (defn- best-method

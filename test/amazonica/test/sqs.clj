@@ -32,7 +32,13 @@
                 :message-body (str "test" (java.util.Date.)))
   
   (send-message q "hello world")  
-  (receive-message q)
+  
+  (def msgs (receive-message q))
+  
+  (delete-message (-> msgs 
+                      :messages 
+                      first
+                      (assoc :queue-url q)))
 
   (let [msgs (receive-message :queue-url q
                               :wait-time-seconds 6

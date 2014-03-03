@@ -56,6 +56,7 @@
   ;   []
   ;   (list-buckets cred))
   
+  (list-buckets)
   
   (defcredential (:access-key cred)
                     (:secret-key cred)
@@ -166,9 +167,7 @@
                             :key "some-key"
                             :upload-id "my-upload")
     (catch Exception e
-      (is (.startsWith
-            (:message (ex->map e)) 
-            "The specified upload does not exist."))))  
+      (is (= (:error-code (ex->map e)) "NoSuchUpload"))))
 
   (try
     (complete-multipart-upload cred 
@@ -179,9 +178,7 @@
                                  {:part-number 3
                                   :etag "my-etag"}])
     (catch Exception e
-      (is (.startsWith
-            (:message (ex->map e)) 
-            "The specified upload does not exist."))))
+      (is (is (= (:error-code (ex->map e)) "NoSuchUpload")))))
   
   
   (delete-object bucket1 "jenny")

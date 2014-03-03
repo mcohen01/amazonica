@@ -727,7 +727,7 @@
   [args method]
   (let [types (.getParameterTypes method)]
     (if (and (= (count types) (count args))
-             (every? identity (map #(instance? %1 %2) types args)))
+             (every? identity (map instance? types args)))
         method)))
         
 (defn- best-method

@@ -102,7 +102,7 @@
     ; addRequestHandler???
 
 
-(defn- keys->cred
+(defn keys->cred
   [access-key secret-key & [endpoint]]
   (let [credential {:access-key access-key
                     :secret-key secret-key}]
@@ -122,8 +122,8 @@
   "Per invocation binding of credentials for ad-hoc
   service calls using alternate user/password combos
   (and endpoints)."
-  [[a b c] & body]
-  `(binding [*credentials* ~(keys->cred a b c)]
+  [cred & body]
+  `(binding [*credentials* (apply keys->cred ~cred)]
     (do ~@body)))
 
 (declare new-instance)
@@ -462,7 +462,7 @@
   [types col]
   (let [type (last (or (:actual types)
                        (:generic types)))
-        pp   (partial populate types :actual)]    
+        pp   (partial populate types :actual)]
     (if (aws-package? type)
         (if (map? col)
             (if (contains? types :actual)
@@ -473,7 +473,7 @@
                     (apply assoc {}
                            (interleave (fmap kw->str (apply vector (keys col)))
                                        [(fmap #(populate {:generic [type]}
-                                                              :generic 
+                                                              :generic
                                                               %)
                                                   (first (apply vector (vals col))))])))
                 (populate types :generic col))
@@ -704,7 +704,7 @@
    the Java method on the Amazon*Client class."
   [clazz method & arg]
   (binding [*client-class* clazz]
-    (let [args    (args-from arg)          
+    (let [args    (args-from arg)
           arg-arr (prepare-args method (:args args))
           client  (delay (candidate-client clazz args))]
       (fn []
@@ -729,7 +729,7 @@
     (if (and (= (count types) (count args))
              (every? identity (map instance? types args)))
         method)))
-        
+
 (defn- best-method
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."

@@ -579,8 +579,8 @@
 
 (extend-protocol IMarshall
   nil
-  (marshall [obj]
-    nil)
+  (marshall [obj] nil)
+  
   java.util.Map
   (marshall [obj]
     (if-not (empty? obj)
@@ -590,21 +590,24 @@
                 (apply vector (keys obj)))
           (fmap marshall
                 (apply vector (vals obj)))))))
+  
   java.util.Collection
-    (marshall [obj]
-      (if (instance? clojure.lang.IPersistentSet obj)
-        obj
-        (fmap marshall (apply vector obj))))
+  (marshall [obj]
+    (if (instance? clojure.lang.IPersistentSet obj)
+      obj
+      (fmap marshall (apply vector obj))))
+  
   java.util.Date
-    (marshall [obj]
-      (DateTime. (.getTime obj)))
+  (marshall [obj] (DateTime. (.getTime obj)))
+  
   ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
   ; .doesBucketExist, which wreak havoc on Clojure truthiness
   Boolean
-    (marshall [obj] (.booleanValue obj))
+  (marshall [obj] (if obj (.booleanValue obj)))
+  
   Object
-    (marshall [obj]
-      (if (aws-package? (class obj))
+  (marshall [obj]
+    (if (aws-package? (class obj))
         (get-fields obj)
         obj)))
 

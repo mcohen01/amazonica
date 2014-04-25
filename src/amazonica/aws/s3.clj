@@ -19,6 +19,26 @@
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$;")
 
 (extend-protocol IMarshall
+  ObjectMetadata
+  (marshall [obj]
+    {:cache-control           (.getCacheControl obj)
+     :content-disposition     (.getContentDisposition obj)
+     :content-encoding        (.getContentEncoding obj)
+     :content-length          (.getContentLength obj)
+     :content-md5             (.getContentMD5 obj)
+     :content-type            (.getContentType obj)
+     :etag                    (.getETag obj)
+     :expiration-time         (.getExpirationTime obj)
+     :expiration-time-rule-id (.getExpirationTimeRuleId obj)
+     :http-expires-date       (marshall (.getHttpExpiresDate obj))
+     :instance-length         (.getInstanceLength obj)
+     :last-modified           (marshall (.getLastModified obj))
+     :ongoing-restore         (marshall (.getOngoingRestore obj))
+     ;; :raw-metadata            (.getRawMetadata obj)
+     :restore-expiration-time (marshall (.getRestoreExpirationTime obj))
+     :server-side-encryption  (.getServerSideEncryption obj)
+     :user-metadata           (marshall (.getUserMetadata obj))
+     :version-id              (.getVersionId obj)})
   S3Object
   (marshall [obj]
     {:bucket-name       (.getBucketName obj)
@@ -26,8 +46,7 @@
      :input-stream      (.getObjectContent obj)
      :object-content    (.getObjectContent obj)
      :redirect-location (.getRedirectLocation obj)
-     :object-metadata   (marshall
-                          (.getObjectMetadata obj))}))
+     :object-metadata   (marshall (.getObjectMetadata obj))}))
 
 (register-coercions
   ObjectMetadata
@@ -49,6 +68,8 @@
         (.setExpirationTime om (to-date et)))
       (when-let [id (:expiration-time-rule-id col)]
         (.setExpirationTimeRuleId om id))
+      (when-let [he (:http-expires-date col)]
+        (.setHttpExpiresDate om he))
       (when-let [rt (:restore-expiration-time col)]
         (.setRestoreExpirationTime om (to-date rt)))
       (when-let [sse (:server-side-encryption col)]

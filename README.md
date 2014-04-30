@@ -1,9 +1,9 @@
 ![AWS logo] (claws.png)
 # `Amazonica`
 
-A comprehensive Clojure client for the entire [Amazon AWS api] [1].   
+A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
-## Installation  
+## Installation
 
 Leiningen coordinates:
 ```clj
@@ -35,6 +35,7 @@ and the following dependency:
 * [CloudFormation] (#cloudformation)
 * [CloudFront] (#cloudfront)
 * [CloudSearch] (#cloudsearch)
+* [CloudSearchV2] (#cloudsearchv2)
 * [CloudWatch] (#cloudwatch)
 * [DataPipeline] (#datapipeline)
 * DirectConnect
@@ -60,9 +61,9 @@ and the following dependency:
 * [SQS] (#sqs)
 * StorageGateway
 
-    
-## Documentation   
-[Minimum Viable Snippet] [9]:  
+
+## Documentation
+[Minimum Viable Snippet] [9]:
 ```clj
 (ns com.example
   (:use [amazonica.aws.ec2]))
@@ -71,18 +72,18 @@ and the following dependency:
 
 (create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")
-```  
+```
 
-Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].  
+Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].
 
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
 (create-snapshot :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
-which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.   
+which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.
 
-All of the AWS Java apis (except S3) follow this pattern, either having a single implementation method which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.   
+All of the AWS Java apis (except S3) follow this pattern, either having a single implementation method which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.
 
 For example, AmazonEC2Client's [describeImages()] [7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest] [8]. So the Clojure invocation would look like
 ```clj
@@ -92,17 +93,17 @@ or
 ```clj
 (describe-images :owners ["self"]
                  :image-ids ["ami-f00f9699" "ami-e0d30c89"])
-```   
+```
 
-### Conversion of Returned Types  
+### Conversion of Returned Types
 
-`java.util.Collections` are converted to the corresponding Clojure collection type. `java.util.Maps` are converted to `clojure.lang.IPersistentMaps`, `java.util.Lists` are converted to `clojure.lang.IPersistentVectors`, etc.  
+`java.util.Collections` are converted to the corresponding Clojure collection type. `java.util.Maps` are converted to `clojure.lang.IPersistentMaps`, `java.util.Lists` are converted to `clojure.lang.IPersistentVectors`, etc.
 
-`java.util.Dates` are automatically converted to Joda Time `DateTime` instances.   
+`java.util.Dates` are automatically converted to Joda Time `DateTime` instances.
 
-Amazon AWS object types are returned as Clojure maps, with conversion taking place recursively, so, "Clojure data all the way down."  
+Amazon AWS object types are returned as Clojure maps, with conversion taking place recursively, so, "Clojure data all the way down."
 
-For example, a call to 
+For example, a call to
 ```clj
 (describe-instances)
 ```
@@ -152,16 +153,16 @@ invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services
 ```
 If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` returns a `java.util.List` of `GroupIdentifiers`, which is converted to a vector of maps containing keys `:group-name` and `:group-id`, under the `:groups` key. Ditto for :block-device-mappings and :tags, and so and so on...
 
-Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling 
+Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling
 ```clj
 ; dynamodb
 (list-tables)
 ```
-by default would return 
+by default would return
 ```clj
 {:table-names ["TableOne" "TableTwo" "TableThree"]}
 ```
-However, if you call 
+However, if you call
 ```clj
 (set-root-unwrapping! true)
 ```
@@ -173,19 +174,19 @@ then single keyed top level maps will be "unwrapped" like so:
 
 
 
-The returned data can be "round tripped" as well. So the returned Clojure data structures can be supplied as arguments to function calls which delegate to Java methods taking the same object type as an argument. See the section below for more on this.  
+The returned data can be "round tripped" as well. So the returned Clojure data structures can be supplied as arguments to function calls which delegate to Java methods taking the same object type as an argument. See the section below for more on this.
 
-### Argument Coercion   
+### Argument Coercion
 
-Coercion of any types that are part of the java.lang wrapper classes happens transparently. So for example, Clojure's preferred longs are automatically converted to ints where required. 
+Coercion of any types that are part of the java.lang wrapper classes happens transparently. So for example, Clojure's preferred longs are automatically converted to ints where required.
 
-Clojure data structures automatically participate in the Java Collections abstractions, and so no explicit coercion is necessary. Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes.  
+Clojure data structures automatically participate in the Java Collections abstractions, and so no explicit coercion is necessary. Typically when service calls take collections as parameter arguments, as in the case above, the values in the collections are most often instances of the Java wrapper classes.
 
-When complex objects consisting of types outside of those in the `java.lang` package are required as argument parameters, smart conversions are attempted based on the argument types of the underlying Java method signature. Methods requiring a `java.util.Date` argument can take Joda Time `org.joda.time.base.AbstractInstants`, longs, or Strings (default pattern is "yyyy-MM-dd"), with conversion happening automatically. 
-```clj 
+When complex objects consisting of types outside of those in the `java.lang` package are required as argument parameters, smart conversions are attempted based on the argument types of the underlying Java method signature. Methods requiring a `java.util.Date` argument can take Joda Time `org.joda.time.base.AbstractInstants`, longs, or Strings (default pattern is "yyyy-MM-dd"), with conversion happening automatically.
+```clj
 (set-date-format! "MM-dd-yyyy")
-``` 
-can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.  
+```
+can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.
 
 In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
@@ -215,25 +216,25 @@ and return the following Clojure collection:
    :region-name "us-east-1",
    :zone-name "us-east-1e",
    :messages []}]}
-```  
+```
 
 
-### Extension points  
-Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished via the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the  
-```clj 
-(amazonica.core/register-coercions) 
-``` 
-function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:  
+### Extension points
+Clojure apis built specifically to wrap a Java client, such as this one, often provide "conveniences" for the user of the api, to remove boilerplate. In Amazonica this is accomplished via the IMarshall protocol, which defines the contract for converting the returned Java result from the AWS service call to Clojure data, and the
+```clj
+(amazonica.core/register-coercions)
+```
+function, which takes a map of class/function pairs defining how a value should be coerced to a specific AWS Java bean. You can find a good example of this in the `amazonica.aws.dynamodb` namespace. Consider the following DynamoDB service call:
 ```clj
 (get-item :table-name "MyTable"
           :key "foo")
 ```
-The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:  
+The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:
 ```clj
 (get-item :table-name "TestTable"
           :key {:hash-key-element {:s "foo"}})
-```  
-Note that either form will work. This allows contributors to the library to incrementally evolve the api independently from the core of the library, as well as maintain backward compatibility of existing code written against prior versions of the library which didn't contain the conveniences. 
+```
+Note that either form will work. This allows contributors to the library to incrementally evolve the api independently from the core of the library, as well as maintain backward compatibility of existing code written against prior versions of the library which didn't contain the conveniences.
 
 
 ### Authentication
@@ -242,7 +243,7 @@ The default authentication scheme is to use the [chained Provider class] [15] fr
 - Java System Properties - aws.accessKeyId and aws.secretKey
 - Instance profile credentials delivered through the Amazon EC2 metadata service
 
-Note that in order for the Instance Profile Metadata to be found, you must have launched the instance with a provided IAM role, and the same permissions as the IAM Role the instance was launched with will apply. 
+Note that in order for the Instance Profile Metadata to be found, you must have launched the instance with a provided IAM role, and the same permissions as the IAM Role the instance was launched with will apply.
 
 See the [AWS docs] [14] for reference.
 
@@ -255,13 +256,13 @@ Addtionally, all of the functions may take as their first argument an optional m
            :endpoint   "us-west-1"})
 
 (describe-instances cred)
-```  
+```
 
-As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:  
+As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
-```  
-All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential)` macro, which takes a vector of key pair credentials and an optional endpoint, like so:  
+```
+All subsequent API calls will use the specified credential. If you need to execute a service call with alternate credentials, or against a different region than the one passed to `(defcredential)`, you can wrap these ad-hoc calls in the `(with-credential)` macro, which takes a vector of key pair credentials and an optional endpoint, like so:
 ```clj
 (defcredential "account-1-aws-access-key" "aws-secret-key" "us-west-1")
 
@@ -274,7 +275,7 @@ All subsequent API calls will use the specified credential. If you need to execu
 
 (describe-images :owners ["self"])
 ; returns images belonging to account-1
-```  
+```
 
 ### Client configuration
 
@@ -285,7 +286,7 @@ You can supply a `:client-config` entry in the credentials map to configure the 
 ```
 
 
-### Exception Handling  
+### Exception Handling
 All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catch exceptions you can convert the AWS object to a Clojure map like so:
 ```clj
 (try
@@ -301,7 +302,7 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;  :service-name "AmazonEC2",
 ;  :message
 ;  "Value (vol-ahsg23h) for parameter volumeId is invalid. Expected: 'vol-...'.",
-;  :stack-trace "Status Code: 400, AWS Service: AmazonEC2, AWS Request ID: a5b0340a-8f37-4122-941c-ed8d5472b11d, AWS Error Code: InvalidParameterValue, AWS Error Message: Value (vol-ahsg23h) for parameter volumeId is invalid. Expected: 'vol-...'. 
+;  :stack-trace "Status Code: 400, AWS Service: AmazonEC2, AWS Request ID: a5b0340a-8f37-4122-941c-ed8d5472b11d, AWS Error Code: InvalidParameterValue, AWS Error Message: Value (vol-ahsg23h) for parameter volumeId is invalid. Expected: 'vol-...'.
 ;  at com.amazonaws.http.AmazonHttpClient.handleErrorResponse(AmazonHttpClient.java:644)
 ;   at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:338)
 ;   at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:190)
@@ -309,8 +310,8 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;   at com.amazonaws.services.ec2.AmazonEC2Client.createSnapshot(AmazonEC2Client.java:1531)
 ;   .....
 ```
-### Performance  
-Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]  
+### Performance
+Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]
 
 ![Benchmark results](https://raw.github.com/mcohen01/amazonica-benchmark/master/reflection.png)
 
@@ -318,7 +319,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ## Examples
 
-###Autoscaling  
+###Autoscaling
 
 ```clj
 (ns com.example
@@ -346,21 +347,21 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (describe-auto-scaling-instances)
 
-```  
+```
 
-###CloudFormation  
+###CloudFormation
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudformation]))
-      
+
 (create-stack :stack-name "my-stack"
               :template-url "abcd1234.s3.amazonaws.com")
 
-(describe-stack-resources)  
+(describe-stack-resources)
 
 ```
 
-###CloudFront  
+###CloudFront
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudfront]))
@@ -375,20 +376,20 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                        {:enabled false
                         :include-cookies false
                         :bucket "abcd1234.s3.amazonaws.com"
-                        :prefix "cflog_"}                     
+                        :prefix "cflog_"}
                       :caller-reference 12345
                       :aliases
                        {:items ["m.example.com" "www.example.com"]
                         :quantity 2}
                       :cache-behaviors
-                       {:quantity 0 
+                       {:quantity 0
                         :items []}
                       :comment "example"
                       :default-cache-behavior
                        {:target-origin-id "MyOrigin"
                         :forwarded-values
-                          {:query-string false 
-                           :cookies 
+                          {:query-string false
+                           :cookies
                              {:forward "none"}}}
                        :trusted-signers
                          {:enabled false
@@ -401,18 +402,33 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudSearch  
+###CloudSearch
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudsearch]))
 
 (create-domain :domain-name "my-index")
 
-(index-documents :domain-name "my-index")  
+(index-documents :domain-name "my-index")
 
 ```
 
-###CloudWatch  
+###CloudSearchV2
+```clj
+(ns com.example
+  (:use [amazonica.aws.cloudsearchv2]))
+
+(create-domain :domain-name "my-index")
+
+(index-documents :domain-name "my-index")
+
+(build-suggesters :domain-name "my-index")
+
+(list-domains)
+
+```
+
+###CloudWatch
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudwatch]))
@@ -422,11 +438,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                   :evaluation-periods 5
                   :period 60
                   :metric-name "CPU"
-                  :threshold "50%")  
+                  :threshold "50%")
 
 ```
 
-###DataPipeline  
+###DataPipeline
 ```clj
 (ns com.example
   (:use [amazonica.aws.datapipeline]))
@@ -438,40 +454,40 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                           :pipeline-objects [{:name "my-pipeline-object"
                                               :id "my-pl-object-id"
                                               :fields [{:key "some-key"
-                                                        :string-value "foobar"}]}])  
+                                                        :string-value "foobar"}]}])
 
 (list-pipelines)
 
-(delete-pipeline :pipeline-id pid)  
+(delete-pipeline :pipeline-id pid)
 
 ```
 
-###DynamoDB  
+###DynamoDB
 ```clj
 (ns com.example
   (:use [amazonica.aws.dynamodb]))
 
 (create-table :table-name "TestTable"
               :key-schema {:hash-key-element {:attribute-name "id"
-                                              :attribute-type "S"}}              
+                                              :attribute-type "S"}}
               :provisioned-throughput {:read-capacity-units 1
                                        :write-capacity-units 1})
 
 (put-item :table-name "TestTable"
-          :item {:id "foo" 
-                 :text "barbaz"})              
+          :item {:id "foo"
+                 :text "barbaz"})
 
 (get-item :table-name "TestTable"
           :key "foo")
 
 (scan :table-name "TestTable")
 
-(delete-table :table-name "TestTable")  
+(delete-table :table-name "TestTable")
 
 ```
 
 
-###DynamoDBV2  
+###DynamoDBV2
 ```clj
 (ns com.example
   (:use [amazonica.aws.dynamodbv2]))
@@ -482,10 +498,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (create-table cred
               :table-name "TestTable"
-              :key-schema 
+              :key-schema
                 [{:attribute-name "id"   :key-type "HASH"}
                  {:attribute-name "date" :key-type "RANGE"}]
-              :attribute-definitions 
+              :attribute-definitions
                 [{:attribute-name "id"      :attribute-type "S"}
                  {:attribute-name "date"    :attribute-type "N"}
                  {:attribute-name "column1" :attribute-type "S"}
@@ -522,13 +538,13 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
           :table-name "TestTable"
           :key {:id {:s "foo"}
                 :date {:n 123456}})
-    
+
 (query :table-name "TestTable"
        :limit 1
        :index-name "column1_idx"
        :select "ALL_ATTRIBUTES"
        :scan-index-forward true
-       :key-conditions 
+       :key-conditions
         {:id      {:attribute-value-list ["foo"]      :comparison-operator "EQ"}
          :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
@@ -536,9 +552,9 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   cred
   :return-consumed-capacity "TOTAL"
   :return-item-collection-metrics "SIZE"
-  :request-items 
+  :request-items
     {"TestTable"
-      [{:delete-request 
+      [{:delete-request
          {:key {:id "foo"
                 :date 123456}}}
        {:put-request
@@ -548,7 +564,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                  :column1 "funky"}}}]})
 
 (batch-get-item
-  cred 
+  cred
   :return-consumed-capacity "TOTAL"
   :request-items {
   "TestTable" {:keys [{"id"   {:s "foobar"}
@@ -564,7 +580,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (delete-table cred :table-name "TestTable")
 
-```  
+```
 
 
 
@@ -589,7 +605,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                    :delete-on-termination true}}])
 
 (create-snapshot :volume-id   "vol-8a4857fa"
-                 :description "my_new_snapshot")  
+                 :description "my_new_snapshot")
 
 ```
 
@@ -630,7 +646,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###ElasticMapReduce  
+###ElasticMapReduce
 
 ```clj
 (ns com.example
@@ -648,7 +664,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (run-job-flow :name "my-job-flow"
               :log-uri "s3n://emr-logs/logs"
-              :instances 
+              :instances
                 {:instance-groups [
                    {:instance-type "m1.large"
                     :instance-role "MASTER"
@@ -663,32 +679,32 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                     :args ["s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
 
 (describe-job-flows :job-flow-ids ["j-38BW9W0NN8YGV"])
-  
-```  
+
+```
 
 
-###Glacier  
+###Glacier
 
 ```clj
 (ns com.example
   (:use [amazonica.aws.glacier]))
 
 (create-vault :vault-name "my-vault")
-  
+
 (describe-vault :vault-name "my-vault")
-  
+
 (list-vaults :limit 10)
 
 (upload-archive :vault-name "my-vault"
                 :body "upload.txt")
-  
+
 (delete-archive :account-id "-"
                 :vault-name "my-vault"
                 :archive-id "pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg", :checksum "83a05fd1ce759e401b44fff8f34d40e17236bbdd24d771ec2ca4886b875430f9", :location "/676820690883/vaults/my-vault/archives/pgy30P2FTNu_d7buSVrGawDsfKczlrCG7Hy6MQg53ibeIGXNFZjElYMYFm90mHEUgEbqjwHqPLVko24HWy7DU9roCnZ1djEmT-1REvnHKHGPgkuzVlMIYk3bn3XhqxLJ2qS22EYgzg")
-  
-(delete-vault :vault-name "my-vault")  
 
- ```  
+(delete-vault :vault-name "my-vault")
+
+ ```
 
 
 ###IdentityManagement
@@ -720,7 +736,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (describe-stream "my-stream")
 
 (merge-shards "my-stream" "shardId-000000000000" "shardId-000000000001")
-  
+
 (split-shard "my-stream" "shard-id" "new-starting-hash-key")
 
 
@@ -734,7 +750,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
               (str (UUID/randomUUID))))
 ;; if anything BUT a java.nio.ByteBuffer is supplied as the second
 ;; argument, then the data will be transparently serialized and compressed
-;; using Nippy, and deserialized on calls to (get-records), or via a worker 
+;; using Nippy, and deserialized on calls to (get-records), or via a worker
 ;; (see below), provided that a deserializer function is NOT supplied. If
 ;; you do pass a ByteBuffer instance as the data argument, then you'll need
 ;; to also provide a deserializer function when fetching records.
@@ -755,7 +771,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                                                  "TRIM_HORIZON"))
 ;; if no :deserializer function is supplied then it will be assumed
 ;; that the records were put into Kinesis by Amazonica, and hence,
-;; the data was serialized and compressed by Nippy (e.g. Snappy) 
+;; the data was serialized and compressed by Nippy (e.g. Snappy)
 
 
 
@@ -765,10 +781,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
 ;; alternatively, supply a numeric value for duration in seconds between checkpoints
-;; for full checkpoint control, set :checkpoint to false and return true from the 
-;; :processor function only when you want checkpoint to be called 
+;; for full checkpoint control, set :checkpoint to false and return true from the
+;; :processor function only when you want checkpoint to be called
 
-;; if no :credentials key is provided the default authentication scheme is used (preferable), 
+;; if no :credentials key is provided the default authentication scheme is used (preferable),
 ;; see the [Authentication] #(authentication) section above
 
 ;; returns the UUID assigned to this worker
@@ -813,7 +829,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                  :availability-zone "us-east-1a"
                  :autoscaling-type "LoadBasedAutoScaling"
                  :os "Ubuntu 12.04 LTS"
-                 :ssh-key-name "admin")  
+                 :ssh-key-name "admin")
 
 (describe-stacks :stack-ids ["dafa328e-c529-41af-89d3-12840a31abad"])
 
@@ -825,14 +841,14 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (start-stack :stack-id "660d00da-c533-43d4-8c7f-2df240fd563f")
 
-(start-instance :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")  
+(start-instance :instance-id "93bc5049-1bd4-49c8-a6ef-e84145807f71")
 
-```  
-
-
+```
 
 
-###Redshift  
+
+
+###Redshift
 ```clj
 (ns com.example
   (:use [amazonica.aws.redshift]))
@@ -842,12 +858,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                 :db-name "dw"
                 :master-username "scott"
                 :master-user-password "tiger"
-                :number-of-nodes 3)  
+                :number-of-nodes 3)
 
 ```
 
 
-###Route53  
+###Route53
 ```clj
 (ns com.example
   (:use [amazonica.aws.route53]))
@@ -871,12 +887,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (delete-health-check :health-check-id "99999999-1234-4923-a116-cd9ae2c30ee3")
 
-(delete-hosted-zone :id "my-bogus-hosted-zone")  
+(delete-hosted-zone :id "my-bogus-hosted-zone")
 
-```  
+```
 
 
-###S3  
+###S3
 ```clj
 (ns com.example
   (:use [amazonica.aws.s3]
@@ -890,7 +906,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
             :metadata {:server-side-encryption "AES256"}
             :file upload-file)
 
-(copy-object bucket1 "key-1" bucket2 "key-2")            
+(copy-object bucket1 "key-1" bucket2 "key-2")
 
 (get-object bucket2 "key-2"))
 
@@ -916,7 +932,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; get object and decrypt
 (get-object :bucket-name bucket1
             :encryption {:key-pair key-pair}
-            :key "foo")))))            
+            :key "foo")))))
 
 
 ;; put object from stream
@@ -977,7 +993,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```
 
 
-###SNS  
+###SNS
 ```clj
 
 (ns com.example
@@ -998,12 +1014,12 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
          :subject "test"
          :message (str "Todays is " (java.util.Date.)))
 
-(unsubscribe :subscription-arn "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")  
+(unsubscribe :subscription-arn "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")
 
 ```
 
-###SQS  
-```clj  
+###SQS
+```clj
 
 (ns com.example
   (:use [amazonica.aws.sqs]))
@@ -1014,7 +1030,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                  :MaximumMessageSize 65536 ; bytes
                  :MessageRetentionPeriod 1209600 ; sec
                  :ReceiveMessageWaitTimeSeconds 10}) ; sec
-;; full list of attributes at 
+;; full list of attributes at
 ;; http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/sqs/model/GetQueueAttributesRequest.html
 
 (create-queue "DLQ")
@@ -1023,7 +1039,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (def queue (find-queue "my-queue"))
 
-(assign-dead-letter-queue 
+(assign-dead-letter-queue
   queue
   (find-queue "DLQ")
   10)
@@ -1032,8 +1048,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (def msgs (receive-message queue))
 
-(delete-message (-> msgs 
-                    :messages 
+(delete-message (-> msgs
+                    :messages
                     first
                     (assoc :queue-url q)))
 
@@ -1046,7 +1062,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (-> "my-queue" find-queue delete-queue)
 (-> "DLQ" find-queue delete-queue)
 
-```  
+```
 
 ### Acknowledgements
 

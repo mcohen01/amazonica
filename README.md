@@ -55,7 +55,7 @@ and the following dependency:
 * [Route53] (#route53)
 * [S3] (#s3)
 * SimpleDB
-* SimpleEmail
+* [SimpleEmail](#simpleemail)
 * [SimpleWorkflow] (#simpleworkflow)
 * [SNS] (#sns)
 * [SQS] (#sqs)
@@ -957,6 +957,24 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                     (println %))]
   ((:add-progress-listener dl) listener))
 
+```
+
+###SimpleEmail
+```clj
+(ns com.example
+  (:use [amazonica.aws.simpleemail]))
+
+(send-email :destination
+             {:to-addresses ["example@example.com"]}
+            :source "no-reply@example.org"
+            :message
+             {:subject
+               {:data "Subject"}
+              :body
+               {:html
+                 {:data "HTML message"}
+                :text
+                 {:data "Text message"}}})
 ```
 
 ###SimpleWorkflow

@@ -3,6 +3,7 @@
             [taoensso.nippy :as nippy]
             [clojure.algo.generic.functor :as functor])
   (:import [com.amazonaws.auth
+              AWSCredentialsProvider
               AWSCredentials
               AWSCredentialsProviderChain
               DefaultAWSCredentialsProviderChain]
@@ -16,6 +17,7 @@
               ShutdownException
               ThrottlingException]
            [com.amazonaws.services.kinesis.clientlibrary.lib.worker
+              InitialPositionInStream
               KinesisClientLibConfiguration
               Worker]
            java.nio.ByteBuffer
@@ -103,26 +105,115 @@
                                   (*' 1000 checkpoint))))
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
 
-(defn worker!
+(defn- kinesis-client-lib-configuration
+  "Instantiate a KinesisClientLibConfiguration instance."
+  [^AWSCredentialsProvider provider
+   {:keys [app
+           stream
+           worker-id
+           endpoint
+           initial-position-in-stream
+           failover-time-millis
+           shard-sync-interval-millis
+           max-records
+           idle-time-between-reads-in-millis
+           call-process-records-even-for-empty-record-list
+           parent-shard-poll-interval-millis
+           cleanup-leases-upon-shard-completion
+           common-client-config
+           kinesis-client-config
+           dynamodb-client-config
+           cloud-watch-client-config
+           user-agent
+           task-backoff-time-millis
+           metrics-buffer-time-millis
+           metrics-max-queue-size]
+    :or {worker-id (str (UUID/randomUUID))
+         endpoint "kinesis.us-east-1.amazonaws.com"}}]
+  (cond-> (KinesisClientLibConfiguration. (name app)
+                                          (name stream)
+                                          provider
+                                          (name worker-id))
+
+          endpoint
+          (.withKinesisEndpoint endpoint)
+
+          initial-position-in-stream
+          (.withInitialPositionInStream
+           (InitialPositionInStream/valueOf (name initial-position-in-stream)))
+
+          failover-time-millis
+          (.withFailoverTimeMillis failover-time-millis)
+
+          shard-sync-interval-millis
+          (.withShardSyncIntervalMillis shard-sync-interval-millis)
+
+          max-records
+          (.withMaxRecords max-records)
+
+          idle-time-between-reads-in-millis
+          (.withIdleTimeBetweenReadsInMillis idle-time-between-reads-in-millis)
+
+          call-process-records-even-for-empty-record-list
+          (.withCallProcessRecordsEvenForEmptyRecordList
+           call-process-records-even-for-empty-record-list)
+
+          parent-shard-poll-interval-millis
+          (.withParentShardPollIntervalMillis
+           parent-shard-poll-interval-millis)
+
+          cleanup-leases-upon-shard-completion
+          (.withCleanupLeasesUponShardCompletion
+           cleanup-leases-upon-shard-completion)
+
+          common-client-config
+          (.withCommonClientConfig common-client-config)
+
+          kinesis-client-config
+          (.withKinesisClientConfig kinesis-client-config)
+
+          dynamodb-client-config
+          (.withDynamoDBClientConfig dynamodb-client-config)
+
+          cloud-watch-client-config
+          (.withCloudWatchClientConfig cloud-watch-client-config)
+
+          user-agent
+          (.withUserAgent user-agent)
+
+          task-backoff-time-millis
+          (.withTaskBackoffTimeMillis task-backoff-time-millis)
+
+          metrics-buffer-time-millis
+          (.withMetricsBufferTimeMillis metrics-buffer-time-millis)
+
+          metrics-max-queue-size
+          (.withMetricsMaxQueueSize metrics-max-queue-size)))
+
+(defn worker
+  "Instantiate a kinesis Worker."
   [& args]
   (let [opts (if (associative? (first args))
                  (first args)
                  (apply hash-map args))
-        {:keys [app stream processor deserializer checkpoint credentials]
+        {:keys [processor deserializer checkpoint credentials]
          :or   {checkpoint   60000
-                deserializer unwrap
-                credentials {:endpoint "kinesis.us-east-1.amazonaws.com"}}} opts
+                deserializer unwrap}} opts
         next-check (atom 0)
         factory  (processor-factory processor deserializer checkpoint next-check)
-        uuid     (str (UUID/randomUUID))
         creds    (amz/get-credentials credentials)
         provider (if (instance? AWSCredentials creds)
                      (StaticCredentialsProvider. creds)
                      creds)
-        config   (KinesisClientLibConfiguration. app
-                                                 stream
-                                                 ;(:endpoint credentials)
-                                                 provider
-                                                 uuid)]
-    (future (.run (Worker. factory config)))
+        config   (kinesis-client-lib-configuration provider opts)]
+    (Worker. factory config)))
+
+(defn worker!
+  "Instantiate a new kinesis Worker and invoke its run method in a
+   separate thread. Return the identifier of the Worker."
+  [& args]
+  (let [^Worker worker (apply worker args)
+        uuid (.getWorkerIdentifier worker)]
+    (future (.run worker))
     uuid))
+

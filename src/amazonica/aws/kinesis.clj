@@ -206,13 +206,12 @@
                      (StaticCredentialsProvider. creds)
                      creds)
         config   (kinesis-client-lib-configuration provider opts)]
-    (Worker. factory config)))
+    [(Worker. factory config) (.getWorkerIdentifier config)]))
 
 (defn worker!
   "Instantiate a new kinesis Worker and invoke its run method in a
    separate thread. Return the identifier of the Worker."
   [& args]
-  (let [^Worker worker (apply worker args)
-        uuid (.getWorkerIdentifier worker)]
+  (let [[^Worker worker uuid] (apply worker args)]
     (future (.run worker))
     uuid))

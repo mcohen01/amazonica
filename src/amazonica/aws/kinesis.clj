@@ -216,4 +216,3 @@
         uuid (.getWorkerIdentifier worker)]
     (future (.run worker))
     uuid))
-

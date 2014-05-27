@@ -82,6 +82,8 @@
               ProgressEvent/COMPLETED_EVENT_CODE      :completed
               ProgressEvent/FAILED_EVENT_CODE         :failed
               ProgressEvent/CANCELED_EVENT_CODE       :cancelled
+              ProgressEvent/RESET_EVENT_CODE          :reset
+              ProgressEvent/PREPARING_EVENT_CODE      :preparing
               ProgressEvent/PART_STARTED_EVENT_CODE   :part-started
               ProgressEvent/PART_COMPLETED_EVENT_CODE :part-completed
               ProgressEvent/PART_FAILED_EVENT_CODE    :part-failed

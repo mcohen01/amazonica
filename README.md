@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.2.15"]
+[amazonica "0.2.16"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.2.15</version>
+  <version>0.2.16</version>
 </dependency>
 ```
 
@@ -962,19 +962,13 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ###SimpleEmail
 ```clj
 (ns com.example
-  (:use [amazonica.aws.simpleemail]))
+  (:require [amazonica.aws.simpleemail :as ses]))
 
-(send-email :destination
-             {:to-addresses ["example@example.com"]}
-            :source "no-reply@example.org"
-            :message
-             {:subject
-               {:data "Subject"}
-              :body
-               {:html
-                 {:data "HTML message"}
-                :text
-                 {:data "Text message"}}})
+(ses/send-email :destination {:to-addresses ["example@example.com"]}
+                :source "no-reply@example.com"
+                :message {:subject "Test Subject"
+                          :body {:html "testing 1-2-3-4"
+                                 :text "testing 1-2-3-4"}})
 ```
 
 ###SimpleWorkflow

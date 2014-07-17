@@ -58,9 +58,12 @@
   #'amazonica.aws.kinesis/get-records
   (fn [f]
     (fn [& args]
-      (let [deserializer (or (:deserializer (apply hash-map args))
-                             unwrap)
-            result (apply f args)]
+      (let [parsed       (amz/parse-args (first args) (rest args))
+            args         (apply hash-map (:args parsed))
+            deserializer (or (:deserializer args) unwrap)
+            result (->>  (list (:cred parsed) args)
+                         (filter some?)
+                         (apply f))]
         (assoc result
                :records
                (functor/fmap

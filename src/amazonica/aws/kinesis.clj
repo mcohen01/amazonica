@@ -31,16 +31,16 @@
     (fn [& args]
       (let [parsed (amz/parse-args (first args) (rest args))
             args   (:args parsed)
-            [stream data key] args
+            [stream data key & [seq-id]] args
             bytes  (if (instance? ByteBuffer data)
                        data
                        (ByteBuffer/wrap (nippy/freeze data)))
             putrec (->> (list (:cred parsed) stream bytes key)
                         (filter some?)
                         (apply partial f))]
-      (if (= 3 (count args))
-          (putrec)
-          (putrec (nth args 3)))))))
+      (if seq-id
+          (putrec seq-id)
+          (putrec))))))
 
 (defn unwrap
   [byte-buffer]

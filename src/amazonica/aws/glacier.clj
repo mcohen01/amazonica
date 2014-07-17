@@ -1,13 +1,9 @@
 (ns amazonica.aws.glacier
-  (:use [amazonica.core :only (get-credentials set-client to-file)]
+  (:use [amazonica.core :only (parse-args set-client to-file)]
         [robert.hooke :only (add-hook)])
-  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-           [com.amazonaws.services.glacier
-              AmazonGlacierClient]
-           [amazonica TreeHash]
-           [java.io
-              BufferedInputStream
-              FileInputStream]))
+  (:import com.amazonaws.services.glacier.AmazonGlacierClient
+           amazonica.TreeHash
+           [java.io BufferedInputStream FileInputStream]))
 
 (set-client AmazonGlacierClient *ns*)
 
@@ -18,16 +14,8 @@
                        TreeHash/computeSHA256TreeHash
                        TreeHash/toHex)
    :body           (-> file
-                       (FileInputStream.) 
+                       (FileInputStream.)
                        (BufferedInputStream.))})
-
-(defn- parse-args
-  "Legacy support means credentials may or may not be passed
-   as the first argument."
-  [cred args]
-  (if (instance? DefaultAWSCredentialsProviderChain (get-credentials cred))
-      {:args (conj args cred)}
-      {:args args :cred cred}))
 
 (defn tree-hash
   [f cred & args]
@@ -36,8 +24,8 @@
                     (partial f cred)
                     f)
         m       (apply hash-map (:args arg-map))
-        file    (to-file (:body m))        
-        mm      (merge-with               
+        file    (to-file (:body m))
+        mm      (merge-with
                   (fn [_ e] e)
                   m
                   (file-hash->map file))]

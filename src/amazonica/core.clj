@@ -163,6 +163,14 @@
     :else
     (DefaultAWSCredentialsProviderChain.)))
 
+(defn parse-args
+  "Legacy support means credentials may or may not be passed
+   as the first argument."
+  [cred args]
+  (if (instance? DefaultAWSCredentialsProviderChain (get-credentials cred))
+      {:args (conj args cred)}
+      {:args args :cred cred}))
+
 (declare create-bean)
 
 (defn- get-client-configuration

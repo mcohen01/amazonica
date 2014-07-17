@@ -1,19 +1,10 @@
 (ns amazonica.aws.sqs
-  (:use [amazonica.core :only (get-credentials kw->str)]
+  (:use [amazonica.core :only (kw->str parse-args)]
         [clojure.walk]
         [robert.hooke :only (add-hook)])
-  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-           com.amazonaws.services.sqs.AmazonSQSClient))
+  (:import com.amazonaws.services.sqs.AmazonSQSClient))
 
 (amazonica.core/set-client AmazonSQSClient *ns*)
-
-(defn- parse-args
-  "Legacy support means credentials may or may not be passed
-   as the first argument."
-  [cred args]
-  (if (instance? DefaultAWSCredentialsProviderChain (get-credentials cred))
-      {:args (conj args cred)}
-      {:args args :cred cred}))
 
 (defn- attr-keys->str
   [f cred & args]

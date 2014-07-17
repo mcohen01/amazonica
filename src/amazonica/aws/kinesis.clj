@@ -29,13 +29,15 @@
   #'amazonica.aws.kinesis/put-record
   (fn [f]
     (fn [& args]
-      (let [stream (first args)
-            data   (second args)
-            key    (nth args 2)
+      (let [parsed (amz/parse-args (first args) (rest args))
+            args   (:args parsed)
+            [stream data key] args
             bytes  (if (instance? ByteBuffer data)
                        data
                        (ByteBuffer/wrap (nippy/freeze data)))
-            putrec (partial f stream bytes key)]
+            putrec (->> (list (:cred parsed) stream bytes key)
+                        (filter some?)
+                        (apply partial f))]
       (if (= 3 (count args))
           (putrec)
           (putrec (nth args 3)))))))

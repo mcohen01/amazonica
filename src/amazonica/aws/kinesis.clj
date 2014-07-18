@@ -57,9 +57,11 @@
 (alter-var-root
   #'amazonica.aws.kinesis/get-records
   (fn [f]
-    (fn [& args]
-      (let [parsed       (amz/parse-args (first args) (rest args))
-            args         (apply hash-map (:args parsed))
+    (fn [& args]         
+       (let [parsed      (amz/parse-args (first args) (rest args))             
+            args         (if (= 1 (count (:args parsed)))
+                             (first (:args parsed))
+                             (apply hash-map (seq (:args parsed))))
             deserializer (or (:deserializer args) unwrap)
             result (->>  (list (:cred parsed) args)
                          (filter some?)

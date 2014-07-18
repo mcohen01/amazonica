@@ -5,6 +5,14 @@
   (:use [clojure.test]
         [amazonica.aws.kinesis]))
 
+(def cred 
+  (apply 
+    hash-map 
+      (interleave 
+        [:access-key :secret-key :endpoint]
+        (seq (.split (slurp "aws.config") " ")))))
+
+
 (deftest kinesis []
 
   (def my-stream "my-stream")
@@ -42,6 +50,23 @@
                  last
                  :shard-id))
   
+  ;; test invocations with and without credentials map passed in 
+  ;; test invocations passed with key:value arg pairs and with a single map   
+  (->> (get-shard-iterator my-stream shard "TRIM_HORIZON")
+       (hash-map :shard-iterator)
+       (get-records))
+
+  (->> (get-shard-iterator my-stream shard "TRIM_HORIZON")
+       (hash-map :shard-iterator)
+       (get-records cred))
+
+  (->> (get-shard-iterator my-stream shard "TRIM_HORIZON")
+       (get-records :shard-iterator))
+
+  (->> (get-shard-iterator my-stream shard "TRIM_HORIZON")
+       (get-records cred :shard-iterator))
+  
+  
   (let [iter  (get-shard-iterator my-stream shard "TRIM_HORIZON")
         resp  (get-records :shard-iterator iter)
         rows  (:records resp)]
@@ -49,12 +74,15 @@
            (-> rows first :data :col)))
     (is (= "any data"
            (-> rows first :data :name)))
-    (is (.equals now (-> rows first :data :date))))  
+    (is (.equals now (-> rows first :data :date))))
   
+  
+  
+  ;; test unmarshalled "raw" data, no nippy serialization/deserialization
   (def seq-number
     (:sequence-number (put-record my-stream
                                   (ByteBuffer/wrap (.getBytes "foobar"))
-                                  (str (UUID/randomUUID)))))
+                                  (str (UUID/randomUUID)))))  
   
   (defn get-raw-bytes [byte-buffer]
     (let [b (byte-array (.remaining byte-buffer))]
@@ -63,12 +91,12 @@
   
   (Thread/sleep 3000)
   
-  (-> (get-records :deserializer get-raw-bytes
+  (-> (get-records {:deserializer get-raw-bytes
                    :shard-iterator 
                    (get-shard-iterator my-stream
                                        shard
                                        "AT_SEQUENCE_NUMBER"
-                                       seq-number))
+                                       seq-number)})
       :records
       first
       :data

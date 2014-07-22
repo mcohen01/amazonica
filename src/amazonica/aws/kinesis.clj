@@ -204,7 +204,7 @@
                  (first args)
                  (apply hash-map args))
         {:keys [processor deserializer checkpoint credentials]
-         :or   {checkpoint   60000
+         :or   {checkpoint 60
                 deserializer unwrap}} opts
         next-check (atom 0)
         factory  (processor-factory processor deserializer checkpoint next-check)

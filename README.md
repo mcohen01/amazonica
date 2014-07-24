@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.2.23"]
+[amazonica "0.2.24"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.2.23</version>
+  <version>0.2.24</version>
 </dependency>
 ```
 
@@ -241,6 +241,7 @@ Note that either form will work. This allows contributors to the library to incr
 The default authentication scheme is to use the [chained Provider class] [15] from the AWS SDK, whereby authentication is attempted in the following order:
 - Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_KEY
 - Java System Properties - aws.accessKeyId and aws.secretKey
+- Credential profiles file at the default location (~/.aws/credentials) shared by all AWS SDKs and the AWS CLI
 - Instance profile credentials delivered through the Amazon EC2 metadata service
 
 Note that in order for the Instance Profile Metadata to be found, you must have launched the instance with a provided IAM role, and the same permissions as the IAM Role the instance was launched with will apply.

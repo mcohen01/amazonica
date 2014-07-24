@@ -14,6 +14,7 @@
               IRecordProcessorFactory]
            [com.amazonaws.services.kinesis.clientlibrary.exceptions
               InvalidStateException
+              KinesisClientLibDependencyException
               ShutdownException
               ThrottlingException]
            [com.amazonaws.services.kinesis.clientlibrary.lib.worker
@@ -83,13 +84,12 @@
   (try
     (.checkpoint checkpointer)
     true
-    (catch ShutdownException se
-      true)
+    (catch ShutdownException se true)
+    (catch InvalidStateException ise false)
+    (catch KinesisClientLibDependencyException de false)
     (catch ThrottlingException te
       (println "sleeping for 3s due to throttling....")
       (Thread/sleep 3000)
-      false)
-    (catch InvalidStateException ise
       false)))
 
 (defn- processor-factory

@@ -679,7 +679,13 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                     :main-class "bigml.core"
                     :args ["s3n://beee0534-ad04-4143-9894-8ddb0e4ebd31/data" "output"]}}])
 
-(describe-job-flows :job-flow-ids ["j-38BW9W0NN8YGV"])
+(list-clusters)
+
+(describe-cluster :cluster-id "j-38BW9W0NN8YGV")
+
+(list-steps :cluster-id "j-38BW9W0NN8YGV")
+
+(list-bootstrap-actions :cluster-id "j-38BW9W0NN8YGV")
 
 ```
 

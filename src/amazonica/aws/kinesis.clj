@@ -17,6 +17,8 @@
               KinesisClientLibDependencyException
               ShutdownException
               ThrottlingException]
+           [com.amazonaws.services.kinesis.clientlibrary.types
+            ShutdownReason]
            [com.amazonaws.services.kinesis.clientlibrary.lib.worker
               InitialPositionInStream
               KinesisClientLibConfiguration
@@ -99,7 +101,7 @@
       (reify IRecordProcessor
         (initialize [this shard-id])
         (shutdown [this checkpointer reason]
-          (if (= "TERMINATE" reason)
+          (if (= ShutdownReason/TERMINATE reason)
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
           (if (or (processor (functor/fmap (partial marshall deserializer)

@@ -9,8 +9,11 @@
               DefaultAWSCredentialsProviderChain]
            com.amazonaws.internal.StaticCredentialsProvider
            com.amazonaws.services.kinesis.AmazonKinesisClient
+           [com.amazonaws.services.kinesis.model
+            Record]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces
               IRecordProcessor
+              IRecordProcessorCheckpointer
               IRecordProcessorFactory]
            [com.amazonaws.services.kinesis.clientlibrary.exceptions
               InvalidStateException
@@ -23,6 +26,8 @@
               Worker]
            java.nio.ByteBuffer
            java.util.UUID))
+
+(set! *warn-on-reflection* true)
 
 (amz/set-client AmazonKinesisClient *ns*)
 
@@ -44,7 +49,7 @@
           (putrec))))))
 
 (defn unwrap
-  [byte-buffer]
+  [^java.nio.ByteBuffer byte-buffer]
   (let [b (byte-array (.remaining byte-buffer))]
     (.get byte-buffer b)
     (nippy/thaw b)))
@@ -75,12 +80,12 @@
                    (:records result)))))))
 
 (defn marshall
-  [deserializer record]
+  [deserializer ^Record record]
   {:sequence-number (.getSequenceNumber record)
    :partition-key   (.getPartitionKey record)
    :data            (deserializer (.getData record))})
 
-(defn- mark-checkpoint [checkpointer _]
+(defn- mark-checkpoint [^IRecordProcessorCheckpointer checkpointer _]
   (try
     (.checkpoint checkpointer)
     true
@@ -114,7 +119,7 @@
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
-  [^AWSCredentialsProvider provider
+  ^KinesisClientLibConfiguration [^AWSCredentialsProvider provider
    {:keys [app
            stream
            worker-id

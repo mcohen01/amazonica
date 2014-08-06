@@ -106,7 +106,8 @@
       (reify IRecordProcessor
         (initialize [this shard-id])
         (shutdown [this checkpointer reason]
-          (if (= ShutdownReason/TERMINATE reason)
+          (if (or (= ShutdownReason/TERMINATE reason)
+                  (= "TERMINATE" reason))
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
           (if (or (processor (functor/fmap (partial marshall deserializer)

@@ -54,7 +54,7 @@ and the following dependency:
 * [Redshift] (#redshift)
 * [Route53] (#route53)
 * [S3] (#s3)
-* SimpleDB
+* [SimpleDB] (#simpledb)
 * [SimpleEmail](#simpleemail)
 * [SimpleWorkflow] (#simpleworkflow)
 * [SNS] (#sns)
@@ -963,6 +963,29 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                     (println ((:object-metadata dl)))
                     (println %))]
   ((:add-progress-listener dl) listener))
+
+```
+
+###SimpleDB
+```clj
+(ns com.example
+  (:require [amazonica.aws.simpledb :as sdb]))
+
+(sdb/create-domain :domain-name "domain")
+
+(sdb/list-domains)
+
+(sdb/put-attributes :domain-name "domain"
+                    :item-name "my-item"
+                    :attributes [{:name "foo"
+                                  :value "bar"}
+                                 {:name "baz"
+                                  :value 42}])
+
+(sdb/select :select-expression
+            "select * from domain where baz = '42' ")
+
+(sdb/delete-domain :domain-name "domain")
 
 ```
 

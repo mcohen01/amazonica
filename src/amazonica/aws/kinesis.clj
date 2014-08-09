@@ -163,8 +163,7 @@
               (checkpoint-async checkpointer cp-channel))
           (close! cp-channel))
         (processRecords [this records checkpointer]
-          (<!! (onto-chan shard-channel (functor/fmap (partial marshall deserializer)
-                                           (vec (seq records))) false))
+          (<!! (onto-chan shard-channel (map (partial marshall deserializer) records) false))
           (if (and checkpoint (> (System/currentTimeMillis) @next-check))
               (do 
                   (reset! next-check (+' (System/currentTimeMillis)

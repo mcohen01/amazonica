@@ -157,10 +157,10 @@
         (initialize [this shard-id])
         (shutdown [this checkpointer reason]
           (close! shard-channel)
-          (if (= ShutdownReason/TERMINATE reason)
-            (do 
+          (when (or (= ShutdownReason/TERMINATE reason)
+                    (= "TERMINATE" reason))
               (Thread/sleep 2000)
-              (checkpoint-async checkpointer cp-channel) ))
+              (checkpoint-async checkpointer cp-channel))
           (close! cp-channel))
         (processRecords [this records checkpointer]
           (<!! (onto-chan shard-channel (functor/fmap (partial marshall deserializer)

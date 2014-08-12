@@ -143,7 +143,7 @@
       false)))
 
 (defn- get-latest-seq [c]
-  (first (alts!! [c (timeout 0)] :priority true))) ; alts returns [val port]
+  (first (alts!! [c] :default nil))) ; alts returns [val port]
 
 (defn- checkpoint-async [checkpointer cp-channel]
   (when-let [s (get-latest-seq cp-channel)]

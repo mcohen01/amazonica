@@ -66,9 +66,10 @@
         cp-mock-throttled (mockCheckpointer-throttled cp-state)]
     
         ; Simulate app checkpoint of sequence number 0
-        (>!! cp-chan 0)
+        (>!! cp-chan "0")
         ; Simulate incoming data from Kinesis, which will be written to shard-chan
-        (let [records (java.util.ArrayList. [(mockRecord 1 "data1") (mockRecord 2 2) (mockRecord 3 [3 6 9])]) ]
+        (let [records (java.util.ArrayList. [(mockRecord "1" "data1") (mockRecord "2" 2) 
+                                             (mockRecord "3" [3 6 9])]) ]
           (.processRecords processor records cp-mock-throttled))
         ; Verify sequence number 0 was checkpointed as a side effect of processRecords
         (is (= @cp-state "0"))
@@ -82,9 +83,9 @@
               (is (= (:sequence-number d2) "2"))
               (is (= (:data d2) 2))
               (is (= (:sequence-number d3) "3"))
-              (is (= (:data d3) [3 6 9])))
-        ; Simulate completion of processing by writing sequence #3 to the checkpoint channel
-        (>!! cp-chan 3)
+              (is (= (:data d3) [3 6 9]))
+              ; Simulate completion of processing by writing last sequence # to the checkpoint channel
+              (>!! cp-chan (:sequence-number d3)))
         ; Simulate termination of processing initiated by Kinesis
         (.shutdown processor cp-mock ShutdownReason/TERMINATE)
         ; Verify sequence number 3 was checkpointed as a side effect of termination

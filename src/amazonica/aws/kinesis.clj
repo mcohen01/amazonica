@@ -127,9 +127,9 @@
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
 
 
-(defn- mark-checkpoint-async [^IRecordProcessorCheckpointer checkpointer s]
+(defn- mark-checkpoint-async [^IRecordProcessorCheckpointer checkpointer seq]
   (try
-    (.checkpoint checkpointer (str s))
+    (.checkpoint checkpointer seq)
     true
     (catch ShutdownException se true)
     (catch InvalidStateException ise false)

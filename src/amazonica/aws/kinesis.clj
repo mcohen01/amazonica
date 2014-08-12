@@ -88,6 +88,11 @@
    :partition-key   (.getPartitionKey record)
    :data            (deserializer (.getData record))})
 
+(defrecord KinesisRecord [sequence-number partition-key data])
+(defn marshall-async
+  [deserializer ^Record record]
+  (->KinesisRecord (.getSequenceNumber record) (.getPartitionKey record) (deserializer (.getData record))))
+
 (defn- mark-checkpoint [^IRecordProcessorCheckpointer checkpointer _]
   (try
     (.checkpoint checkpointer)
@@ -163,7 +168,7 @@
               (checkpoint-async checkpointer cp-channel))
           (close! cp-channel))
         (processRecords [this records checkpointer]
-          (<!! (onto-chan shard-channel (map (partial marshall deserializer) records) false))
+          (<!! (onto-chan shard-channel (map (partial marshall-async deserializer) records) false))
           (if (and checkpoint (> (System/currentTimeMillis) @next-check))
               (do 
                   (reset! next-check (+' (System/currentTimeMillis)

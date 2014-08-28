@@ -2,7 +2,7 @@
   (:require [amazonica.core :as amz]
             [taoensso.nippy :as nippy]
             [clojure.algo.generic.functor :as functor]
-            [clojure.core.async :refer [alts!! chan close! onto-chan <!! sliding-buffer timeout]])
+            [clojure.core.async :refer [alts!! chan close! onto-chan <!! sliding-buffer timeout thread]])
   (:import [com.amazonaws.auth
               AWSCredentialsProvider
               AWSCredentials
@@ -176,26 +176,6 @@
                   (checkpoint-async checkpointer cp-channel)))
         )))))
 
-(comment interface to application TBD
-(defn worker-async!
-  "Instantiate a kinesis worker that consumes records via a core.async channel."
-  [& args]
-  (let [cp-channel (chan (sliding-buffer 1))]
-          ;
-          ; do all of the usual worker setup. No 'processor' key is needed
-          ; in the arguments, instead a 'shard-channel' is provided by the caller. 
-          factory  (processor-factory-async shard-channel cp-channel
-                                            deserializer checkpoint next-check)
-          ;
-          ; For the Kinesis client lib configuration:
-          ; withCallProcessRecordsEvenForEmptyRecordList  = true
-          ;
-          ; Launch with (async/thread (.run worker))
-  [uuid cp-channel]))
-)
-
-;;;;;;;;;;;;;;;;;;;;;
-
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
   ^KinesisClientLibConfiguration [^AWSCredentialsProvider provider
@@ -306,3 +286,30 @@
   (let [[^Worker worker uuid] (apply worker args)]
     (future (.run worker))
     uuid))
+
+(defn worker-async!
+  "Instantiate a kinesis worker that relays records via a core.async channel. 
+  The application provides a shard-channel which is filled and read asynchronously. Records can be checkpointed by
+  writing sequence numbers to the returned cp-channel. The cp-channel will not block, and 
+  checkpointing is also asynchronous. On shutdown, shard-channel will be closed, the worker will quiesce, and the 
+  last available sequence number on cp-channel will be checkpointed."
+  [& args]
+  (let [opts (if (associative? (first args))
+                 (first args)
+                 (apply hash-map args))
+        {:keys [shard-channel deserializer checkpoint credentials]
+         :or   {checkpoint 60
+                deserializer unwrap}} opts
+        cp-channel (chan (sliding-buffer 1))
+        next-check (atom 0)
+        factory  (processor-factory-async shard-channel cp-channel deserializer checkpoint next-check)
+        creds    (amz/get-credentials credentials)
+        provider (if (instance? AWSCredentials creds)
+                     (StaticCredentialsProvider. creds)
+                     creds)
+        mod-opts (assoc opts :call-process-records-even-for-empty-record-list true)
+        config   (kinesis-client-lib-configuration provider mod-opts)
+        worker   (Worker. factory config)
+        worker-id (.getWorkerIdentifier config)]
+        (thread (.run worker))
+        [worker-id cp-channel]))

@@ -142,7 +142,9 @@
            user-agent
            task-backoff-time-millis
            metrics-buffer-time-millis
-           metrics-max-queue-size]
+           metrics-max-queue-size
+           validate-sequence-number-before-checkpointing
+           region-name]
     :or {worker-id (str (UUID/randomUUID))
          endpoint "kinesis.us-east-1.amazonaws.com"}}]
   (cond-> (KinesisClientLibConfiguration. (name app)
@@ -203,7 +205,13 @@
           (.withMetricsBufferTimeMillis metrics-buffer-time-millis)
 
           metrics-max-queue-size
-          (.withMetricsMaxQueueSize metrics-max-queue-size)))
+          (.withMetricsMaxQueueSize metrics-max-queue-size)
+
+          validate-sequence-number-before-checkpointing
+          (.withValidateSequenceNumberBeforeCheckpointing validate-sequence-number-before-checkpointing)
+
+          region-name
+          (.withRegionName region-name)))
 
 (defn worker
   "Instantiate a kinesis Worker."

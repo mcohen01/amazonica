@@ -1,7 +1,7 @@
 (ns amazonica.test.dynamodb
+  (:require [amazonica.core :as amz])
   (:use [clojure.test]
         [clojure.pprint]
-        [amazonica.core]
         [amazonica.aws.dynamodb]))
 
 ; config file contains space-separated AWS credential key pair
@@ -68,14 +68,14 @@
                           [:table :table-status]))))))
  
 
-  (set-root-unwrapping! true)
+  (amz/set-root-unwrapping! true)
 
   (is (= "id" 
          (get-in 
            (describe-table cred :table-name "TestTable")
            [:key-schema :hash-key-element :attribute-name])))
 
-  (set-root-unwrapping! false)
+  (amz/set-root-unwrapping! false)
 
   (is (= "id" 
          (get-in 
@@ -131,7 +131,7 @@
   (clojure.pprint/pprint
     (scan cred :table-name "TestTable"))
 
-  (set-root-unwrapping! false)
+  (amz/set-root-unwrapping! false)
 
   (clojure.pprint/pprint (batch-get-item cred :request-items {
      "TestTable" { :keys [

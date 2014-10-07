@@ -96,7 +96,8 @@
 (def ^:private excluded
   #{:invoke
     :init
-    :set-endpoint
+    ; cloudsearchdomain needs this
+    ;:set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
     ; addRequestHandler???

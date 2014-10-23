@@ -200,7 +200,8 @@
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
         client     (create-client clazz aws-creds aws-config)]
-    (when-let [endpoint (:endpoint credentials)]
+    (when-let [endpoint (or (:endpoint credentials)
+                            (System/getenv "AWS_DEFAULT_REGION"))]
       (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
                            (apply hash-set (seq (Regions/values))))
                      (-> (str/upper-case endpoint)

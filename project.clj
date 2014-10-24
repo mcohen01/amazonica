@@ -8,6 +8,7 @@
   :target-path "target"
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/algo.generic "0.1.2"]
+                 [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [com.amazonaws/aws-java-sdk "1.8.5"]
                  [com.amazonaws/amazon-kinesis-client "1.1.0"]
                  [joda-time "2.2"]

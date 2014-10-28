@@ -289,6 +289,7 @@
 
   (let [config {:rules [{:id "rm after 14 days"
                          :expiration-in-days 14
+                         :noncurrent-version-expiration-in-days -1
                          :prefix "some-prefix/"
                          :status "Enabled"}]}]
     (set-bucket-lifecycle-configuration cred bucket1 config)
@@ -349,6 +350,12 @@
     cred
     :bucket-name bucket1
     :key "jenny")
+  
+  (get-object
+    cred
+    :bucket-name bucket1
+    :key "jenny"
+    :range [0 100])
 
   (get-object cred bucket1 "jenny")
   

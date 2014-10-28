@@ -452,8 +452,11 @@
       ;; misbehaving S3Client mutates the coll
       (if (and (coll? v)
             (= AmazonS3Client *client-class*))
-        [(to-java-coll v)]
-        [v])))
+        (if (and (> (count (.getParameterTypes method)) 1)
+                 (sequential? v))
+          (to-java-coll v)
+          [(to-java-coll v)])
+          [v])))
   true)
 
 (declare set-fields)

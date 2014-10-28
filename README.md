@@ -964,6 +964,28 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                     (println %))]
   ((:add-progress-listener dl) listener))
 
+
+;; setup S3 bucket for static website hosting
+(create-bucket bucket-name)
+
+(put-object bucket-name
+            "index.html"
+            (java.io.File. "index.html"))
+(let [policy {:Version "2012-10-17"
+              :Statement [{
+                :Sid "PublicReadGetObject"
+                :Effect "Allow"
+                :Principal "*"
+                  :Action ["s3:GetObject"]
+                  :Resource [(str "arn:aws:s3:::" bucket-name "/*")]}]}
+      json (cheshire.core/generate-string policy true)]
+  (set-bucket-policy bucket-name json))
+
+(set-bucket-website-configuration
+  :bucket-name bucket-name
+  :configuration {
+    :index-document-suffix "index.html"})
+
 ```
 
 ###SimpleDB

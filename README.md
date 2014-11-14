@@ -248,8 +248,7 @@ Note that in order for the Instance Profile Metadata to be found, you must have 
 
 See the [AWS docs] [14] for reference.
 
-
-Addtionally, all of the functions may take as their first argument an optional map of credentials, with keys :access-key and :secret-key, and optional :endpoint. (Default endpoint is "us-east-1"). This is primarily for legacy support or to set the region/endpoint. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
+Additionally, all of the functions may take as their first argument an optional map of credentials:
 
 ```clj
 (def cred {:access-key "aws-access-key"
@@ -258,6 +257,15 @@ Addtionally, all of the functions may take as their first argument an optional m
 
 (describe-instances cred)
 ```
+
+The credentials map may contain zero or one of the following:
+
+- `:access-key` and `:secret-key`, in which case an instance of [`BasicAWSCredentials`] [20] will be created.
+- `:session-token`, in which case an instance of [`BasicSessionCredentials`] [21] will be created.
+- `:profile`, in which case an instance of [`ProfileCredentialsProvider`] [22] will be created.
+- `:cred`, which should be an instance of a subclass of either [`AWSCredentialsProvider`] [23] or [`AWSCredentials`] [24].
+
+In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 
 As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:
 ```clj
@@ -1161,3 +1169,8 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [17]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setRegion(com.amazonaws.regions.Region)
 [18]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setEndpoint(java.lang.String)
 [19]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/kinesis/model/Record.html#getData()
+[20]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/BasicAWSCredentials.html
+[21]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/BasicSessionCredentials.html
+[22]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/profile/ProfileCredentialsProvider.html
+[23]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/AWSCredentialsProvider.html
+[24]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/AWSCredentials.html

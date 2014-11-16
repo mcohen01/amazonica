@@ -43,7 +43,7 @@ and the following dependency:
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
 * [ElastiCache] (#elasticache)
-* ElasticBeanstalk
+* [ElasticBeanstalk] (#elasticbeanstalk)
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
@@ -640,6 +640,31 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+###ElasticBeanstalk
+```clj
+(ns com.example
+  (:use [amazonica.aws.elastibeanstalk]))
+
+(describe-applications)
+
+(describe-environments)
+
+(describe-configuration-settings {:application-name "app" :environment-name "env"})
+
+(create-environment creds 
+                    {:application-name "app"
+                     :environment-name "env"
+                     :version-label "1.0"
+                     :solution-stack-name "64bit Amazon Linux 2014.09 v1.0.9 running Docker 1.2.0"
+                     :option-settings [{:namespace "aws:elb:loadbalancer"
+                                        :option-name "LoadBalancerHTTPSPort"
+                                        :value "443"}
+                                       {:namespace "aws:elb:loadbalancer"
+                                        :option-name "LoadBalancerHTTPPort"
+                                        :value "OFF"}]}))
+
+(describe-configuration-settings {:application-name "app" :environment-name "env"})
+```
 
 ###ElasticLoadBalancing
 

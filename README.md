@@ -649,8 +649,6 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (describe-environments)
 
-(describe-configuration-settings {:application-name "app" :environment-name "env"})
-
 (create-environment creds 
                     {:application-name "app"
                      :environment-name "env"

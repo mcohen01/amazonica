@@ -12,6 +12,8 @@
              BasicAWSCredentials
              BasicSessionCredentials
              DefaultAWSCredentialsProviderChain]
+           [com.amazonaws.auth.profile
+             ProfileCredentialsProvider]
            [com.amazonaws.regions
              Region
              Regions]
@@ -161,6 +163,10 @@
     (BasicAWSCredentials.
         (:access-key credentials)
         (:secret-key credentials))
+    (and (associative? credentials)
+         (contains? credentials :profile))
+    (ProfileCredentialsProvider.
+        (:profile credentials))
     :else
     (DefaultAWSCredentialsProviderChain.)))
 

@@ -851,7 +851,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (list-keys)
 
-(disable-key "1b54b53b-249d-4613-b688-f1b431a1fc23")
+(disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
 ```
 
 ###OpsWorks

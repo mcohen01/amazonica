@@ -49,6 +49,7 @@ and the following dependency:
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
+* [KMS] (#kms)
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -840,6 +841,18 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+### KMS
+
+```clj
+(ns com.example
+  (:use [amazonica.aws.kms]))
+
+(create-key)
+
+(list-keys)
+
+(disable-key "1b54b53b-249d-4613-b688-f1b431a1fc23")
+```
 
 ###OpsWorks
 ```clj

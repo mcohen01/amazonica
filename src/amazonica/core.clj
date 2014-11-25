@@ -167,6 +167,9 @@
          (contains? credentials :profile))
     (ProfileCredentialsProvider.
         (:profile credentials))
+    (and (associative? credentials)
+         (instance? AWSCredentialsProvider (:cred credentials)))
+    (:cred credentials)
     :else
     (DefaultAWSCredentialsProviderChain.)))
 

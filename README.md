@@ -263,7 +263,7 @@ The credentials map may contain zero or one of the following:
 - `:access-key` and `:secret-key`, in which case an instance of [`BasicAWSCredentials`] [20] will be created.
 - `:session-token`, in which case an instance of [`BasicSessionCredentials`] [21] will be created.
 - `:profile`, in which case an instance of [`ProfileCredentialsProvider`] [22] will be created.
-- `:cred`, which should be an instance of a subclass of either [`AWSCredentialsProvider`] [23] or [`AWSCredentials`] [24].
+- Or rather than a Clojure map, the argument may be an actual instance or subclass of either [`AWSCredentialsProvider`] [23] or [`AWSCredentials`] [24].
 
 In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 

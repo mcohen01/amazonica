@@ -39,7 +39,6 @@ and the following dependency:
 * [CloudWatch] (#cloudwatch)
 * [DataPipeline] (#datapipeline)
 * DirectConnect
-* [DynamoDB] (#dynamodb)
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
 * [ElastiCache] (#elasticache)
@@ -49,6 +48,7 @@ and the following dependency:
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
+* [KMS] (#kms)
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -471,31 +471,6 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###DynamoDB
-```clj
-(ns com.example
-  (:use [amazonica.aws.dynamodb]))
-
-(create-table :table-name "TestTable"
-              :key-schema {:hash-key-element {:attribute-name "id"
-                                              :attribute-type "S"}}
-              :provisioned-throughput {:read-capacity-units 1
-                                       :write-capacity-units 1})
-
-(put-item :table-name "TestTable"
-          :item {:id "foo"
-                 :text "barbaz"})
-
-(get-item :table-name "TestTable"
-          :key "foo")
-
-(scan :table-name "TestTable")
-
-(delete-table :table-name "TestTable")
-
-```
-
-
 ###DynamoDBV2
 ```clj
 (ns com.example
@@ -840,6 +815,18 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+### KMS
+
+```clj
+(ns com.example
+  (:use [amazonica.aws.kms]))
+
+(create-key)
+
+(list-keys)
+
+(disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+```
 
 ###OpsWorks
 ```clj

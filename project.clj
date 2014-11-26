@@ -1,4 +1,4 @@
-(defproject amazonica "0.2.5"
+(defproject amazonica "0.3.0"
   :description "A comprehensive Clojure client for the entire Amazon AWS api."
   :url "https://github.com/mcohen01/amazonica"
   :license {:name "Eclipse Public License"
@@ -6,6 +6,7 @@
   :java-source-paths ["src/main/java"]
   :javac-options ["-target" "1.6" "-source" "1.6"]
   :target-path "target"
+  :deploy-repositories [["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/algo.generic "0.1.2"]
                  [com.amazonaws/aws-java-sdk "1.8.5"]

@@ -44,7 +44,7 @@
                        data
                        (ByteBuffer/wrap (nippy/freeze data)))
             putrec (->> (list (:cred parsed) stream bytes key)
-                        (filter some?)
+                        (filter (complement nil?))
                         (apply partial f))]
       (if seq-id
           (putrec seq-id)
@@ -72,7 +72,7 @@
                              (apply hash-map (seq (:args parsed))))
             deserializer (or (:deserializer args) unwrap)
             result (->>  (list (:cred parsed) args)
-                         (filter some?)
+                         (filter (complement nil?))
                          (apply f))]
         (assoc result
                :records

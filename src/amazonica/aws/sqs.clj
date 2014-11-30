@@ -60,9 +60,9 @@
 
 (add-hook #'receive-message #'delete-on-receive)
 
-(defn find-queue [s]
-  (some #(if (.contains % s) %)
-             (:queue-urls (list-queues))))
+(defn find-queue [& s]
+  (some #(if (.contains % (or (second s) (first s))) %)
+        (:queue-urls (list-queues (first s)))))
 
 (defn arn [q] (-> q get-queue-attributes :QueueArn))
 

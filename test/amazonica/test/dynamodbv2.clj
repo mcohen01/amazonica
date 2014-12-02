@@ -3,7 +3,8 @@
            java.text.SimpleDateFormat
            java.util.Date
            java.util.UUID)
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.pprint :refer [pprint]])
   (:use [clojure.test]
         amazonica.core
         [amazonica.aws
@@ -86,7 +87,16 @@
               :text "barbaz"
               :column1 "first name"
               :column2 "last name"
-              :bytes (.getBytes "some bytes")}]
+              :bytes (.getBytes "some bytes")
+              :someMap {:text "bar" :number 7}
+              :someList ["one" "two" 3]
+              :mapInMap {:foo {:bar "yes"}}
+              :setInMap {:mySet #{"one" "two"}}
+              :nullAttr nil
+              :boolAttr true
+              :listInMap {:myList ["one" "two"]}
+              :complex {:mySet #{"one" "two"} :foo {:bar "it works"} :answer 42}
+              :someSet #{17 42}}]
     (put-item
       cred
       :table-name table

@@ -971,7 +971,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
             :key "stream"
             :input-stream input-stream
             :metadata {:content-length (count some-bytes)}
-            :return-value "ALL_OLD")
+            :return-values "ALL_OLD")
 
 
 (let [upl (upload bucket

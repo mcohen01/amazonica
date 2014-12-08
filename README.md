@@ -516,7 +516,11 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
             :date 123456
             :text "barbaz"
             :column1 "first name"
-            :column2 "last name"})
+            :column2 "last name"
+            :numberSet #{1 2 3}
+            :stringSet #{"foo" "bar"}
+            :mixedList [1 "foo"]
+            :mixedMap {:name "baz" :secret 42}})
 
 (get-item cred
           :table-name "TestTable"
@@ -966,7 +970,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (put-object :bucket-name bucket1
             :key "stream"
             :input-stream input-stream
-            :metadata {:content-length (count some-bytes)})
+            :metadata {:content-length (count some-bytes)}
+            :return-values "ALL_OLD")
 
 
 (let [upl (upload bucket

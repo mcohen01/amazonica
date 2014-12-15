@@ -14,4 +14,4 @@
                  [com.amazonaws/amazon-kinesis-client "1.1.0" :exclusions [joda-time]]
                  [joda-time "2.2"]
                  [robert/hooke "1.3.0"]
-                 [com.taoensso/nippy "2.5.0"]])
+                 [com.taoensso/nippy "2.7.0"]])

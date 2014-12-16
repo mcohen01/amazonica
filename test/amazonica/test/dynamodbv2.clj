@@ -10,22 +10,11 @@
         [amazonica.aws
           dynamodbv2]))
 
-; config file contains space-separated AWS credential key pair
-; and optional third param of AWS endpoint (e.g. for different
-; region than the default US_East)
-(def cred 
-  (apply 
-    hash-map 
-      (interleave 
-        [:access-key :secret-key :endpoint]
-        (seq (.split (slurp "aws.config") " ")))))
-
 (def table "TestTable")
 
 (deftest dynamodbv2 []  
 
   (create-table 
-    cred 
     :table-name table
     :key-schema 
       [{:attribute-name "id"   :key-type "HASH"}
@@ -53,14 +42,14 @@
        :write-capacity-units 1})
   
   ; wait for the tables to be created
-  (doseq [table (:table-names (list-tables cred))]
-    (loop [status (get-in (describe-table cred :table-name table)
+  (doseq [table (:table-names (list-tables))]
+    (loop [status (get-in (describe-table :table-name table)
                           [:table :table-status])]
       (if-not (= "ACTIVE" status)
         (do 
           (println "waiting for status" status "to be active")
           (Thread/sleep 1000)
-          (recur (get-in (describe-table cred :table-name table)
+          (recur (get-in (describe-table :table-name table)
                           [:table :table-status]))))))
  
   (set-root-unwrapping! true)
@@ -68,7 +57,7 @@
   (is 
     (= "id" 
       (get-in 
-        (describe-table cred :table-name table)
+        (describe-table :table-name table)
         [:key-schema 0 :attribute-name])))
 
   (set-root-unwrapping! false)
@@ -76,11 +65,11 @@
   (is 
     (= "id" 
       (get-in 
-        (describe-table cred :table-name table)
+        (describe-table :table-name table)
         [:table :key-schema 0 :attribute-name])))
   
-  (list-tables cred)
-  (list-tables cred :limit 1)
+  (list-tables)
+  (list-tables :limit 1)
 
   (let [item {:id "foo"
               :date 123456
@@ -97,14 +86,12 @@
               :listInMap {:myList ["one" "two"]}
               :complex {:mySet #{"one" "two"} :foo {:bar "it works"} :answer 42}
               :someSet #{17 42}}]
-    (put-item
-      cred
+    (put-item      
       :table-name table
       :return-consumed-capacity "TOTAL"
       :return-item-collection-metrics "SIZE"
       :item item)
-    (let [ret-item (:item (get-item
-                            cred
+    (let [ret-item (:item (get-item                            
                             :table-name table
                             :key 
                             {:id {:s "foo"}
@@ -114,8 +101,7 @@
              (-> ret-item :bytes .array String.)))))
   
     
-  (query cred
-         :table-name table
+  (query :table-name table
          :limit 1
          :index-name "column1_idx"
          :select "ALL_ATTRIBUTES"
@@ -125,12 +111,11 @@
             :column1 {:attribute-value-list ["first na"] :comparison-operator "BEGINS_WITH"}})
 
   (clojure.pprint/pprint
-    (scan cred :table-name "TestTable"))
+    (scan :table-name "TestTable"))
 
   (set-root-unwrapping! false)
 
-(let [item (batch-get-item
-             cred 
+(let [item (batch-get-item 
              :return-consumed-capacity "TOTAL"
              :request-items {
              "TestTable" {:keys [{"id"   {:s "foobar"}
@@ -143,7 +128,6 @@
   (is (= "foo"    (-> item :responses :TestTable first :id))))
 
 (batch-write-item
-  cred
   :return-consumed-capacity "TOTAL"
   :return-item-collection-metrics "SIZE"
   :request-items 
@@ -158,8 +142,8 @@
                  :column1 "funky"}}}]})
   
   (clojure.pprint/pprint 
-    (describe-table cred :table-name "TestTable"))
+    (describe-table :table-name "TestTable"))
 
-  (delete-table cred :table-name "TestTable")
+  (delete-table :table-name "TestTable")
 
 )

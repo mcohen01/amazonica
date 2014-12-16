@@ -4,12 +4,20 @@
   (:use [amazonica.aws.s3transfer]
         [clojure.test]))
 
-(def cred 
-  (apply 
-    hash-map 
-      (interleave 
-        [:access-key :secret-key :endpoint]
-        (seq (.split (slurp "aws.config") " ")))))
+(def cred
+  (let [access "aws_access_key_id = "
+        secret "aws_secret_access_key = "
+        file   "/.aws/credentials"
+        creds  (-> "user.home"
+                   System/getProperty
+                   (str file)
+                   slurp
+                   (.split "\n"))
+        key-for (fn [k] (-> (filter #(.startsWith % k) creds)
+                            first
+                            (.replace k "")))]
+    {:access-key (key-for access)
+     :secret-key (key-for secret)}))
 
 
 (deftest s3transfer []

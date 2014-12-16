@@ -319,6 +319,19 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;   at com.amazonaws.services.ec2.AmazonEC2Client.createSnapshot(AmazonEC2Client.java:1531)
 ;   .....
 ```
+
+
+### Running the tests
+As always, `lein test` will run all the tests. Note that some of the namespaces require the file `~/.aws/credentials` to be present and be of the same form as required by the official AWS tools:
+
+```
+[default]
+aws_access_key_id = AKIAABCDEFGHIEJK
+aws_secret_access_key = 6rqzvpAbcd1234++zyx987WUV654sRq
+```
+
+
+
 ### Performance
 Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]
 

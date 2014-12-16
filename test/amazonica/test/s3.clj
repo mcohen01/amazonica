@@ -14,15 +14,20 @@
         [amazonica.core]
         [amazonica.aws.s3]))
 
-; config file contains space-separated AWS credential key pair
-; and optional third param of AWS endpoint (e.g. for different
-; region than the default US_East)
-(def cred 
-  (apply 
-    hash-map 
-      (interleave 
-        [:access-key :secret-key :endpoint]
-        (seq (.split (slurp "aws.config") " ")))))
+(def cred
+  (let [access "aws_access_key_id = "
+        secret "aws_secret_access_key = "
+        file   "/.aws/credentials"
+        creds  (-> "user.home"
+                   System/getProperty
+                   (str file)
+                   slurp
+                   (.split "\n"))
+        key-for (fn [k] (-> (filter #(.startsWith % k) creds)
+                            first
+                            (.replace k "")))]
+    {:access-key (key-for access)
+     :secret-key (key-for secret)}))
 
 (deftest s3 []
 

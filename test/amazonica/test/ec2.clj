@@ -1,10 +1,35 @@
 (ns amazonica.test.ec2
   (:use [clojure.test]
         [clojure.pprint]
-        [amazonica.core]
         [amazonica.aws.ec2]))
 
 (deftest ec2 []
+  
+  (def vpc-id
+   (-> (create-vpc :cidr-block "10.0.0.0/16") :vpc :vpc-id))
+
+
+  (def network-acl-id
+    (-> (create-network-acl :vpc-id vpc-id) :network-acl :network-acl-id))
+
+  (clojure.pprint/pprint
+    (create-network-acl-entry :network-acl-id network-acl-id
+                              :cidr-block "0.0.0.0/0"
+                              :egress false
+                              :port-range [22 22]
+                              :rule-action "deny"
+                              :protocol "6"
+                              :rule-number 100))
+
+  (clojure.pprint/pprint
+    (describe-network-acls :network-aclids [network-acl-id]))
+
+
+  (delete-network-acl-entry :network-acl-id network-acl-id
+                            :egress false
+                            :rule-number 100)
+  (delete-network-acl :network-acl-id network-acl-id)
+  (delete-vpc :vpc-id vpc-id)
 
   (clojure.pprint/pprint
     (describe-availability-zones))

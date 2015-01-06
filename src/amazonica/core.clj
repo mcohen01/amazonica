@@ -637,16 +637,17 @@
 (defn- use-aws-request-bean?
   [method args]
   (let [types (.getParameterTypes method)]
-    (and (< 1 (count args))
+    (and (or (map? args) (< 1 (count args)))
          (< 0 (count types))
-         (and
-            (or (and
-                  (even? (count args))
-                  (not= java.io.File (last types)))
-                (and
-                  (odd? (count args))
-                  (= java.io.File (last types)))) ; s3 getObject() support
-            (some keyword? args))
+         (or (map? args)
+             (and
+                (or (and
+                      (even? (count args))
+                      (not= java.io.File (last types)))
+                    (and
+                      (odd? (count args))
+                      (= java.io.File (last types)))) ; s3 getObject() support
+                (some keyword? args)))
          (or (aws-package? (first types))
              (and (aws-package? (last types))
                   (not (< (count types) (count args))))))))
@@ -704,7 +705,8 @@
        :credential (dissoc (first args) :client-config)
        :client-config (:client-config (first args))}
       (map? (first args))
-      {:args (mapcat identity (first args))}
+      {:args (let [m (mapcat identity (first args))]
+               (if (seq m) m {}))}
       :default {:args args})))
 
 (defn- candidate-client

@@ -435,7 +435,7 @@
 (defn- find-methods
   [pojo k & v]
   (-> (.getClass pojo)
-      (.getDeclaredMethods)
+      (.getMethods)
       (accessor-methods
         (.toLowerCase (keyword->camel k))
         (empty? v))))

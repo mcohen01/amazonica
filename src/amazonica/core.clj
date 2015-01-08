@@ -359,7 +359,10 @@
           %
           nil)
         ctors)
-      (first ctors))))
+      (first (sort-by
+               (fn [ctor]
+                 (some aws-package? (.getParameterTypes ctor)))
+               ctors)))))
 
 (defn- new-instance
   "Create a new instance of a Java bean. S3 neccessitates

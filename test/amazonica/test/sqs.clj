@@ -1,11 +1,14 @@
 (ns amazonica.test.sqs
   (:use [clojure.test]
         [amazonica.aws.sqs])
-  (:import com.amazonaws.services.sqs.model.QueueDoesNotExistException))
+  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+           com.amazonaws.services.sqs.model.QueueDoesNotExistException))
 
 (deftest sqs []
 
   (list-queues)
+  
+  (list-queues (DefaultAWSCredentialsProviderChain.) "my-queue")
 
   (create-queue :queue-name "my-queue"
                 :attributes

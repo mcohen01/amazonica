@@ -1,5 +1,6 @@
 (ns amazonica.test.s3
-  (:import org.joda.time.DateTime
+  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+           org.joda.time.DateTime
            java.io.BufferedInputStream
            java.io.File
            java.io.FileInputStream
@@ -42,6 +43,8 @@
   (create-bucket bucket1)
   
   (list-buckets cred)
+  
+  (list-buckets (DefaultAWSCredentialsProviderChain.))
 
   ; (def uuid-regex #"[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}")
   ; (reduce

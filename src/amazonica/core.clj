@@ -702,7 +702,9 @@
       {:args (if (-> args rest first map?)
                  (mapcat identity (-> args rest args-from :args))
                  (rest args))
-       :credential (dissoc (first args) :client-config)
+       :credential (if (map? (first args))
+                       (dissoc (first args) :client-config)
+                       (first args))
        :client-config (:client-config (first args))}
       (map? (first args))
       {:args (let [m (mapcat identity (first args))]
@@ -718,12 +720,16 @@
       (if (= clazz TransferManager)
           (TransferManager. (candidate-client AmazonS3Client args))
           (encryption-client (:encryption (apply hash-map (:args args)))
-                             (merge @credential (:credential args))
+                             (if (map? (:credential args))
+                                 (merge @credential (:credential args))
+                                 (:credential args))
                                  (:client-config args)))
       (if (= clazz TransferManager)
           (TransferManager. (candidate-client AmazonS3Client args))
           (amazon-client clazz
-                         (merge @credential (:credential args))
+                         (if (map? (:credential args))
+                             (merge @credential (:credential args))
+                             (:credential args))
                          (:client-config args)))))
 
 (defn- fn-call

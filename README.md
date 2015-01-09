@@ -42,7 +42,7 @@ and the following dependency:
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
 * [ElastiCache] (#elasticache)
-* [ElasticBeanstalk] (#ElasticBeanstalk)
+* [ElasticBeanstalk] (#elasticbeanstalk)
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
@@ -633,6 +633,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```
 
 ###ElasticBeanstalk
+
 ```clj
 (ns com.example
   (:use [amazonica.aws.elasticbeanstalk]))

@@ -716,24 +716,23 @@
 
 (defn- candidate-client
   [clazz args]
-  (if (and (or (= clazz AmazonS3Client)
-               (= clazz TransferManager))
-           (even? (count (:args args)))
-           (contains? (apply hash-map (:args args)) :encryption))
-      (if (= clazz TransferManager)
-          (TransferManager. (candidate-client AmazonS3Client args))
-          (encryption-client (:encryption (apply hash-map (:args args)))
-                             (if (map? (:credential args))
-                                 (merge @credential (:credential args))
-                                 (:credential args))
-                                 (:client-config args)))
-      (if (= clazz TransferManager)
-          (TransferManager. (candidate-client AmazonS3Client args))
-          (amazon-client clazz
-                         (if (map? (:credential args))
+  (let [credential (if (map? (:credential args))
                              (merge @credential (:credential args))
-                             (:credential args))
-                         (:client-config args)))))
+                             (or (:credential args) @credential))]
+    (if (and (or (= clazz AmazonS3Client)
+                 (= clazz TransferManager))
+             (even? (count (:args args)))
+             (contains? (apply hash-map (:args args)) :encryption))
+        (if (= clazz TransferManager)
+            (TransferManager. (candidate-client AmazonS3Client args))
+            (encryption-client (:encryption (apply hash-map (:args args)))
+                               credential
+                               (:client-config args)))
+        (if (= clazz TransferManager)
+            (TransferManager. (candidate-client AmazonS3Client args))
+            (amazon-client clazz
+                           credential
+                           (:client-config args))))))
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on

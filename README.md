@@ -633,9 +633,10 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```
 
 ###ElasticBeanstalk
+
 ```clj
 (ns com.example
-  (:use [amazonica.aws.elastibeanstalk]))
+  (:use [amazonica.aws.elasticbeanstalk]))
 
 (describe-applications)
 

@@ -37,6 +37,7 @@ and the following dependency:
 * [CloudSearch] (#cloudsearch)
 * [CloudSearchV2] (#cloudsearchv2)
 * [CloudWatch] (#cloudwatch)
+* [CodeDeploy] (#codedeploy)
 * [DataPipeline] (#datapipeline)
 * DirectConnect
 * [DynamoDBV2] (#dynamodbv2)
@@ -49,6 +50,7 @@ and the following dependency:
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
 * [KMS] (#kms)
+* [Lambda] (#lambda)
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -464,6 +466,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+
+###CodeDeploy
+```clj
+(ns com.example
+  (:use [amazonica.aws.codedeploy]))
+
+(list-applications)
+
+```
+
+
 ###DataPipeline
 ```clj
 (ns com.example
@@ -845,6 +858,27 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
 ```
+
+
+###Lambda
+```clj
+(ns com.example
+  (:use [amazonica.aws.lambda]))
+
+(let [role "arn:aws:iam::123456789012:role/some-lambda-role"
+      handler "exports.helloWorld = function(event, context) {
+                  console.log('value1 = ' + event.key1)
+                  console.log('value2 = ' + event.key2)
+                  console.log('value3 = ' + event.key3)
+                  context.done(null, 'Hello World')
+                }"]
+  (upload-function :role role :function handler))
+
+(invoke-async :function-name "helloWorld"
+              :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")  
+
+```
+
 
 ###OpsWorks
 ```clj

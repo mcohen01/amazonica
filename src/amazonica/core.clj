@@ -177,7 +177,8 @@
   "Legacy support means credentials may or may not be passed
    as the first argument."
   [cred args]
-  (if (and (instance? DefaultAWSCredentialsProviderChain (get-credentials cred))
+  (if (and (instance? AWSCredentialsProvider (get-credentials cred))
+           (not (instance? AWSCredentialsProvider cred))
            (nil? (:endpoint cred)))
     {:args (conj args cred)}
     {:args args :cred cred}))

@@ -43,7 +43,8 @@
                       first
                       (assoc :queue-url q)))
 
-  (let [msgs (receive-message :queue-url q
+  (let [msgs (receive-message (DefaultAWSCredentialsProviderChain.)
+                              :queue-url q
                               :wait-time-seconds 6
                               :max-number-of-messages 10
                               :delete true

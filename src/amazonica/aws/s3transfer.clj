@@ -32,6 +32,8 @@
    :get-progress             #(marshall (.getProgress obj))
    :get-state                #(str (.getState obj))
    :is-done                  #(.isDone obj)
+   :abort                    #(.abort obj)
+   :pause                    #(.pause obj)
    :remove-progress-listener #(.removeProgressListener obj %)
    :wait-for-completion      #(.waitForCompletion obj)
    :wait-for-exception       #(stack->string (.waitForException obj))})
@@ -49,9 +51,7 @@
     (let [t (transfer obj)]
       ((:add-progress-listener t) (partial default-listener t))
       (merge (transfer obj)
-             {:abort         #(.abort obj)
-              :pause         #(.pause obj)
-              :try-pause     #(.tryPause obj %)
+             {:try-pause     #(.tryPause obj %)
               :upload-result #(marshall (.waitForUploadResult obj))})))
   
   Download
@@ -59,10 +59,8 @@
     (let [t (transfer obj)]
       ((:add-progress-listener t) (partial default-listener t))
       (merge (transfer obj)
-             {:bucket-name     #(.getBucketName obj)
-              :abort           #(.abort obj)
-              :key             #(.getKey obj)
-              :pause           #(.pause obj)
+             {:key             #(.getKey obj)
+              :bucket-name     #(.getBucketName obj)
               :object-metadata #(marshall (.getObjectMetadata obj))})))
   
   MultipleFileUpload

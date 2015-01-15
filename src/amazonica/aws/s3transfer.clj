@@ -49,7 +49,10 @@
     (let [t (transfer obj)]
       ((:add-progress-listener t) (partial default-listener t))
       (merge (transfer obj)
-             {:upload-result #(marshall (.waitForUploadResult obj))})))
+             {:abort         #(.abort obj)
+              :pause         #(.pause obj)
+              :try-pause     #(.tryPause obj %)
+              :upload-result #(marshall (.waitForUploadResult obj))})))
   
   Download
   (marshall [obj]
@@ -59,6 +62,7 @@
              {:bucket-name     #(.getBucketName obj)
               :abort           #(.abort obj)
               :key             #(.getKey obj)
+              :pause           #(.pause obj)
               :object-metadata #(marshall (.getObjectMetadata obj))})))
   
   MultipleFileUpload

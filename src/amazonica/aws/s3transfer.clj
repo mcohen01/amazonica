@@ -49,7 +49,8 @@
     (let [t (transfer obj)]
       ((:add-progress-listener t) (partial default-listener t))
       (merge (transfer obj)
-             {:upload-result #(marshall (.waitForUploadResult obj))})))
+             {:upload-result #(marshall (.waitForUploadResult obj))
+              :abort         #(.abort obj)})))
   
   Download
   (marshall [obj]

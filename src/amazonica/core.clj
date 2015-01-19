@@ -17,6 +17,7 @@
            [com.amazonaws.regions
              Region
              Regions]
+           com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient
            [com.amazonaws.services.s3
              AmazonS3Client
              AmazonS3EncryptionClient]
@@ -98,8 +99,7 @@
 (def ^:private excluded
   #{:invoke
     :init
-    ; cloudsearchdomain needs this
-    ;:set-endpoint
+    :set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
     ; addRequestHandler???
@@ -814,11 +814,12 @@
   (reduce
     (fn [col method]
       (let [fname (camel->keyword (.getName method))]
-        (if (contains? excluded fname)
-          col
-          (if (contains? col fname)
-            (update-in col [fname] conj method)
-            (assoc col fname [method])))))
+        (if (and (contains? excluded fname)
+                 (not= client AmazonCloudSearchDomainClient))
+            col
+            (if (contains? col fname)
+                (update-in col [fname] conj method)
+                (assoc col fname [method])))))
     {}
     (.getDeclaredMethods client)))
 

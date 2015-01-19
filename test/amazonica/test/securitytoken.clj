@@ -12,18 +12,28 @@
     (is (= true (contains? session :secret-key)))
     (is (= true (contains? session :session-token))))
 
-  (assume-role 
-    :role-arn 
-    (-> (get-role :role-name "my-role")
-        :role
-        :arn))
 
-  (get-user)
-  
+  (let [user-arn (get-in (get-user) [:user :arn])
+        policy (str "{\"Version\": \"2012-10-17\",
+                      \"Statement\": {
+                        \"Effect\": \"Allow\",
+                        \"Principal\": {\"AWS\": [\""user-arn"\"]},
+                        \"Action\": \"sts:AssumeRole\"
+                      }
+                    }")
+        role-arn (get-in (create-role :role-name "foobar"
+                                      :assume-role-policy-document policy)
+                         [:role :arn])]
+
+    (assume-role :role-arn role-arn :role-session-name "baz")
+
+    (delete-role :role-name "foobar"))
+
+
   (get-account-summary)
-  
+
   (list-access-keys)
-  
+
   (list-instance-profiles)
-  
+
 )

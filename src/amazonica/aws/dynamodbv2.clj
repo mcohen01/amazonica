@@ -20,7 +20,7 @@
 (extend-protocol IMarshall
   AttributeValue
   (marshall [obj]
-    (let [[type val] (some #(when (val %) %) (dissoc (bean obj) :class))]
+    (let [[type val] (some #(when (not (nil? (val %))) %) (dissoc (bean obj) :class))]
       (marshall (case type
                   (:s :b :BOOL) val
                   (:SS :BS) (into #{} val)

@@ -630,7 +630,7 @@
   ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
   ; .doesBucketExist, which wreak havoc on Clojure truthiness
   Boolean
-  (marshall [obj] (if obj (.booleanValue obj)))
+  (marshall [obj] (when-not (nil? obj) (.booleanValue obj)))
   
   Object
   (marshall [obj]

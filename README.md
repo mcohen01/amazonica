@@ -269,7 +269,7 @@ The credentials map may contain zero or one of the following:
 
 In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 
-**Note: The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.**
+**Note:** The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.
 
 For example, to work with ec2 instances in different regions you might do something like:  
 

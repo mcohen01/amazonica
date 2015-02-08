@@ -283,10 +283,11 @@ You will have created two AmazonEC2Clients, pointing to the two different region
 
 ```clj
 (set-s3client-options :path-style-access true)
+
 (create-bucket credentials "foo")
 ```
 
-The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials. 
+The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials.    
 
 
 As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:

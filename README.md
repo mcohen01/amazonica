@@ -269,6 +269,26 @@ The credentials map may contain zero or one of the following:
 
 In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 
+**Note: The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.**
+
+For example, to work with ec2 instances in different regions you might do something like:  
+
+```clj
+(ec2/create-image {:region "us-east-1"} :instance-id "i-1b9a9f71")
+
+(ec2/create-image {:region "us-west-2"} :instance-id "i-kj239d7d")
+```
+
+You will have created two AmazonEC2Clients, pointing to the two different regions. Likewise, if you omit the explicit credentials map then the DefaultAWSCredentialsProviderChain will be used. So in the following scenario you will again have two different Amazon*Clients:
+
+```clj
+(set-s3client-options :path-style-access true)
+(create-bucket credentials "foo")
+```
+
+The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials. 
+
+
 As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")

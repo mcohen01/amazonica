@@ -274,9 +274,9 @@ In addition, the credentials map may contain an `:endpoint` entry. If the value 
 For example, to work with ec2 instances in different regions you might do something like:  
 
 ```clj
-(ec2/create-image {:region "us-east-1"} :instance-id "i-1b9a9f71")
+(ec2/create-image {:endpoint "us-east-1"} :instance-id "i-1b9a9f71")
 
-(ec2/create-image {:region "us-west-2"} :instance-id "i-kj239d7d")
+(ec2/create-image {:endpoint "us-west-2"} :instance-id "i-kj239d7d")
 ```
 
 You will have created two AmazonEC2Clients, pointing to the two different regions. Likewise, if you omit the explicit credentials map then the DefaultAWSCredentialsProviderChain will be used. So in the following scenario you will again have two different Amazon*Clients:

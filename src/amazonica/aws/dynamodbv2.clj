@@ -38,7 +38,7 @@
 (defn- scalar-attribute-value? [value]
   (and (map? value)
        (= 1 (count value))
-       (= 1 (count (name-of-first-key value)))))
+       (contains? #{:s :b :BOOL :SS :BS :n :NS :l :m :NULL} (name-of-first-key value))))
 
 (register-coercions
   AttributeValue

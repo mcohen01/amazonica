@@ -32,13 +32,13 @@
 
 (def ^:private byte-array-type (class (byte-array 0)))
 
-(defn- name-of-first-key [value]
-  (name (key (first value))))
+(defn- first-key [value]
+  (key (first value)))
 
 (defn- scalar-attribute-value? [value]
   (and (map? value)
        (= 1 (count value))
-       (contains? #{:s :b :BOOL :SS :BS :n :NS :l :m :NULL} (name-of-first-key value))))
+       (contains? #{:s :b :BOOL :SS :BS :n :NS :l :m :NULL} (first-key value))))
 
 (register-coercions
   AttributeValue

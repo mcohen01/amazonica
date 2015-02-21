@@ -88,9 +88,8 @@
             (.setWriteCapacityUnits pt (last value)))))
       pt)))
 
-(intern-function AmazonDynamoDBClient
-                 *ns*
-                 :set-signer-region-override
-                 (.getMethods AmazonDynamoDBClient))
+(->> (.getMethods AmazonDynamoDBClient)
+     (filter #(= "setSignerRegionOverride" (name %)))
+     (intern-function AmazonDynamoDBClient *ns* :set-signer-region-override))
 
 (set-client AmazonDynamoDBClient *ns*)

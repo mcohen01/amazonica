@@ -1,7 +1,7 @@
 (ns amazonica.aws.dynamodbv2
   "Amazon DyanmoDBV2 support - Local Secondary Indexes"
-  (:use [amazonica.core :only (accessors coerce-value marshall
-                               register-coercions set-fields IMarshall)]
+  (:use [amazonica.core :only (accessors coerce-value intern-function marshall
+                               register-coercions set-client set-fields IMarshall)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.dynamodbv2
               AmazonDynamoDBAsyncClient
@@ -88,4 +88,9 @@
             (.setWriteCapacityUnits pt (last value)))))
       pt)))
 
-(amazonica.core/set-client AmazonDynamoDBClient *ns*)
+(intern-function AmazonDynamoDBClient
+                 *ns*
+                 :set-signer-region-override
+                 (.getMethods AmazonDynamoDBClient))
+
+(set-client AmazonDynamoDBClient *ns*)

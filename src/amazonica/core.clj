@@ -790,7 +790,7 @@
               false)))
         methods))))
 
-(defn- intern-function
+(defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."

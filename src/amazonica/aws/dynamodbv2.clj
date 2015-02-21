@@ -89,7 +89,7 @@
       pt)))
 
 (->> (.getMethods AmazonDynamoDBClient)
-     (filter #(= "setSignerRegionOverride" (name %)))
+     (filter #(= "setSignerRegionOverride" (.getName %)))
      (intern-function AmazonDynamoDBClient *ns* :set-signer-region-override))
 
 (set-client AmazonDynamoDBClient *ns*)

@@ -715,25 +715,33 @@
                (if (seq m) m {}))}
       :default {:args args})))
 
+(declare candidate-client)
+
+(defn- transfer-manager*
+  [credential client-config crypto]
+  (TransferManager. (if crypto
+                      (encryption-client crypto credential client-config)
+                      (amazon-client AmazonS3Client credential client-config))))
+
+(def ^:private transfer-manager
+  (memoize transfer-manager*))
+
 (defn- candidate-client
   [clazz args]
   (let [credential (if (map? (:credential args))
                              (merge @credential (:credential args))
-                             (or (:credential args) @credential))]
-    (if (and (or (= clazz AmazonS3Client)
-                 (= clazz TransferManager))
-             (even? (count (:args args)))
-             (contains? (apply hash-map (:args args)) :encryption))
+                             (or (:credential args) @credential))
+        client-config (:client-config args)
+        crypto (if (even? (count (:args args)))
+                   (:encryption (apply hash-map (:args args))))
+        client  (if (and crypto (or (= clazz AmazonS3Client)
+                                    (= clazz TransferManager)))
+                    (encryption-client crypto credential client-config)
+                    (amazon-client clazz credential client-config))]
         (if (= clazz TransferManager)
-            (TransferManager. (candidate-client AmazonS3Client args))
-            (encryption-client (:encryption (apply hash-map (:args args)))
-                               credential
-                               (:client-config args)))
-        (if (= clazz TransferManager)
-            (TransferManager. (candidate-client AmazonS3Client args))
-            (amazon-client clazz
-                           credential
-                           (:client-config args))))))
+            (transfer-manager credential client-config crypto)
+            client)))
+        
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on

@@ -16,19 +16,24 @@
         [amazonica.aws.s3]))
 
 (def cred
-  (let [access "aws_access_key_id = "
-        secret "aws_secret_access_key = "
+  (let [access "aws_access_key_id"
+        secret "aws_secret_access_key"
         file   "/.aws/credentials"
         creds  (-> "user.home"
                    System/getProperty
                    (str file)
                    slurp
-                   (.split "\n"))
-        key-for (fn [k] (-> (filter #(.startsWith % k) creds)
-                            first
-                            (.replace k "")))]
-    {:access-key (key-for access)
-     :secret-key (key-for secret)}))
+                   (.split "\n"))]
+    (clojure.set/rename-keys 
+      (reduce
+        (fn [m e]
+          (let [pair (.split e "=")]
+            (if (some #{access secret} [(first pair)])
+                (apply assoc m pair)
+                m)))
+        {}
+        creds)
+      {access :access-key secret :secret-key})))
 
 (deftest s3 []
 
@@ -62,7 +67,7 @@
   ;           (delete-bucket (:name e))))
   ;     m)
   ;   []
-  ;   (list-buckets cred))
+  ;   (list-buckets))
   
   (list-buckets)
   

@@ -271,7 +271,7 @@ In addition, the credentials map may contain an `:endpoint` entry. If the value 
 
 **Note:** The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.
 
-For example, to work with ec2 instances in different regions you might do something like:  
+For example, to work with ec2 instances in different regions you might do something like:
 
 ```clj
 (ec2/create-image {:endpoint "us-east-1"} :instance-id "i-1b9a9f71")
@@ -287,7 +287,7 @@ You will have created two AmazonEC2Clients, pointing to the two different region
 (create-bucket credentials "foo")
 ```
 
-The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials.    
+The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials.
 
 
 As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:
@@ -676,7 +676,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (describe-environments)
 
-(create-environment creds 
+(create-environment creds
                     {:application-name "app"
                      :environment-name "env"
                      :version-label "1.0"
@@ -821,6 +821,14 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ;; to also provide a deserializer function when fetching records.
 
 
+;; For bulk uploading, we provide a `put-records` function which takes in a sequence of maps
+;; that contain the partition-key and data.  As with `put-record` the data will be handled via
+;; Nippy if it is not of a `java.nio.ByteBuffer`.
+(put-records "my-stream"
+             [{:partition-key "x5h2ch" :data ["foo" "bar" "baz"]}
+              {:partition-key "x5j3ak" :data ["quux"]}])
+
+
 ;; optional :deserializer function which will be passed the raw
 ;; java.nio.ByteBuffer representing the data blob of each record
 (defn- get-raw-bytes [byte-buffer]
@@ -896,7 +904,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
   (upload-function :role role :function handler))
 
 (invoke-async :function-name "helloWorld"
-              :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")  
+              :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
 
 ```
 

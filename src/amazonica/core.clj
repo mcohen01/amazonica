@@ -205,6 +205,18 @@
       (AmazonS3EncryptionClient. creds materials config crypto)
       (AmazonS3EncryptionClient. creds materials crypto))))
 
+(defn- ^:private set-region
+  [clazz client endpoint]
+    (if (isa? TransferManager clazz)
+      (.setRegion (.getAmazonS3Client client) endpoint)
+      (.setRegion client endpoint)))
+
+(defn- ^:private set-endpoint
+  [clazz client endpoint]
+    (if (isa? TransferManager clazz)
+      (.setEndpoint (.getAmazonS3Client client) endpoint)
+      (.setEndpoint client endpoint)))
+
 (defn- amazon-client*
   [clazz credentials configuration]
   (let [aws-creds  (get-credentials credentials)
@@ -221,10 +233,10 @@
                      (str/replace "-" "_"))
                  Regions/valueOf
                  Region/getRegion
-                 (.setRegion client))
+                 (set-region clazz client))
             (catch NoSuchMethodException e
               (println e)))
-          (.setEndpoint client endpoint)))
+          (set-endpoint clazz client endpoint)))
     client))
 
 (def ^:private encryption-client

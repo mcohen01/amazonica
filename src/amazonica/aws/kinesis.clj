@@ -61,7 +61,9 @@
       (let [parsed (amz/parse-args (first args) (rest args))
             [stream data] (:args parsed)
             data-byte (map (fn [x] (update-in x [:data] ->bytes)) data)]
-        (f (:cred parsed) :stream-name stream :records data-byte)))))
+        (if (nil? (:cred parsed))
+          (f :stream-name stream :records data-byte)
+          (f (:cred parsed) :stream-name stream :records data-byte))))))
 
 (defn unwrap
   [^java.nio.ByteBuffer byte-buffer]

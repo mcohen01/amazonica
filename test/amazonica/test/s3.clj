@@ -308,6 +308,10 @@
     (set-bucket-lifecycle-configuration cred bucket1 config)
     (is (= config (get-bucket-lifecycle-configuration cred bucket1))))
 
+  (set-bucket-cross-origin-configuration cred bucket1 {:rules [{:allowed-methods ["GET" "POST"]
+                                                                :allowed-origins ["*"]
+                                                                :max-age-seconds 9000
+                                                                :allowed-headers ["Authorization"]}]})
   (delete-bucket-cross-origin-configuration cred bucket1)
   (delete-bucket-lifecycle-configuration cred bucket1)
   (delete-bucket-policy cred bucket1)

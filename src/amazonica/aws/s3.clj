@@ -7,6 +7,8 @@
            [com.amazonaws.services.s3.model
               AccessControlList
               CanonicalGrantee
+              CORSRule
+              CORSRule$AllowedMethods
               DeleteObjectsRequest$KeyVersion
               EmailAddressGrantee
               Grant
@@ -19,6 +21,9 @@
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$;")
 
 (extend-protocol IMarshall
+  CORSRule$AllowedMethods
+  (marshall [obj]
+    (.toString obj))
   ObjectMetadata
   (marshall [obj]
     {:cache-control           (.getCacheControl obj)
@@ -122,6 +127,25 @@
   (fn [value]
     (if (coll? value)
         (DeleteObjectsRequest$KeyVersion. (first value) (second value))
-        (DeleteObjectsRequest$KeyVersion. value))))
+        (DeleteObjectsRequest$KeyVersion. value)))
+  CORSRule
+  (fn [col]
+    (let [cors (CORSRule.)]
+      (when-let [id (:id col)]
+        (.setId cors id))
+      (when-let [max-age-seconds (:max-age-seconds col)]
+        (.setMaxAgeSeconds cors max-age-seconds))
+      (when-let [allowed-headers (:allowed-headers col)]
+        (.setAllowedHeaders cors (into-array String allowed-headers)))
+      (when-let [allowed-origins (:allowed-origins col)]
+        (.setAllowedOrigins cors (into-array String allowed-origins)))
+      (when-let [exposed-headers (:exposed-headers col)]
+        (.setExposedHeaders cors (into-array String exposed-headers)))
+      (when-let [allowed-methods (:allowed-methods col)]
+        (.setAllowedMethods cors
+                            (into-array CORSRule$AllowedMethods
+                    (fmap #(coerce-value % CORSRule$AllowedMethods)
+                          allowed-methods))))
+      cors)))
 
 (amazonica.core/set-client AmazonS3Client *ns*)

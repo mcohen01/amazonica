@@ -736,11 +736,11 @@
                    (:encryption (apply hash-map (:args args))))
         client  (if (and crypto (or (= clazz AmazonS3Client)
                                     (= clazz TransferManager)))
-                    (encryption-client crypto credential client-config)
-                    (amazon-client clazz credential client-config))]
+                    (delay (encryption-client crypto credential client-config))
+                    (delay (amazon-client clazz credential client-config)))]
         (if (= clazz TransferManager)
             (transfer-manager credential client-config crypto)
-            client)))
+            @client)))
         
 
 (defn- fn-call

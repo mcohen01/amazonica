@@ -42,6 +42,7 @@ and the following dependency:
 * DirectConnect
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
+* [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)
 * [ElasticLoadBalancing] (#elasticloadbalancing)

@@ -21,6 +21,7 @@
              datapipeline
              dynamodbv2
              ec2
+             ecs
              elasticache
              elasticbeanstalk
              elasticloadbalancing

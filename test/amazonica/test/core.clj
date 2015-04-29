@@ -1,24 +1,19 @@
 (ns amazonica.test.core
-  (:import amazonica.TreeHash
-           org.joda.time.DateTime
-           java.io.BufferedInputStream
-           java.io.File
-           java.io.FileInputStream
-           java.text.SimpleDateFormat
-           java.util.Date
-           java.util.UUID)
-  (:require [clojure.string :as str])
-  (:require [clojure.test]
-            [clojure.pprint]
-            [clojure.java.shell]
-            [amazonica.core]
+  (:require [amazonica.core]
             [amazonica.aws
              autoscaling
              cloudformation
              cloudfront
              cloudsearch
+             cloudsearchv2
+             cloudsearchdomain
+             cloudtrail
              cloudwatch
+             codedeploy
+             cognitoidentity
+             cognitosync
              datapipeline
+             directconnect
              dynamodbv2
              ec2
              ecs
@@ -26,8 +21,13 @@
              elasticbeanstalk
              elasticloadbalancing
              elasticmapreduce
+             elastictranscoder
              glacier
              identitymanagement
+             kinesis
+             kms
+             lambda
+             logs
              opsworks
              rds
              redshift
@@ -36,10 +36,8 @@
              securitytoken
              simpledb
              simpleemail
+             simpleworkflow
              sns
              sqs
              storagegateway
              ]))
-
-; ;; just load the namespace to confirm we don't have
-; ;; any naming conflicts with interned Vars

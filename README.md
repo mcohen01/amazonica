@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.21"]
+[amazonica "0.3.22"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.21</version>
+  <version>0.3.22</version>
 </dependency>
 ```
 
@@ -42,6 +42,7 @@ and the following dependency:
 * DirectConnect
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
+* [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)
 * [ElasticLoadBalancing] (#elasticloadbalancing)
@@ -644,6 +645,44 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+###ECS
+
+```clj
+(ns com.example
+  (:require [amazonica.aws.esc :refer :all]))
+
+(register-task-definition
+ {:family "grafana2",
+  :container-definitions [{:name "grafana2"
+                           :image "bbinet/grafana2",
+                           :port-mappings [{:container-port 3000, :host-port 3000}]
+                           :memory 300
+                           :cpu 300
+                           }]})
+(describe-task-definition :task-definition "grafana2")
+(list-task-definitions :family-prefix "grafana2")
+
+;; create cluster 
+(create-cluster :cluster-name "Amazonica")
+
+(list-clusters)
+(describe-clusters)
+
+(create-service :cluster "Amazonica"
+                :service-name "grafana2"
+                :task-definition "grafana2" :desired-count 1
+                ;;:role "ecsServiceRole"
+                ;;:load-balancers [...]
+                )
+(list-services :cluster "Amazonica")
+(describe-services :cluster "Amazonica" :services ["grafana2"])
+
+;; add ec2 instances to your cluster
+
+(update-service :cluster "Amazonica" :service "grafana2" :desired-count 0)
+(delete-service :cluster "Amazonica" :service "grafana2")
+(delete-cluster :cluster "Amazonica")
+```
 
 ###Elasticache
 ```clj

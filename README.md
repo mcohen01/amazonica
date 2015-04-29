@@ -643,6 +643,8 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")
 
+```
+
 ###ECS
 
 ```clj

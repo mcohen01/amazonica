@@ -43,4 +43,4 @@
     (func (dissoc attrs :function))))
 
 
-(add-hook #'upload-function #'parse-function)
+(add-hook #'create-function #'parse-function)

@@ -36,12 +36,12 @@
                   context.done(null, 'Hello World')
                 }")
 
-  (upload-function :role role :function handler)
-  (upload-function {:role role :function handler})
-  (upload-function cred :role role :function handler)
-  (upload-function cred {:role role :function handler})
-  (upload-function (DefaultAWSCredentialsProviderChain.) :role role :function handler)
-  (upload-function (DefaultAWSCredentialsProviderChain.) {:role role :function handler})
+  (create-function :role role :function handler)
+  (create-function {:role role :function handler})
+  (create-function cred :role role :function handler)
+  (create-function cred {:role role :function handler})
+  (create-function (DefaultAWSCredentialsProviderChain.) :role role :function handler)
+  (create-function (DefaultAWSCredentialsProviderChain.) {:role role :function handler})
 
   (let [f (-> (list-functions) :functions first)]
     (is (= "uploaded via amazonica" (:description f)))
@@ -52,7 +52,7 @@
   
   (spit "helloWorld.js" handler)
   (clojure.java.shell/sh "zip" "helloWorld.js.zip" "helloWorld.js")
-  (upload-function cred
+  (create-function cred
                    :timeout 30
                    :memory-size 512
                    :description "helloWorld - amazonica test"
@@ -70,10 +70,11 @@
 
   ;(add-event-source :function-name "helloWorld")
 
-  (list-event-sources :function-name "helloWorld")
+  (list-event-source-mappings :function-name "helloWorld")
 
-  (invoke-async :function-name "helloWorld"
-                :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
+  (invoke :function-name "helloWorld"
+          :invocation-type "Event"
+          :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
 
   (delete-function :function-name "helloWorld")
   

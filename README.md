@@ -627,7 +627,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (describe-images :owners ["self"])
 
-(describe-instances)
+(describe-instances :filters [{:name "tag:env" :values ["production"]}])
 
 (create-image :name "my_test_image"
               :instance-id "i-1b9a9f71"

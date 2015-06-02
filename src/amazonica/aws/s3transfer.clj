@@ -1,5 +1,6 @@
 (ns amazonica.aws.s3transfer
-  (:use [amazonica.core :only (IMarshall marshall coerce-value stack->string)])
+  (:require [amazonica.core :refer [IMarshall marshall coerce-value stack->string]]
+            [amazonica.aws.s3])
   (:import [com.amazonaws.event
             ProgressEvent
             ProgressListener]
@@ -25,10 +26,17 @@
       (.addProgressListener obj listener)
       listener)))
 
+(defmacro wait
+  [transfer & body]
+  `(fn []
+     (.waitForCompletion ~transfer)
+     (do ~@body)))
+
 (defn transfer
   [obj]
-  {:add-progress-listener    (add-listener obj)
-   :get-description          #(.getDescription obj)
+  {:transfer                 obj
+   :add-progress-listener    (add-listener obj)
+   :get-description          (wait obj (.getDescription obj))
    :get-progress             #(marshall (.getProgress obj))
    :get-state                #(str (.getState obj))
    :is-done                  #(.isDone obj)
@@ -58,10 +66,9 @@
   (marshall [obj]
     (let [t (transfer obj)]
       ((:add-progress-listener t) (partial default-listener t))
-      (merge (transfer obj)
-             {:key             #(.getKey obj)
-              :bucket-name     #(.getBucketName obj)
-              :object-metadata #(marshall (.getObjectMetadata obj))})))
+      (merge t {:key             (wait obj (.getKey obj))
+                :bucket-name     (wait obj (.getBucketName obj))
+                :object-metadata (wait obj (marshall (.getObjectMetadata obj)))})))
   
   MultipleFileUpload
   (marshall [obj]

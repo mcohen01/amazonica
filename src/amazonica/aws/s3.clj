@@ -91,7 +91,8 @@
     (let [acl   (AccessControlList.)
           s3ns  (find-ns (symbol "amazonica.aws.s3"))
           sym   (symbol "get-s3account-owner")
-          owner (delay (ns-resolve s3ns sym))]
+          own   (delay (ns-resolve s3ns sym))
+          owner #(coerce-value (marshall (@own)) Owner)]
           ;; get-s3account-owner is not interned until runtime
       (if-let [revoked (:revoke-all-permissions col)]
         (.revokeAllPermissions acl
@@ -107,7 +108,7 @@
           (coerce-value (first grant) Grantee)
           (coerce-value (second grant) Permission)))
       ;; s3 complains about ACLs without owners (even though docs say internal)
-      (.setOwner acl (coerce-value @owner Owner))
+      (.setOwner acl (owner))
       acl))
   Grant
   (fn [value]

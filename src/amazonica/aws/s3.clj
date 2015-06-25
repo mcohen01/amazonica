@@ -108,7 +108,7 @@
           (coerce-value (first grant) Grantee)
           (coerce-value (second grant) Permission)))
       ;; s3 complains about ACLs without owners (even though docs say internal)
-      (.setOwner acl (owner))
+      (.setOwner acl (or (:owner col) (owner)))
       acl))
   Grant
   (fn [value]

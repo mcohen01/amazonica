@@ -319,21 +319,22 @@
   (swap! coercions merge coercion))
 
 (defn coerce-value
-  "Coerces the supplied value to the required type as
-  defined by the AWS method signature. String conversion
-  to Enum types (e.g. via valueOf()) is supported."
+  "Coerces the supplied stringvalue to the required type as
+  defined by the AWS method signature. String or keyword 
+  conversion to Enum types (e.g. via valueOf()) is supported."
   [value type]
-  (if-not (instance? type value)
-    (if (= java.lang.Enum (.getSuperclass type))
-      (to-enum type value)
-      (if-let [coercion (@coercions (if (.isPrimitive type)
-                                      (str type)
-                                      type))]
-        (coercion value)
-        (throw (IllegalArgumentException.
-                 (format "No coercion is available to turn %s into an object of type %s"
-                         value type)))))
-    value))
+  (let [value (if (keyword? value) (name value) value)]
+    (if-not (instance? type value)
+      (if (= java.lang.Enum (.getSuperclass type))
+        (to-enum type value)
+        (if-let [coercion (@coercions (if (.isPrimitive type)
+                                        (str type)
+                                        type))]
+          (coercion value)
+          (throw (IllegalArgumentException.
+                   (format "No coercion is available to turn %s into an object of type %s"
+                           value type)))))
+      value)))
 
 (defn- default-value
   [class-name]
@@ -780,28 +781,48 @@
              (every? identity (map instance? types args)))
         method)))
 
+(defn- coercible? [type]
+  (and (contains? @coercions type)
+       (not (re-find #"java\.lang" (str type)))))
+
+(defn- choose-from [possible]
+  (if (= 1 (count possible))
+      (first possible)
+      (first
+        (sort-by
+          (fn [method]
+            (let [types (.getParameterTypes method)]
+              (cond
+                (some coercible? types) 1
+                (some #(= java.lang.Enum (.getSuperclass %)) types) 2
+                :else 3)))
+          possible))))
+
+(defn possible-methods
+  [methods args]
+  (filter
+    (fn [method]
+      (let [types (.getParameterTypes method)
+            num   (count types)]
+        (if (or
+              (and (empty? args) (= 0 num))
+              (use-aws-request-bean? method args)
+              (and
+                (= num (count args))
+                (not (keyword? (first args)))
+                (not (aws-package? (first types)))))
+          method
+          false)))
+    methods))
+
 (defn- best-method
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
   (let [args (:args (args-from arg))
         methods (filter #(not (Modifier/isPrivate (.getModifiers %))) methods)]
-    (if-let [m (some (partial types-match-args args) methods)]
-      m
-      (some
-        (fn [method]
-          (let [types (.getParameterTypes method)
-                num   (count types)]
-            (if (or
-                  (and (empty? args) (= 0 num))
-                  (use-aws-request-bean? method args)
-                  (and
-                    (= num (count args))
-                    (not (keyword? (first args)))
-                    (not (aws-package? (first types)))))
-              method
-              false)))
-        methods))))
+    (or (some (partial types-match-args args) methods)
+        (choose-from (possible-methods methods args)))))
 
 (defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function

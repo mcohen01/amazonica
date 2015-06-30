@@ -940,7 +940,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
                   console.log('value3 = ' + event.key3)
                   context.done(null, 'Hello World')
                 }"]
-  (upload-function :role role :function handler))
+  (create-function :role role :function handler))
 
 (invoke-async :function-name "helloWorld"
               :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")

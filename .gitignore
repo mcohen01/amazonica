@@ -20,3 +20,4 @@ checkouts
 .lein-repl-history
 .nrepl-port
 *.swp
+upload.txt

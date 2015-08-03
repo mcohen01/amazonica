@@ -37,14 +37,20 @@ and the following dependency:
 * [CloudSearch] (#cloudsearch)
 * [CloudSearchV2] (#cloudsearchv2)
 * [CloudWatch] (#cloudwatch)
+* CodeCommit
 * [CodeDeploy] (#codedeploy)
+* CodePipeline
+* Config
 * [DataPipeline] (#datapipeline)
+* DeviceFarm
 * DirectConnect
+* Directory
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
 * [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)
+* ElasticFileSystem
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
@@ -52,6 +58,7 @@ and the following dependency:
 * [Kinesis] (#kinesis)
 * [KMS] (#kms)
 * [Lambda] (#lambda)
+* MachineLearning
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)

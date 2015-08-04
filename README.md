@@ -451,7 +451,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-To put metric data. 
+To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html)
 ```clj
 (cloudwatch/put-metric-data
     {:endpoint "us-west-1"} ;; Defaults to us-east-1

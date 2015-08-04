@@ -18,3 +18,6 @@ checkouts
 .lein-deps-sum
 .lein-failures
 .lein-repl-history
+.nrepl-port
+*.swp
+upload.txt

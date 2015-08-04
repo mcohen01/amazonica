@@ -1,11 +1,14 @@
 (ns amazonica.test.sqs
   (:use [clojure.test]
         [amazonica.aws.sqs])
-  (:import com.amazonaws.services.sqs.model.QueueDoesNotExistException))
+  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+           com.amazonaws.services.sqs.model.QueueDoesNotExistException))
 
 (deftest sqs []
 
   (list-queues)
+  
+  (list-queues (DefaultAWSCredentialsProviderChain.) "my-queue")
 
   (create-queue :queue-name "my-queue"
                 :attributes
@@ -40,7 +43,8 @@
                       first
                       (assoc :queue-url q)))
 
-  (let [msgs (receive-message :queue-url q
+  (let [msgs (receive-message (DefaultAWSCredentialsProviderChain.)
+                              :queue-url q
                               :wait-time-seconds 6
                               :max-number-of-messages 10
                               :delete true

@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.2"]
+[amazonica "0.3.30"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.2</version>
+  <version>0.3.30</version>
 </dependency>
 ```
 
@@ -37,18 +37,28 @@ and the following dependency:
 * [CloudSearch] (#cloudsearch)
 * [CloudSearchV2] (#cloudsearchv2)
 * [CloudWatch] (#cloudwatch)
+* CodeCommit
+* [CodeDeploy] (#codedeploy)
+* CodePipeline
+* Config
 * [DataPipeline] (#datapipeline)
+* DeviceFarm
 * DirectConnect
+* Directory
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
+* [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)
+* ElasticFileSystem
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
 * [KMS] (#kms)
+* [Lambda] (#lambda)
+* MachineLearning
 * [OpsWorks] (#opsworks)
 * RDS
 * [Redshift] (#redshift)
@@ -81,7 +91,7 @@ Reflection is used to create idiomatically named Clojure Vars in the library nam
 (create-snapshot :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
-which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set* can be supplied as key-value pairs passed as arguments to the Clojure function.
+which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon\*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set\* can be supplied as key-value pairs passed as arguments to the Clojure function.
 
 All of the AWS Java apis (except S3) follow this pattern, either having a single implementation method which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.
 
@@ -267,6 +277,27 @@ The credentials map may contain zero or one of the following:
 
 In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
 
+**Note:** The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.
+
+For example, to work with ec2 instances in different regions you might do something like:
+
+```clj
+(ec2/create-image {:endpoint "us-east-1"} :instance-id "i-1b9a9f71")
+
+(ec2/create-image {:endpoint "us-west-2"} :instance-id "i-kj239d7d")
+```
+
+You will have created two AmazonEC2Clients, pointing to the two different regions. Likewise, if you omit the explicit credentials map then the DefaultAWSCredentialsProviderChain will be used. So in the following scenario you will again have two different Amazon*Clients:
+
+```clj
+(set-s3client-options :path-style-access true)
+
+(create-bucket credentials "foo")
+```
+
+The call to `set-s3client-options` will use a DefaultAWSCredentialsProviderChain, while the `create-bucket` call will create a separate AmazonS3Client with BasicAWSCredentials.
+
+
 As a convenience, users may call `(defcredential)` before invoking any service functions and passing in their AWS key pair and an optional endpoint:
 ```clj
 (defcredential "aws-access-key" "aws-secret-key" "us-west-1")
@@ -319,6 +350,19 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ;   at com.amazonaws.services.ec2.AmazonEC2Client.createSnapshot(AmazonEC2Client.java:1531)
 ;   .....
 ```
+
+
+### Running the tests
+As always, `lein test` will run all the tests. Note that some of the namespaces require the file `~/.aws/credentials` to be present and be of the same form as required by the official AWS tools:
+
+```
+[default]
+aws_access_key_id = AKIAABCDEFGHIEJK
+aws_secret_access_key = 6rqzvpAbcd1234++zyx987WUV654sRq
+```
+
+
+
 ### Performance
 Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]
 
@@ -461,6 +505,15 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                    :value 1.0}])
 ```
 
+###CodeDeploy
+```clj
+(ns com.example
+  (:use [amazonica.aws.codedeploy]))
+
+(list-applications)
+
+```
+
 ###DataPipeline
 ```clj
 (ns com.example
@@ -526,7 +579,11 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
             :date 123456
             :text "barbaz"
             :column1 "first name"
-            :column2 "last name"})
+            :column2 "last name"
+            :numberSet #{1 2 3}
+            :stringSet #{"foo" "bar"}
+            :mixedList [1 "foo"]
+            :mixedMap {:name "baz" :secret 42}})
 
 (get-item cred
           :table-name "TestTable"
@@ -585,7 +642,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (describe-images :owners ["self"])
 
-(describe-instances)
+(describe-instances :filters [{:name "tag:env" :values ["production"]}])
 
 (create-image :name "my_test_image"
               :instance-id "i-1b9a9f71"
@@ -603,6 +660,44 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
+###ECS
+
+```clj
+(ns com.example
+  (:require [amazonica.aws.esc :refer :all]))
+
+(register-task-definition
+ {:family "grafana2",
+  :container-definitions [{:name "grafana2"
+                           :image "bbinet/grafana2",
+                           :port-mappings [{:container-port 3000, :host-port 3000}]
+                           :memory 300
+                           :cpu 300
+                           }]})
+(describe-task-definition :task-definition "grafana2")
+(list-task-definitions :family-prefix "grafana2")
+
+;; create cluster
+(create-cluster :cluster-name "Amazonica")
+
+(list-clusters)
+(describe-clusters)
+
+(create-service :cluster "Amazonica"
+                :service-name "grafana2"
+                :task-definition "grafana2" :desired-count 1
+                ;;:role "ecsServiceRole"
+                ;;:load-balancers [...]
+                )
+(list-services :cluster "Amazonica")
+(describe-services :cluster "Amazonica" :services ["grafana2"])
+
+;; add ec2 instances to your cluster
+
+(update-service :cluster "Amazonica" :service "grafana2" :desired-count 0)
+(delete-service :cluster "Amazonica" :service "grafana2")
+(delete-cluster :cluster "Amazonica")
+```
 
 ###Elasticache
 ```clj
@@ -626,15 +721,16 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 ###ElasticBeanstalk
+
 ```clj
 (ns com.example
-  (:use [amazonica.aws.elastibeanstalk]))
+  (:use [amazonica.aws.elasticbeanstalk]))
 
 (describe-applications)
 
 (describe-environments)
 
-(create-environment creds 
+(create-environment creds
                     {:application-name "app"
                      :environment-name "env"
                      :version-label "1.0"
@@ -779,6 +875,14 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ;; to also provide a deserializer function when fetching records.
 
 
+;; For bulk uploading, we provide a `put-records` function which takes in a sequence of maps
+;; that contain the partition-key and data.  As with `put-record` the data will be handled via
+;; Nippy if it is not of a `java.nio.ByteBuffer`.
+(put-records "my-stream"
+             [{:partition-key "x5h2ch" :data ["foo" "bar" "baz"]}
+              {:partition-key "x5j3ak" :data ["quux"]}])
+
+
 ;; optional :deserializer function which will be passed the raw
 ;; java.nio.ByteBuffer representing the data blob of each record
 (defn- get-raw-bytes [byte-buffer]
@@ -837,6 +941,27 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
 ```
+
+
+###Lambda
+```clj
+(ns com.example
+  (:use [amazonica.aws.lambda]))
+
+(let [role "arn:aws:iam::123456789012:role/some-lambda-role"
+      handler "exports.helloWorld = function(event, context) {
+                  console.log('value1 = ' + event.key1)
+                  console.log('value2 = ' + event.key2)
+                  console.log('value3 = ' + event.key3)
+                  context.done(null, 'Hello World')
+                }"]
+  (create-function :role role :function handler))
+
+(invoke-async :function-name "helloWorld"
+              :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
+
+```
+
 
 ###OpsWorks
 ```clj
@@ -977,7 +1102,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
             :key "stream"
             :input-stream input-stream
             :metadata {:content-length (count some-bytes)}
-            :return-value "ALL_OLD")
+            :return-values "ALL_OLD")
 
 
 (let [upl (upload bucket

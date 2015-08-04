@@ -33,6 +33,12 @@
 
 (amz/set-client AmazonKinesisClient *ns*)
 
+(defn- ->bytes
+  [data]
+  (if (instance? ByteBuffer data)
+    data
+    (ByteBuffer/wrap (nippy/freeze data))))
+
 (alter-var-root
   #'amazonica.aws.kinesis/put-record
   (fn [f]
@@ -40,15 +46,24 @@
       (let [parsed (amz/parse-args (first args) (rest args))
             args   (:args parsed)
             [stream data key & [seq-id]] args
-            bytes  (if (instance? ByteBuffer data)
-                       data
-                       (ByteBuffer/wrap (nippy/freeze data)))
+            bytes  (->bytes data)
             putrec (->> (list (:cred parsed) stream bytes key)
                         (filter (complement nil?))
                         (apply partial f))]
       (if seq-id
           (putrec seq-id)
           (putrec))))))
+
+(alter-var-root
+  #'amazonica.aws.kinesis/put-records
+  (fn [f]
+    (fn [& args]
+      (let [parsed (amz/parse-args (first args) (rest args))
+            [stream data] (:args parsed)
+            data-byte (map (fn [x] (update-in x [:data] ->bytes)) data)]
+        (if (nil? (:cred parsed))
+          (f :stream-name stream :records data-byte)
+          (f (:cred parsed) :stream-name stream :records data-byte))))))
 
 (defn unwrap
   [^java.nio.ByteBuffer byte-buffer]
@@ -65,8 +80,8 @@
 (alter-var-root
   #'amazonica.aws.kinesis/get-records
   (fn [f]
-    (fn [& args]         
-       (let [parsed      (amz/parse-args (first args) (rest args))             
+    (fn [& args]
+       (let [parsed      (amz/parse-args (first args) (rest args))
             args         (if (= 1 (count (:args parsed)))
                              (first (:args parsed))
                              (apply hash-map (seq (:args parsed))))

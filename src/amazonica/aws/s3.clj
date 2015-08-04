@@ -7,18 +7,24 @@
            [com.amazonaws.services.s3.model
               AccessControlList
               CanonicalGrantee
+              CORSRule
+              CORSRule$AllowedMethods
               DeleteObjectsRequest$KeyVersion
               EmailAddressGrantee
               Grant
               Grantee
               GroupGrantee
               ObjectMetadata
+              Owner
               Permission
               S3Object]))
 
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$;")
 
 (extend-protocol IMarshall
+  CORSRule$AllowedMethods
+  (marshall [obj]
+    (.toString obj))
   ObjectMetadata
   (marshall [obj]
     {:cache-control           (.getCacheControl obj)
@@ -82,7 +88,12 @@
       om))
   AccessControlList
   (fn [col]
-    (let [acl (AccessControlList.)]
+    (let [acl   (AccessControlList.)
+          s3ns  (find-ns (symbol "amazonica.aws.s3"))
+          sym   (symbol "get-s3account-owner")
+          own   (delay (ns-resolve s3ns sym))
+          owner #(coerce-value (marshall (@own)) Owner)]
+          ;; get-s3account-owner is not interned until runtime
       (if-let [revoked (:revoke-all-permissions col)]
         (.revokeAllPermissions acl
           (coerce-value revoked Grantee)))
@@ -96,6 +107,10 @@
           acl
           (coerce-value (first grant) Grantee)
           (coerce-value (second grant) Permission)))
+      ;; s3 complains about ACLs without owners (even though docs say internal)
+      (if-let [o (:owner col)]
+        (.setOwner acl (coerce-value o Owner))
+        (.setOwner acl (owner)))
       acl))
   Grant
   (fn [value]
@@ -115,6 +130,9 @@
       (EmailAddressGrantee. value)
       true
       (CanonicalGrantee. value)))
+  Owner
+  (fn [col]
+    (Owner. (:id col) (:displayName col)))
   Permission
   (fn [value]
     (Permission/valueOf value))
@@ -122,6 +140,25 @@
   (fn [value]
     (if (coll? value)
         (DeleteObjectsRequest$KeyVersion. (first value) (second value))
-        (DeleteObjectsRequest$KeyVersion. value))))
+        (DeleteObjectsRequest$KeyVersion. value)))
+  CORSRule
+  (fn [col]
+    (let [cors (CORSRule.)]
+      (when-let [id (:id col)]
+        (.setId cors id))
+      (when-let [max-age-seconds (:max-age-seconds col)]
+        (.setMaxAgeSeconds cors max-age-seconds))
+      (when-let [allowed-headers (:allowed-headers col)]
+        (.setAllowedHeaders cors (into-array String allowed-headers)))
+      (when-let [allowed-origins (:allowed-origins col)]
+        (.setAllowedOrigins cors (into-array String allowed-origins)))
+      (when-let [exposed-headers (:exposed-headers col)]
+        (.setExposedHeaders cors (into-array String exposed-headers)))
+      (when-let [allowed-methods (:allowed-methods col)]
+        (.setAllowedMethods cors
+                            (into-array CORSRule$AllowedMethods
+                    (fmap #(coerce-value % CORSRule$AllowedMethods)
+                          allowed-methods))))
+      cors)))
 
 (amazonica.core/set-client AmazonS3Client *ns*)

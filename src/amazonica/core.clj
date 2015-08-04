@@ -17,6 +17,8 @@
            [com.amazonaws.regions
              Region
              Regions]
+           com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient
+           com.amazonaws.services.lambda.AWSLambdaClient
            [com.amazonaws.services.s3
              AmazonS3Client
              AmazonS3EncryptionClient]
@@ -98,8 +100,7 @@
 (def ^:private excluded
   #{:invoke
     :init
-    ; cloudsearchdomain needs this
-    ;:set-endpoint
+    :set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
     ; addRequestHandler???
@@ -116,17 +117,21 @@
 (defn defcredential
   "Specify the AWS access key, secret key and optional
   endpoint to use on subsequent requests."
-  [access-key secret-key & [endpoint]]
-  (reset!
-    credential
-    (keys->cred access-key secret-key endpoint)))
+  ([cred]
+   (reset! credential cred))
+  ([access-key secret-key & [endpoint]]
+   (defcredential (keys->cred access-key secret-key endpoint))))
 
 (defmacro with-credential
   "Per invocation binding of credentials for ad-hoc
   service calls using alternate user/password combos
   (and endpoints)."
   [cred & body]
-  `(binding [*credentials* (apply keys->cred ~cred)]
+  `(binding [*credentials*
+             (let [cred# ~cred]
+               (if (sequential? cred#)
+                 (apply keys->cred cred#)
+                 cred#))]
     (do ~@body)))
 
 (declare new-instance)
@@ -177,7 +182,8 @@
   "Legacy support means credentials may or may not be passed
    as the first argument."
   [cred args]
-  (if (and (instance? DefaultAWSCredentialsProviderChain (get-credentials cred))
+  (if (and (instance? AWSCredentialsProvider (get-credentials cred))
+           (not (instance? AWSCredentialsProvider cred))
            (nil? (:endpoint cred)))
     {:args (conj args cred)}
     {:args args :cred cred}))
@@ -313,21 +319,22 @@
   (swap! coercions merge coercion))
 
 (defn coerce-value
-  "Coerces the supplied value to the required type as
-  defined by the AWS method signature. String conversion
-  to Enum types (e.g. via valueOf()) is supported."
+  "Coerces the supplied stringvalue to the required type as
+  defined by the AWS method signature. String or keyword 
+  conversion to Enum types (e.g. via valueOf()) is supported."
   [value type]
-  (if-not (instance? type value)
-    (if (= java.lang.Enum (.getSuperclass type))
-      (to-enum type value)
-      (if-let [coercion (@coercions (if (.isPrimitive type)
-                                      (str type)
-                                      type))]
-        (coercion value)
-        (throw (IllegalArgumentException.
-                 (format "No coercion is available to turn %s into an object of type %s"
-                         value type)))))
-    value))
+  (let [value (if (keyword? value) (name value) value)]
+    (if-not (instance? type value)
+      (if (= java.lang.Enum (.getSuperclass type))
+        (to-enum type value)
+        (if-let [coercion (@coercions (if (.isPrimitive type)
+                                        (str type)
+                                        type))]
+          (coercion value)
+          (throw (IllegalArgumentException.
+                   (format "No coercion is available to turn %s into an object of type %s"
+                           value type)))))
+      value)))
 
 (defn- default-value
   [class-name]
@@ -359,7 +366,10 @@
           %
           nil)
         ctors)
-      (first ctors))))
+      (first (sort-by
+               (fn [ctor]
+                 (some aws-package? (.getParameterTypes ctor)))
+               ctors)))))
 
 (defn- new-instance
   "Create a new instance of a Java bean. S3 neccessitates
@@ -435,7 +445,7 @@
 (defn- find-methods
   [pojo k & v]
   (-> (.getClass pojo)
-      (.getDeclaredMethods)
+      (.getMethods)
       (accessor-methods
         (.toLowerCase (keyword->camel k))
         (empty? v))))
@@ -626,7 +636,7 @@
   ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
   ; .doesBucketExist, which wreak havoc on Clojure truthiness
   Boolean
-  (marshall [obj] (if obj (.booleanValue obj)))
+  (marshall [obj] (when-not (nil? obj) (.booleanValue obj)))
   
   Object
   (marshall [obj]
@@ -637,16 +647,17 @@
 (defn- use-aws-request-bean?
   [method args]
   (let [types (.getParameterTypes method)]
-    (and (< 1 (count args))
+    (and (or (map? args) (< 1 (count args)))
          (< 0 (count types))
-         (and
-            (or (and
-                  (even? (count args))
-                  (not= java.io.File (last types)))
-                (and
-                  (odd? (count args))
-                  (= java.io.File (last types)))) ; s3 getObject() support
-            (some keyword? args))
+         (or (map? args)
+             (and
+                (or (and
+                      (even? (count args))
+                      (not= java.io.File (last types)))
+                    (and
+                      (odd? (count args))
+                      (= java.io.File (last types)))) ; s3 getObject() support
+                (some keyword? args)))
          (or (aws-package? (first types))
              (and (aws-package? (last types))
                   (not (< (count types) (count args))))))))
@@ -695,34 +706,49 @@
                    (map? (first args)))
                (or (contains? (first args) :access-key)
                    (contains? (first args) :endpoint)
+                   (contains? (first args) :profile)
                    (contains? (first args) :client-config)))
           (instance? AWSCredentialsProvider (first args))
           (instance? AWSCredentials (first args)))
       {:args (if (-> args rest first map?)
                  (mapcat identity (-> args rest args-from :args))
                  (rest args))
-       :credential (dissoc (first args) :client-config)
+       :credential (if (map? (first args))
+                       (dissoc (first args) :client-config)
+                       (first args))
        :client-config (:client-config (first args))}
       (map? (first args))
-      {:args (mapcat identity (first args))}
+      {:args (let [m (mapcat identity (first args))]
+               (if (seq m) m {}))}
       :default {:args args})))
+
+(declare candidate-client)
+
+(defn- transfer-manager*
+  [credential client-config crypto]
+  (TransferManager. (if crypto
+                      (encryption-client crypto credential client-config)
+                      (amazon-client AmazonS3Client credential client-config))))
+
+(def ^:private transfer-manager
+  (memoize transfer-manager*))
 
 (defn- candidate-client
   [clazz args]
-  (if (and (or (= clazz AmazonS3Client)
-               (= clazz TransferManager))
-           (even? (count (:args args)))
-           (contains? (apply hash-map (:args args)) :encryption))
-      (if (= clazz TransferManager)
-          (TransferManager. (candidate-client AmazonS3Client args))
-          (encryption-client (:encryption (apply hash-map (:args args)))
+  (let [credential (if (map? (:credential args))
                              (merge @credential (:credential args))
-                                 (:client-config args)))
-      (if (= clazz TransferManager)
-          (TransferManager. (candidate-client AmazonS3Client args))
-          (amazon-client clazz
-                         (merge @credential (:credential args))
-                         (:client-config args)))))
+                             (or (:credential args) @credential))
+        client-config (:client-config args)
+        crypto (if (even? (count (:args args)))
+                   (:encryption (apply hash-map (:args args))))
+        client  (if (and crypto (or (= clazz AmazonS3Client)
+                                    (= clazz TransferManager)))
+                    (delay (encryption-client crypto credential client-config))
+                    (delay (amazon-client clazz credential client-config)))]
+        (if (= clazz TransferManager)
+            (transfer-manager credential client-config crypto)
+            @client)))
+        
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
@@ -756,30 +782,50 @@
              (every? identity (map instance? types args)))
         method)))
 
+(defn- coercible? [type]
+  (and (contains? @coercions type)
+       (not (re-find #"java\.lang" (str type)))))
+
+(defn- choose-from [possible]
+  (if (= 1 (count possible))
+      (first possible)
+      (first
+        (sort-by
+          (fn [method]
+            (let [types (.getParameterTypes method)]
+              (cond
+                (some coercible? types) 1
+                (some #(= java.lang.Enum (.getSuperclass %)) types) 2
+                :else 3)))
+          possible))))
+
+(defn possible-methods
+  [methods args]
+  (filter
+    (fn [method]
+      (let [types (.getParameterTypes method)
+            num   (count types)]
+        (if (or
+              (and (empty? args) (= 0 num))
+              (use-aws-request-bean? method args)
+              (and
+                (= num (count args))
+                (not (keyword? (first args)))
+                (not (aws-package? (first types)))))
+          method
+          false)))
+    methods))
+
 (defn- best-method
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
   (let [args (:args (args-from arg))
         methods (filter #(not (Modifier/isPrivate (.getModifiers %))) methods)]
-    (if-let [m (some (partial types-match-args args) methods)]
-      m
-      (some
-        (fn [method]
-          (let [types (.getParameterTypes method)
-                num   (count types)]
-            (if (or
-                  (and (empty? args) (= 0 num))
-                  (use-aws-request-bean? method args)
-                  (and
-                    (= num (count args))
-                    (not (keyword? (first args)))
-                    (not (aws-package? (first types)))))
-              method
-              false)))
-        methods))))
+    (or (some (partial types-match-args args) methods)
+        (choose-from (possible-methods methods args)))))
 
-(defn- intern-function
+(defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."
@@ -803,11 +849,13 @@
   (reduce
     (fn [col method]
       (let [fname (camel->keyword (.getName method))]
-        (if (contains? excluded fname)
-          col
-          (if (contains? col fname)
-            (update-in col [fname] conj method)
-            (assoc col fname [method])))))
+        (if (and (contains? excluded fname)
+                 (not= client AWSLambdaClient)
+                 (not= client AmazonCloudSearchDomainClient))
+            col
+            (if (contains? col fname)
+                (update-in col [fname] conj method)
+                (assoc col fname [method])))))
     {}
     (.getDeclaredMethods client)))
 

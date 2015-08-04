@@ -1,5 +1,6 @@
 (ns amazonica.test.s3
-  (:import org.joda.time.DateTime
+  (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+           org.joda.time.DateTime
            java.io.BufferedInputStream
            java.io.File
            java.io.FileInputStream
@@ -14,15 +15,25 @@
         [amazonica.core]
         [amazonica.aws.s3]))
 
-; config file contains space-separated AWS credential key pair
-; and optional third param of AWS endpoint (e.g. for different
-; region than the default US_East)
-(def cred 
-  (apply 
-    hash-map 
-      (interleave 
-        [:access-key :secret-key :endpoint]
-        (seq (.split (slurp "aws.config") " ")))))
+(def cred
+  (let [access "aws_access_key_id"
+        secret "aws_secret_access_key"
+        file   "/.aws/credentials"
+        creds  (-> "user.home"
+                   System/getProperty
+                   (str file)
+                   slurp
+                   (.split "\n"))]
+    (clojure.set/rename-keys 
+      (reduce
+        (fn [m e]
+          (let [pair (.split e "=")]
+            (if (some #{access secret} [(first pair)])
+                (apply assoc m pair)
+                m)))
+        {}
+        creds)
+      {access :access-key secret :secret-key})))
 
 (deftest s3 []
 
@@ -37,6 +48,8 @@
   (create-bucket bucket1)
   
   (list-buckets cred)
+  
+  (list-buckets (DefaultAWSCredentialsProviderChain.))
 
   ; (def uuid-regex #"[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}")
   ; (reduce
@@ -54,7 +67,7 @@
   ;           (delete-bucket (:name e))))
   ;     m)
   ;   []
-  ;   (list-buckets cred))
+  ;   (list-buckets))
   
   (list-buckets)
   
@@ -295,6 +308,10 @@
     (set-bucket-lifecycle-configuration cred bucket1 config)
     (is (= config (get-bucket-lifecycle-configuration cred bucket1))))
 
+  (set-bucket-cross-origin-configuration cred bucket1 {:rules [{:allowed-methods ["GET" "POST"]
+                                                                :allowed-origins ["*"]
+                                                                :max-age-seconds 9000
+                                                                :allowed-headers ["Authorization"]}]})
   (delete-bucket-cross-origin-configuration cred bucket1)
   (delete-bucket-lifecycle-configuration cred bucket1)
   (delete-bucket-policy cred bucket1)

@@ -495,6 +495,15 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html)
+```clj
+(cloudwatch/put-metric-data
+    {:endpoint "us-west-1"} ;; Defaults to us-east-1
+    :namespace "test_namespace"
+    :metric-data [{:metric-name "test_metric"
+                   :unit "Count"
+                   :value 1.0}])
+```
 
 ###CodeDeploy
 ```clj
@@ -504,7 +513,6 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (list-applications)
 
 ```
-
 
 ###DataPipeline
 ```clj
@@ -669,7 +677,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (describe-task-definition :task-definition "grafana2")
 (list-task-definitions :family-prefix "grafana2")
 
-;; create cluster 
+;; create cluster
 (create-cluster :cluster-name "Amazonica")
 
 (list-clusters)

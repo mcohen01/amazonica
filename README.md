@@ -451,6 +451,16 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
+To put metric data. 
+```clj
+(cloudwatch/put-metric-data
+    {:endpoint "us-west-1"} ;; Defaults to us-east-1
+    :namespace "test_namespace"
+    :metric-data [{:metric-name "test_metric"
+                   :unit "Count"
+                   :value 1.0}])
+```
+
 ###DataPipeline
 ```clj
 (ns com.example

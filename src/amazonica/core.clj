@@ -43,7 +43,11 @@
 
 (defonce ^:private credential (atom {}))
 
+(defonce ^:private client-config (atom {}))
+
 (def ^:dynamic ^:private *credentials* nil)
+
+(def ^:dynamic ^:private *client-config* nil)
 
 (def ^:dynamic ^:private *client-class* nil)
 
@@ -122,6 +126,12 @@
   ([access-key secret-key & [endpoint]]
    (defcredential (keys->cred access-key secret-key endpoint))))
 
+(defn defclientconfig
+  "Specify the default Client configuration to use on
+  subsequent requests."
+  [config]
+  (reset! client-config config))
+
 (defmacro with-credential
   "Per invocation binding of credentials for ad-hoc
   service calls using alternate user/password combos
@@ -133,6 +143,13 @@
                  (apply keys->cred cred#)
                  cred#))]
     (do ~@body)))
+
+(defmacro with-client-config
+  "Per invocation binding of client-config for ad-hoc
+  service calls using alternate client configuration."
+  [config & body]
+  `(binding [*client-config* config]
+     (do ~@body)))
 
 (declare new-instance)
 
@@ -735,10 +752,12 @@
 
 (defn- candidate-client
   [clazz args]
-  (let [credential (if (map? (:credential args))
-                             (merge @credential (:credential args))
-                             (or (:credential args) @credential))
-        client-config (:client-config args)
+  (let [cred-bound (or *credentials* (:credential args))
+        credential (if (map? cred-bound)
+                             (merge @credential cred-bound)
+                             (or cred-bound @credential))
+        config-bound (or *client-config* (:client-config args))
+        client-config (merge @client-config config-bound)
         crypto (if (even? (count (:args args)))
                    (:encryption (apply hash-map (:args args))))
         client  (if (and crypto (or (= clazz AmazonS3Client)
@@ -761,10 +780,7 @@
           client  (delay (candidate-client clazz args))]
       (fn []
         (try
-          (let [c (if (thread-bound? #'*credentials*)
-                      (candidate-client clazz (assoc args :credential *credentials*))
-                      @client)
-                java (.invoke method c arg-arr)
+          (let [java (.invoke method @client arg-arr)
                 cloj (marshall java)]
             (if (and
                   @root-unwrapping

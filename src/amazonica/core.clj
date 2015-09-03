@@ -212,6 +212,24 @@
   (when (associative? configuration)
     (create-bean ClientConfiguration configuration)))
 
+(defn- set-endpoint!
+  [client credentials]
+  (when-let [endpoint (or (:endpoint credentials)
+                          (System/getenv "AWS_DEFAULT_REGION"))]
+    (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
+                         (apply hash-set (seq (Regions/values))))
+                   (-> (str/upper-case endpoint)
+                       (str/replace "-" "")))
+        (try
+          (->> (-> (str/upper-case endpoint)
+                   (str/replace "-" "_"))
+               Regions/valueOf
+               Region/getRegion
+               (.setRegion client))
+          (catch NoSuchMethodException e
+            (println e)))
+        (.setEndpoint client endpoint))))
+
 (defn- encryption-client*
   [encryption credentials configuration]
   (let [creds     (get-credentials credentials)
@@ -220,33 +238,21 @@
                       (:key-pair encryption))
         crypto    (CryptoConfiguration.)
         em        (EncryptionMaterials. key)
-        materials (StaticEncryptionMaterialsProvider. em)]
-    (if-let [provider (:provider encryption)]
-        (.withCryptoProvider crypto provider))
-    (if config
-      (AmazonS3EncryptionClient. creds materials config crypto)
-      (AmazonS3EncryptionClient. creds materials crypto))))
+        materials (StaticEncryptionMaterialsProvider. em)
+        _         (if-let [provider (:provider encryption)]
+                    (.withCryptoProvider crypto provider))
+        client    (if config
+                      (AmazonS3EncryptionClient. creds materials config crypto)
+                      (AmazonS3EncryptionClient. creds materials crypto))]
+    (set-endpoint! client credentials)
+    client))
 
 (defn- amazon-client*
   [clazz credentials configuration]
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
         client     (create-client clazz aws-creds aws-config)]
-    (when-let [endpoint (or (:endpoint credentials)
-                            (System/getenv "AWS_DEFAULT_REGION"))]
-      (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
-                           (apply hash-set (seq (Regions/values))))
-                     (-> (str/upper-case endpoint)
-                         (str/replace "-" "")))
-          (try
-            (->> (-> (str/upper-case endpoint)
-                     (str/replace "-" "_"))
-                 Regions/valueOf
-                 Region/getRegion
-                 (.setRegion client))
-            (catch NoSuchMethodException e
-              (println e)))
-          (.setEndpoint client endpoint)))
+    (set-endpoint! client credentials)
     client))
 
 (def ^:private encryption-client

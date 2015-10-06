@@ -1035,7 +1035,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (get-health-check :health-check-id "ce6a4aeb-acf1-4923-a116-cd9ae2c30ee3")
 
-(create-hosted-zone :name "example.com.")
+(create-hosted-zone :name "example69.com"
+                    :caller-reference (str (java.util.UUID/randomUUID)))
 
 (get-hosted-zone :id "Z3TKY0VR5CH45U")
 

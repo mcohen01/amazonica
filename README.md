@@ -962,32 +962,50 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-
-### KinesisFirehose
+###KinesisFirehose
 ```clj
 (ns com.example
-  (:use [amazonica.aws.kinesisfirehose])
+  (:require [amazonica.aws.kinesisfirehose :as fh])
   (:import [java.nio ByteBuffer]))
 
-(list-delivery-streams :limit 10)
-;; -> {:delivery-stream-names ["my-test-firehose"], :has-more-delivery-streams false}
+;; List delivery streams
+(fh/list-delivery-streams)
+;; => {:delivery-stream-names ("test-firehose" "test-firehose-2"), :has-more-delivery-streams false}
 
-(describe-delivery-stream :delivery-stream-name "my-test-firehose")
-;; -> {:delivery-stream-description
+(fh/describe-delivery-stream :delivery-stream-name "my-test-firehose")
+;; => {:delivery-stream-description
 ;;       {:version-id "2", ....}}
 
-(create-delivery-stream :delivery-stream-name "my-test-firehose-2"
+(fh/create-delivery-stream :delivery-stream-name "my-test-firehose-2"
                            :s3DestinationConfiguration {:role-arn  "arn:aws:iam:xxxx:role/firehose_delivery_role",
                                                         :bucket-arn "arn:aws:s3:::my-test-bucket"})
-;; -> {:delivery-stream-arn "arn:aws:firehose:us-west-2:xxxxx:deliverystream/my-test-firehose-2"}
+;; => {:delivery-stream-arn "arn:aws:firehose:us-west-2:xxxxx:deliverystream/my-test-firehose-2"}
 
-(put-record :delivery-stream-name "my-test-firehose-2"
-            :record {:data (-> "Test Record"
-                               .getBytes
-                               ByteBuffer/wrap)})
-;; -> {:record-id "xxxxxx...."}
+;; Describe delivery stream
+(fh/describe-delivery-stream cred :delivery-stream-name stream-name)
+
+;; Update destination
+(fh/update-destination cred {:current-delivery-stream-version-id version-id
+                             :delivery-stream-name stream-name
+                             :destination-id destination-id
+                             :s3-destination-update {:BucketARN (str "arn:aws:s3:::" new-bucket-name)
+                                                     :BufferingHints {:IntervalInSeconds 300
+                                                                      :SizeInMBs 5}
+	                                                 :CompressionFormat "UNCOMPRESSED"
+                                                     :EncryptionConfiguration {:NoEncryptionConfig "NoEncryption"}
+                                                     :Prefix "string"
+                                                     :RoleARN "arn:aws:iam::123456789012:role/firehose_delivery_role"}})
+
+;; Put batch of records to stream. Records are converted to instances of ByteBuffer if possible. Sequences are converted to CSV formatted strings for injestion into RedShift.
+(fh/put-record-batch cred stream-name [[1 2 3 4] ["test" 2 3 4] "\"test\",2,3,4" (ByteBuffer. (.getBytes "test,2,3,4"))])
+
+;; Put individual record to stream.
+(fh/put-record stream-name "test")
+
+;; Delete delivery stream
+(fh/delete-delivery-stream "stream-name")
+
 ```
-
 
 ### KMS
 

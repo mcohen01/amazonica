@@ -11,6 +11,7 @@
            java.security.SecureRandom)
   (:require [clojure.string :as str])
   (:use [clojure.test]
+        [clojure.set]
         [clojure.pprint]
         [amazonica.core]
         [amazonica.aws.s3]))

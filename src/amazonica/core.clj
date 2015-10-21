@@ -382,6 +382,7 @@
 (defn best-constructor
   "Prefer no-arg ctor if one exists, else the first found."
   [clazz]
+  {:pre [clazz]}
   (let [ctors (.getConstructors clazz)]
     (or
       (some
@@ -399,6 +400,7 @@
   the check for contructor args here, as the rest of the
   AWS api contains strictly no-arg ctor JavaBeans."
   [clazz]
+  {:pre [clazz]}
   (let [ctor (best-constructor clazz)
         arr  (constructor-args ctor)]
     (.newInstance ctor arr)))
@@ -509,6 +511,7 @@
 (defn- populate
   [types key props]
   (let [type (-> types key last)]
+    (assert type (str "Bad data type - there is no " key " in " types))
     (if (contains? @coercions type)
       (coerce-value props type)
       (set-fields (new-instance type) props))))
@@ -519,28 +522,36 @@
   (let [type (last (or (:actual types)
                        (:generic types)))
         pp   (partial populate types :actual)]
-    (if (aws-package? type)
-        (if (map? col)
-            (if (contains? types :actual)
-                (if (< (:depth types) 3)
-                    (apply assoc {}
-                           (interleave (fmap kw->str (apply vector (keys col)))
-                                       (fmap pp (apply vector (vals col)))))
-                    (apply assoc {}
-                           (interleave (fmap kw->str (apply vector (keys col)))
-                                       [(fmap #(populate {:generic [type]}
-                                                              :generic
-                                                              %)
-                                                  (first (apply vector (vals col))))])))
-                (populate types :generic col))
-            (if (and (contains? types :actual)
-                     (= (:depth types) 3))
-                (fmap #(fmap pp %) col)
-                (fmap pp col)))
-        (if (and (contains? types :actual)
-                 (aws-package? type))
-            (fmap pp col)
-            (fmap #(coerce-value % type) col)))))
+    (try
+      (if (aws-package? type)
+       (if (map? col)
+         (if (contains? types :actual)
+           (if (< (:depth types) 3)
+             (apply assoc {}
+                    (interleave (fmap kw->str (apply vector (keys col)))
+                                (fmap pp (apply vector (vals col)))))
+             (apply assoc {}
+                    (interleave (fmap kw->str (apply vector (keys col)))
+                                [(fmap #(populate {:generic [type]}
+                                                  :generic
+                                                  %)
+                                       (first (apply vector (vals col))))])))
+           (populate types :generic col))
+         (if (and (contains? types :actual)
+                  (= (:depth types) 3))
+           (fmap #(fmap pp %) col)
+           (fmap pp col)))
+       (if (and (contains? types :actual)
+                (aws-package? type))
+         (fmap pp col)
+         (fmap #(coerce-value % type) col)))
+      (catch Throwable e
+        (throw (RuntimeException. (str
+                                    "Failed to create an instance of "
+                                    (.getName type)
+                                    " from " col
+                                    " due to " e
+                                    ". Make sure the data matches an existing constructor and setters.")))))))
 
 (defn- invoke-method
   [pojo v method]
@@ -562,8 +573,14 @@
    to the corresponding method calls on the object graph."
   [pojo args]
   (doseq [[k v] args]
-    (->> (find-methods pojo k v)
-         (some (partial invoke-method pojo v))))
+    (try
+      (->> (find-methods pojo k v)
+          (some (partial invoke-method pojo v)))
+      (catch Throwable e
+        (throw (ex-info
+                 (str "Error setting " k ": " (.getMessage e) ". Perhaps the value isn't compatible with the setter?")
+                 {:property k, :value v}
+                 e)))))
   pojo)
 
 (defn- create-bean

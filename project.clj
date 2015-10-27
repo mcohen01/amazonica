@@ -9,7 +9,7 @@
   :deploy-repositories [["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/algo.generic "0.1.2"]
-                 [com.amazonaws/aws-java-sdk "1.10.12" :exclusions [joda-time]]
+                 [com.amazonaws/aws-java-sdk "1.10.28" :exclusions [joda-time]]
                  [com.amazonaws/amazon-kinesis-client "1.1.0" :exclusions [joda-time]]
                  [joda-time "2.8.1"]
                  [robert/hooke "1.3.0"]

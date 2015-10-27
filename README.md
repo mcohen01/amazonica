@@ -53,6 +53,7 @@ and the following dependency:
 * ElasticFileSystem
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
+* [ElasticTranscoder] (#elastictranscoder)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
@@ -799,6 +800,37 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (list-bootstrap-actions :cluster-id "j-38BW9W0NN8YGV")
 
+```
+
+
+###ElasticTranscoder
+```clj
+(ns com.example
+(:use [amazonica.aws.elastictranscoder))
+
+(list-pipelines)
+;; -> {:pipelines []}
+
+(list-presets)
+;; -> {:presets [{:description "System preset generic 1080p", ....}]}
+
+;; status can be :Submitted :Progressing :Complete :Canceled :Error
+(list-jobs-by-status :status :Complete)
+;; -> ...
+
+(def new-pipeline-id (-> (create-pipeline
+                           :role "arn:aws:iam::289431957111:role/Elastic_Transcoder_Default_Role",
+                           :name "avi-to-mp4",
+                           :input-bucket "avi-to-convert",
+                           :output-bucket "converted-mp4")
+                       :pipeline
+                       :id))
+;; -> "1111111111111-11aa11"
+
+(create-job :pipeline-id "1111111111111-11aa11"
+            :input {:key "my/s3/input/obj/key.avi"}
+            :outputs [{:key "my/s3/output/obj/key.avi"
+                       :preset-id "1351620000001-000030"}
 ```
 
 

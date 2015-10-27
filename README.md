@@ -57,6 +57,7 @@ and the following dependency:
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
+* KinesisFirehose
 * [KMS] (#kms)
 * [Lambda] (#lambda)
 * MachineLearning

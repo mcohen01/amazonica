@@ -57,7 +57,7 @@ and the following dependency:
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
-* KinesisFirehose
+* [KinesisFirehose] (#kinesisfirehose)
 * [KMS] (#kms)
 * [Lambda] (#lambda)
 * MachineLearning
@@ -961,6 +961,33 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (delete-stream "my-stream")
 
 ```
+
+
+### KinesisFirehose
+```clj
+(ns com.example
+  (:use [amazonica.aws.kinesisfirehose])
+  (:import [java.nio ByteBuffer]))
+
+(list-delivery-streams :limit 10)
+;; -> {:delivery-stream-names ["my-test-firehose"], :has-more-delivery-streams false}
+
+(describe-delivery-stream :delivery-stream-name "my-test-firehose")
+;; -> {:delivery-stream-description
+;;       {:version-id "2", ....}}
+
+(create-delivery-stream :delivery-stream-name "my-test-firehose-2"
+                           :s3DestinationConfiguration {:role-arn  "arn:aws:iam:xxxx:role/firehose_delivery_role",
+                                                        :bucket-arn "arn:aws:s3:::my-test-bucket"})
+;; -> {:delivery-stream-arn "arn:aws:firehose:us-west-2:xxxxx:deliverystream/my-test-firehose-2"}
+
+(put-record :delivery-stream-name "my-test-firehose-2"
+            :record {:data (-> "Test Record"
+                               .getBytes
+                               ByteBuffer/wrap)})
+;; -> {:record-id "xxxxxx...."}
+```
+
 
 ### KMS
 

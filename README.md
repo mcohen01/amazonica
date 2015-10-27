@@ -57,7 +57,7 @@ and the following dependency:
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
 * [Kinesis] (#kinesis)
-* KinesisFirehose
+* [KinesisFirehose] (#kinesisfirehose)
 * [KMS] (#kms)
 * [Lambda] (#lambda)
 * MachineLearning
@@ -960,6 +960,16 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (delete-stream "my-stream")
 
+```
+
+###KinesisFirehose
+```clj
+(ns com.example
+  (:use [amazonica.aws.kinesisfirehose]))
+
+(list-delivery-streams {:limit 10})
+
+(describe-delivery-stream {:delivery-stream-name "my-stream"})
 ```
 
 ### KMS

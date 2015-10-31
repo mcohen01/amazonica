@@ -1309,7 +1309,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (publish :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
          :subject "test"
-         :message (str "Todays is " (java.util.Date.)))
+         :message (str "Todays is " (java.util.Date.))
+         :message-attributes {"attr" "value"})
 
 (unsubscribe :subscription-arn "arn:aws:sns:us-east-1:676820690883:my-topic:33fb2721-b639-419f-9cc3-b4adec0f4eda")
 

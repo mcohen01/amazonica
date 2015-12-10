@@ -19,6 +19,7 @@
         (instance? (class (byte-array 0)) data) (ByteBuffer/wrap data)
         (string? data)                          (ByteBuffer/wrap (.getBytes ^String (str data "\n")))
         (sequential? data)                      (ByteBuffer/wrap (.getBytes ^String (str (join-as-csv data) "\n")))
+        (map? data)                             (ByteBuffer/wrap (.getBytes ^String (pr-str data)))
         :else                                   nil))
 
 (defonce ^:dynamic *list-delivery-streams-default-limit* 10000)

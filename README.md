@@ -251,7 +251,7 @@ Note that either form will work. This allows contributors to the library to incr
 
 ### Authentication
 The default authentication scheme is to use the [chained Provider class] [15] from the AWS SDK, whereby authentication is attempted in the following order:
-- Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_KEY
+- Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 - Java System Properties - aws.accessKeyId and aws.secretKey
 - Credential profiles file at the default location (~/.aws/credentials) shared by all AWS SDKs and the AWS CLI
 - Instance profile credentials delivered through the Amazon EC2 metadata service

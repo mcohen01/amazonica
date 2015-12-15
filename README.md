@@ -59,6 +59,7 @@ and the following dependency:
 * [Kinesis] (#kinesis)
 * [KinesisFirehose] (#kinesisfirehose)
 * [KMS] (#kms)
+* [Logs] (#logs)
 * [Lambda] (#lambda)
 * MachineLearning
 * [OpsWorks] (#opsworks)
@@ -1020,6 +1021,15 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
 ```
 
+###Logs
+```clj
+(ns com.example
+  (:use [amazonica.aws.logs]))
+
+(describe-log-streams :log-group-name "my-log-group"
+                      :order-by "LastEventTime"
+                      :descending true)
+```
 
 ###Lambda
 ```clj

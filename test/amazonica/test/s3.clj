@@ -393,3 +393,13 @@
     (.delete download-file))
 
 )
+
+(deftest email-test []
+  (are [x] (= x (re-find email-pattern x))
+    "foo@bar.com"
+    "foo@bar.co.jp")
+  (are [x] (nil? (re-find email-pattern x))
+    "foo"
+    "foo@"
+    "foo@bar"
+    "foo@bao.c"))

@@ -3,6 +3,7 @@
             [amazonica.aws.s3])
   (:import [com.amazonaws.event
             ProgressEvent
+            ProgressEventType
             ProgressListener]
            [com.amazonaws.services.s3.transfer            
               Download
@@ -86,16 +87,16 @@
   ProgressEvent
   (marshall [obj]
     {:bytes-transferred (.getBytesTransferred obj)
-     :event (condp = (.getEventCode obj)
-              ProgressEvent/STARTED_EVENT_CODE        :started
-              ProgressEvent/COMPLETED_EVENT_CODE      :completed
-              ProgressEvent/FAILED_EVENT_CODE         :failed
-              ProgressEvent/CANCELED_EVENT_CODE       :cancelled
-              ProgressEvent/RESET_EVENT_CODE          :reset
-              ProgressEvent/PREPARING_EVENT_CODE      :preparing
-              ProgressEvent/PART_STARTED_EVENT_CODE   :part-started
-              ProgressEvent/PART_COMPLETED_EVENT_CODE :part-completed
-              ProgressEvent/PART_FAILED_EVENT_CODE    :part-failed
+     :event (condp = (.getEventType obj)
+              ProgressEventType/TRANSFER_STARTED_EVENT        :started
+              ProgressEventType/TRANSFER_COMPLETED_EVENT      :completed
+              ProgressEventType/TRANSFER_FAILED_EVENT         :failed
+              ProgressEventType/TRANSFER_CANCELED_EVENT       :cancelled
+              ProgressEventType/TRANSFER_PREPARING_EVENT      :preparing
+              ProgressEventType/REQUEST_BYTE_TRANSFER_EVENT   :transfered
+              ProgressEventType/TRANSFER_PART_STARTED_EVENT   :part-started
+              ProgressEventType/TRANSFER_PART_COMPLETED_EVENT :part-completed
+              ProgressEventType/TRANSFER_PART_FAILED_EVENT    :part-failed
               nil)}))
 
 (amazonica.core/set-client TransferManager *ns*)

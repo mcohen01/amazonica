@@ -57,8 +57,7 @@
      :object-metadata   (marshall (.getObjectMetadata obj))})
   BucketTaggingConfiguration
   (marshall [obj]
-    {:tag-set (marshall (.getTagSet obj))
-     :alltag-sets (map marshall (.getAllTagSets obj))})
+    {:tag-sets (map marshall (.getAllTagSets obj))})
   TagSet
   (marshall [obj]
     {:tags (.getAllTags obj)}))

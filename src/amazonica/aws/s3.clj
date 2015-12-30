@@ -6,6 +6,7 @@
               AmazonS3Client]
            [com.amazonaws.services.s3.model
               AccessControlList
+              BucketTaggingConfiguration
               CanonicalGrantee
               CORSRule
               CORSRule$AllowedMethods
@@ -17,7 +18,8 @@
               ObjectMetadata
               Owner
               Permission
-              S3Object]))
+              S3Object
+              TagSet]))
 
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(?:\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9]+)*(?:\.[A-Za-z]{2,})$")
 
@@ -52,7 +54,14 @@
      :input-stream      (.getObjectContent obj)
      :object-content    (.getObjectContent obj)
      :redirect-location (.getRedirectLocation obj)
-     :object-metadata   (marshall (.getObjectMetadata obj))}))
+     :object-metadata   (marshall (.getObjectMetadata obj))})
+  BucketTaggingConfiguration
+  (marshall [obj]
+    {:tag-set (marshall (.getTagSet obj))
+     :alltag-sets (map marshall (.getAllTagSets obj))})
+  TagSet
+  (marshall [obj]
+    {:tags (.getAllTags obj)}))
 
 (register-coercions
   ObjectMetadata

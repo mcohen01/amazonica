@@ -1183,6 +1183,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
             :encryption {:key-pair key-pair}
             :key "foo")))))
 
+;; get tags for the bucket
+(get-bucket-tagging-configuration {:bucket-name bucket})
 
 ;; put object from stream
 (def some-bytes (.getBytes "Amazonica" "UTF-8"))

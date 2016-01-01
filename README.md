@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.43"]
+[amazonica "0.3.44"]
 ```
 
 For Maven users:
@@ -26,11 +26,12 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.43</version>
+  <version>0.3.44</version>
 </dependency>
 ```
 
 ## Supported Services
+* Api Gateway
 * [Autoscaling] (#autoscaling)
 * [CloudFormation] (#cloudformation)
 * [CloudFront] (#cloudfront)
@@ -47,6 +48,7 @@ and the following dependency:
 * Directory
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
+* EC2 Container Registry
 * [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)

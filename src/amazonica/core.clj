@@ -17,8 +17,6 @@
            [com.amazonaws.regions
              Region
              Regions]
-           com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient
-           com.amazonaws.services.lambda.AWSLambdaClient
            [com.amazonaws.services.s3
              AmazonS3Client
              AmazonS3EncryptionClient]
@@ -889,8 +887,8 @@
     (fn [col method]
       (let [fname (camel->keyword (.getName method))]
         (if (and (contains? excluded fname)
-                 (not= client AWSLambdaClient)
-                 (not= client AmazonCloudSearchDomainClient))
+                 (not= (.getSimpleName client) "AWSLambdaClient")
+                 (not= (.getSimpleName client) "AmazonCloudSearchDomainClient"))
             col
             (if (contains? col fname)
                 (update-in col [fname] conj method)

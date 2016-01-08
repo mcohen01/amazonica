@@ -357,6 +357,18 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ```
 
 
+#### For the memory constrained  
+If you're especially concerned about the size of your uberjar, you can limit the transitive dependencies pulled in by the AWS Java SDK, which currently total 35mb. You'll need to exclude the entire AWS Java SDK and then add back only those services you'll be using (although core and s3 are required). So for example, if you were only using DynamoDB, you could restrict the dependencies to only include the required jars like so:
+
+```clj
+:dependencies [[org.clojure/clojure "1.7.0"]
+               [amazonica "0.3.44" :exclusions [com.amazonaws/aws-java-sdk]]
+               [com.amazonaws/aws-java-sdk-core "1.10.44"]
+               [com.amazonaws/aws-java-sdk-s3 "1.10.44"]
+               [com.amazonaws/aws-java-sdk-dynamodb "1.10.44"]]
+```
+
+
 ### Running the tests
 As always, `lein test` will run all the tests. Note that some of the namespaces require the file `~/.aws/credentials` to be present and be of the same form as required by the official AWS tools:
 

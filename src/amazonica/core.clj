@@ -12,19 +12,10 @@
              BasicAWSCredentials
              BasicSessionCredentials
              DefaultAWSCredentialsProviderChain]
-           [com.amazonaws.auth.profile
-             ProfileCredentialsProvider]
+           com.amazonaws.auth.profile.ProfileCredentialsProvider
            [com.amazonaws.regions
              Region
              Regions]
-           [com.amazonaws.services.s3
-             AmazonS3Client
-             AmazonS3EncryptionClient]
-           [com.amazonaws.services.s3.model
-             CryptoConfiguration
-             EncryptionMaterials
-             StaticEncryptionMaterialsProvider]
-           com.amazonaws.services.s3.transfer.TransferManager
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -52,6 +43,12 @@
 (def ^:private date-format (atom "yyyy-MM-dd"))
 
 (def ^:private root-unwrapping (atom false))
+
+(defn- invoke-constructor
+  [class-name arg-vec]
+  (Reflector/invokeConstructor
+    (Class/forName class-name)
+    (into-array Object arg-vec)))
 
 (defn set-root-unwrapping!
   "Enables JSON-like root unwrapping of singly keyed
@@ -152,19 +149,20 @@
 (declare new-instance)
 
 (defn- create-client
-  [aws-client credentials configuration]
+  [clazz credentials configuration]
   (if (every? nil? [credentials configuration])
-    (new-instance aws-client)
-    ; TransferManager is the only client to date that doesn't
-    ; accept AWSCredentialsProviders
-    (if (= aws-client TransferManager)
-        (TransferManager. (create-client AmazonS3Client
-                                         credentials
-                                         configuration))
-        (Reflector/invokeConstructor aws-client
-                                     (into-array Object
-                                                 (filter (comp not nil?)
-                                                         [credentials configuration]))))))
+    (new-instance (Class/forName clazz))
+    ; TransferManager is the only client to date that doesn't accept AWSCredentialsProviders
+    (if (= (.getSimpleName clazz) "TransferManager")
+        (invoke-constructor
+          "com.amazonaws.services.s3.transfer.TransferManager"
+          [(create-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
+                          credentials
+                          configuration)])
+        (invoke-constructor (.getName clazz)
+                            (->> [credentials configuration]
+                                 (filter (comp not nil?))
+                                 vec)))))
 
 (defn get-credentials
   [credentials]
@@ -234,14 +232,23 @@
         config    (get-client-configuration configuration)
         key       (or (:secret-key encryption)
                       (:key-pair encryption))
-        crypto    (CryptoConfiguration.)
-        em        (EncryptionMaterials. key)
-        materials (StaticEncryptionMaterialsProvider. em)
+        crypto    (invoke-constructor
+                    "com.amazonaws.services.s3.model.CryptoConfiguration" [])
+        em        (invoke-constructor
+                    "com.amazonaws.services.s3.model.EncryptionMaterials"
+                    [key])
+        materials (invoke-constructor
+                    "com.amazonaws.services.s3.model.StaticEncryptionMaterialsProvider"
+                    [em])
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
         client    (if config
-                      (AmazonS3EncryptionClient. creds materials config crypto)
-                      (AmazonS3EncryptionClient. creds materials crypto))]
+                      (invoke-constructor
+                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
+                        [creds materials config crypto])
+                      (invoke-constructor
+                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
+                        [creds materials crypto]))]
     (set-endpoint! client credentials)
     client))
 
@@ -493,7 +500,7 @@
     (into-array
       ;; misbehaving S3Client mutates the coll
       (if (and (coll? v)
-            (= AmazonS3Client *client-class*))
+            (= "AmazonS3Client" (.getSimpleName *client-class*)))
         (if (and (> (count (.getParameterTypes method)) 1)
                  (sequential? v))
           (to-java-coll v)
@@ -764,9 +771,13 @@
 
 (defn- transfer-manager*
   [credential client-config crypto]
-  (TransferManager. (if crypto
-                      (encryption-client crypto credential client-config)
-                      (amazon-client AmazonS3Client credential client-config))))
+  (invoke-constructor
+    "com.amazonaws.services.s3.transfer.TransferManager"
+    (if crypto
+        [(encryption-client crypto credential client-config)]
+        [(amazon-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
+                        credential
+                        client-config)])))
 
 (def ^:private transfer-manager
   (memoize transfer-manager*))
@@ -781,11 +792,11 @@
         client-config (merge @client-config config-bound)
         crypto (if (even? (count (:args args)))
                    (:encryption (apply hash-map (:args args))))
-        client  (if (and crypto (or (= clazz AmazonS3Client)
-                                    (= clazz TransferManager)))
+        client  (if (and crypto (or (= (.getSimpleName clazz) "AmazonS3Client")
+                                    (= (.getSimpleName clazz) "TransferManager")))
                     (delay (encryption-client crypto credential client-config))
                     (delay (amazon-client clazz credential client-config)))]
-        (if (= clazz TransferManager)
+        (if (= (.getSimpleName clazz) "TransferManager")
             (transfer-manager credential client-config crypto)
             @client)))
         

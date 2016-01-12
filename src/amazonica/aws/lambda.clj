@@ -5,14 +5,14 @@
 
 (amz/set-client AWSLambdaClient *ns*)
 
-(defn zip-file [function-name body]
+(defn byte-buffer-zip-file [function-name body]
   (let [baos (java.io.ByteArrayOutputStream.)
         zos  (java.util.zip.ZipOutputStream. baos)]
     (.putNextEntry zos (java.util.zip.ZipEntry. (str function-name ".js")))
     (.write zos (.getBytes body))
     (.closeEntry zos)
     (.finish zos)
-    (java.io.ByteArrayInputStream. (.toByteArray baos))))
+    (java.nio.ByteBuffer/wrap (.toByteArray baos))))
 
 (defn function-name [node-fn]
   (-> (re-find #"exports\..+=" node-fn)
@@ -34,7 +34,7 @@
         fn-name (or (:function-name attrs) (function-name (:function attrs)))
         attrs   (if (:function attrs)
                     (merge {:function-name fn-name
-                            :function-zip (zip-file fn-name (:function attrs))
+                            :code {:zip-file (byte-buffer-zip-file fn-name (:function attrs))}
                             :handler (str fn-name "." fn-name)} attrs)
                     attrs)
         func    (if (contains? arg-map :cred)

@@ -1058,8 +1058,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                 }"]
   (create-function :role role :function handler))
 
-(invoke-async :function-name "helloWorld"
-              :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
+(invoke :function-name "helloWorld"
+        :payload "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
 
 ```
 

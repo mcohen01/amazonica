@@ -37,11 +37,11 @@
                 }")
 
   (create-function :role role :function handler)
-  (create-function {:role role :function handler})
-  (create-function cred :role role :function handler)
-  (create-function cred {:role role :function handler})
-  (create-function (DefaultAWSCredentialsProviderChain.) :role role :function handler)
-  (create-function (DefaultAWSCredentialsProviderChain.) {:role role :function handler})
+  ; (create-function {:role role :function handler})
+  ; (create-function cred :role role :function handler)
+  ; (create-function cred {:role role :function handler})
+  ; (create-function (DefaultAWSCredentialsProviderChain.) :role role :function handler)
+  ; (create-function (DefaultAWSCredentialsProviderChain.) {:role role :function handler})
 
   (let [f (-> (list-functions) :functions first)]
     (is (= "uploaded via amazonica" (:description f)))
@@ -50,23 +50,19 @@
     (is (= 10 (:timeout f)))
     (is (= 256 (:memory-size f))))
   
-  (spit "helloWorld.js" handler)
-  (clojure.java.shell/sh "zip" "helloWorld.js.zip" "helloWorld.js")
-  (create-function cred
-                   :timeout 30
-                   :memory-size 512
-                   :description "helloWorld - amazonica test"
-                   :role role
-                   :function-name "helloWorld"
-                   :function-zip (java.io.FileInputStream. "helloWorld.js.zip")
-                   :handler "helloWorld.helloWorld")
-  (clojure.java.shell/sh "rm" "-rf" "helloWorld.js")
-  (clojure.java.shell/sh "rm" "-rf" "helloWorld.js.zip")
-
-  (let [f (-> (list-functions) :functions first)]
-    (is (= "helloWorld - amazonica test" (:description f)))
-    (is (= 30 (:timeout f)))
-    (is (= 512 (:memory-size f))))
+  ; (create-function cred
+  ;                  :timeout 30
+  ;                  :memory-size 512
+  ;                  :description "helloWorld - amazonica test"
+  ;                  :role role
+  ;                  :function-name "helloWorld"
+  ;                  :function handler
+  ;                  :handler "helloWorld.helloWorld")
+  
+  ; (let [f (-> (list-functions) :functions first)]
+  ;   (is (= "helloWorld - amazonica test" (:description f)))
+  ;   (is (= 30 (:timeout f)))
+  ;   (is (= 512 (:memory-size f))))
 
   ;(add-event-source :function-name "helloWorld")
 
@@ -74,7 +70,7 @@
 
   (invoke :function-name "helloWorld"
           :invocation-type "Event"
-          :invoke-args "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
+          :payload "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
 
   (delete-function :function-name "helloWorld")
   

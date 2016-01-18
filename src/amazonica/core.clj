@@ -500,7 +500,8 @@
     (into-array
       ;; misbehaving S3Client mutates the coll
       (if (and (coll? v)
-            (= "AmazonS3Client" (.getSimpleName *client-class*)))
+               (not (nil? *client-class*))
+               (= "AmazonS3Client" (.getSimpleName *client-class*)))
         (if (and (> (count (.getParameterTypes method)) 1)
                  (sequential? v))
           (to-java-coll v)

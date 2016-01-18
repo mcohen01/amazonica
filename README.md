@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.47"]
+[amazonica "0.3.48"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.47</version>
+  <version>0.3.48</version>
 </dependency>
 ```
 
@@ -362,7 +362,7 @@ If you're especially concerned about the size of your uberjar, you can limit the
 
 ```clj
 :dependencies [[org.clojure/clojure "1.7.0"]
-               [amazonica "0.3.44" :exclusions [com.amazonaws/aws-java-sdk]]
+               [amazonica "0.3.48" :exclusions [com.amazonaws/aws-java-sdk]]
                [com.amazonaws/aws-java-sdk-core "1.10.44"]
                [com.amazonaws/aws-java-sdk-s3 "1.10.44"]]
 ```

@@ -2,30 +2,23 @@
   (:use [clojure.test]
         [amazonica.aws.lambda]
         [clojure.java.shell])
-  (:require [amazonica.aws.identitymanagement :as iam])
+  (:require [amazonica.aws.identitymanagement :as iam]
+            [clojure.string :as string])
   (:import [com.amazonaws.auth
-             AWSCredentialsProvider
-             DefaultAWSCredentialsProviderChain]))
+            AWSCredentialsProvider
+            DefaultAWSCredentialsProviderChain]))
 
 (def cred
-  (let [access "aws_access_key_id = "
-        secret "aws_secret_access_key = "
-        file   "/.aws/credentials"
-        creds  (-> "user.home"
-                   System/getProperty
-                   (str file)
-                   slurp
-                   (.split "\n"))
-        key-for (fn [k] (-> (filter #(.startsWith % k) creds)
-                            first
-                            (.replace k "")))]
-    {:access-key (key-for access)
-     :secret-key (key-for secret)}))
+  (let [file  (str (System/getProperty "user.home") "/.aws/credentials")
+        lines (string/split (slurp file) #"\n")
+        creds (into {} (filter second (map #(string/split % #"\s*=\s*") lines)))]
+    {:access-key (get creds "aws_access_key_id")
+     :secret-key (get creds "aws_secret_access_key")}))
 
 (def role (-> #(.contains (:role-name %) "lambda")
-              (filter (:roles (iam/list-roles)))
-              first
-              :arn))
+            (filter (:roles (iam/list-roles)))
+            first
+            :arn))
 
 (deftest aws-lambda []
 
@@ -49,7 +42,7 @@
     (is (= "helloWorld.helloWorld" (:handler f)))
     (is (= 10 (:timeout f)))
     (is (= 256 (:memory-size f))))
-  
+
   ; (create-function cred
   ;                  :timeout 30
   ;                  :memory-size 512
@@ -58,7 +51,7 @@
   ;                  :function-name "helloWorld"
   ;                  :function handler
   ;                  :handler "helloWorld.helloWorld")
-  
+
   ; (let [f (-> (list-functions) :functions first)]
   ;   (is (= "helloWorld - amazonica test" (:description f)))
   ;   (is (= 30 (:timeout f)))
@@ -73,5 +66,5 @@
           :payload "{\"key1\": 1, \"key2\": 2, \"key3\": 3}")
 
   (delete-function :function-name "helloWorld")
-  
+
 )

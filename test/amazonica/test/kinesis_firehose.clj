@@ -2,24 +2,17 @@
   ;; (:import org.joda.time.DateTime java.nio.ByteBuffer java.util.UUID)
   (:require [amazonica.aws.kinesisfirehose :as fh]
             [amazonica.aws.s3 :as s3])
-  (:require [clojure.test :refer :all]))
+  (:require [clojure.test :refer :all]
+            [clojure.string :as string]))
 
 (def stream-prefix "amazonica-kinesis-firehose-tests-ca232885fa3e-")
 
 (def cred
-  (let [access "aws_access_key_id = "
-        secret "aws_secret_access_key = "
-        file   "/.aws/credentials"
-        creds  (-> "user.home"
-                   System/getProperty
-                   (str file)
-                   slurp
-                   (.split "\n"))
-        key-for (fn [k] (-> (filter #(.startsWith % k) creds)
-                            first
-                            (.replace k "")))]
-    {:access-key (key-for access)
-     :secret-key (key-for secret)}))
+  (let [file  (str (System/getProperty "user.home") "/.aws/credentials")
+        lines (string/split (slurp file) #"\n")
+        creds (into {} (filter second (map #(string/split % #"\s*=\s*") lines)))]
+    {:access-key (get creds "aws_access_key_id")
+     :secret-key (get creds "aws_secret_access_key")}))
 
 (defn list-delivery-streams-matching-prefix []
   (->> (fh/list-delivery-streams cred)
@@ -52,7 +45,7 @@
       (testing "delete delivery streams where the name matches the prefix"
         (delete-delivery-streams-matching-prefix)
         (is (empty? (list-delivery-streams-matching-prefix))))
-      
+
       (let [stream-name (str stream-prefix "--test-stream")
             new-bucket-name (str stream-name 2)]
         (try
@@ -98,4 +91,3 @@
               (s3/delete-bucket cred stream-name)
               (s3/delete-bucket cred new-bucket-name)
               (delete-delivery-streams-matching-prefix))))))))
-

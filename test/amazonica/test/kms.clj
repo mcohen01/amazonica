@@ -6,6 +6,8 @@
 (deftest kms []
   (list-keys)
 
-  (def test-kms-key (create-key))
-  (disable-key :key-id (:key-id (:key-metadata test-kms-key)))
+  (let [k (create-key)
+        k (:key-metadata k)]
+    (disable-key k)
+    (schedule-key-deletion (merge k {:pending-window-in-days 7})))
 )

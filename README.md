@@ -606,7 +606,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
           :key {:id {:s "foo"}
                 :date {:n 123456}})
 
-(query :table-name "TestTable"
+(query cred
+       :table-name "TestTable"
        :limit 1
        :index-name "column1_idx"
        :select "ALL_ATTRIBUTES"

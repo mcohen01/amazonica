@@ -38,6 +38,7 @@ and the following dependency:
 * [CloudSearch] (#cloudsearch)
 * [CloudSearchV2] (#cloudsearchv2)
 * [CloudWatch] (#cloudwatch)
+* [CloudWatchEvents] (#cloudwatchevents)
 * CodeCommit
 * [CodeDeploy] (#codedeploy)
 * CodePipeline
@@ -357,7 +358,7 @@ All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catc
 ```
 
 
-#### For the memory constrained  
+#### For the memory constrained
 If you're especially concerned about the size of your uberjar, you can limit the transitive dependencies pulled in by the AWS Java SDK, which currently total 35mb. You'll need to exclude the entire AWS Java SDK and then add back only those services you'll be using (although core is always required). So for example, if you were only using S3, you could restrict the dependencies to only include the required jars like so:
 
 ```clj
@@ -521,6 +522,23 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                    :value 1.0}])
 ```
 
+###CloudWatchEvents
+```clj
+(ns com.example
+  (:use [amazonica.aws.cloudwatchevents]))
+
+(put-rule
+    :name "nightly-backup"
+    :description "Backup DB nightly at 10:00 UTC (2 AM or 3 AM Pacific)"
+    :schedule-expression "cron(0 10 * * ? *)")
+   
+(put-targets
+    :rule "nightly-backup"
+    :targets [{:id    "backup-lambda"
+               :arn   "arn:aws:lambda:us-east-1:123456789012:function:backup-lambda"
+               :input (json/write-str {"whatever" "arguments"})}])
+```
+    
 ###CodeDeploy
 ```clj
 (ns com.example

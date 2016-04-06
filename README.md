@@ -739,11 +739,13 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```clj
 (require '[amazonica.aws.ecr :as ecr])
 
-(ecr/create-repository :repository-name "amazonica")
-;{:repository {:repository-arn "arn:aws:ecr:us-east-1:123456789:repository/amazonica", :registry-id "123456789", :repository-name "amazonica"}}
-
 (ecr/describe-repositories {})
-;{:repositories [{:repository-arn "arn:aws:ecr:us-east-1:123456789:repository/amazonica", :registry-id "123456789", :repository-name "amazonica"}]}
+
+(ecr/create-repository :repository-name "amazonica")
+
+(ecr/get-authorization-token {})
+
+(ecr/list-images :repository-name "amazonica")
 
 (ecr/delete-repository :repository-name "amazonica")
 ```

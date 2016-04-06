@@ -49,7 +49,7 @@ and the following dependency:
 * Directory
 * [DynamoDBV2] (#dynamodbv2)
 * [EC2] (#ec2)
-* EC2 Container Registry
+* [ECR] (#ecr)
 * [ECS] (#ecs)
 * [ElastiCache] (#elasticache)
 * [ElasticBeanstalk] (#elasticbeanstalk)
@@ -732,6 +732,20 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (update-service :cluster "Amazonica" :service "grafana2" :desired-count 0)
 (delete-service :cluster "Amazonica" :service "grafana2")
 (delete-cluster :cluster "Amazonica")
+```
+
+###ECR
+
+```clj
+(require '[amazonica.aws.ecr :as ecr])
+
+(ecr/create-repository :repository-name "amazonica")
+;{:repository {:repository-arn "arn:aws:ecr:us-east-1:123456789:repository/amazonica", :registry-id "123456789", :repository-name "amazonica"}}
+
+(ecr/describe-repositories {})
+;{:repositories [{:repository-arn "arn:aws:ecr:us-east-1:123456789:repository/amazonica", :registry-id "123456789", :repository-name "amazonica"}]}
+
+(ecr/delete-repository :repository-name "amazonica")
 ```
 
 ###Elasticache

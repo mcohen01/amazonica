@@ -70,10 +70,14 @@
      (let [{:keys [cred] [delivery-stream-name data :as args] :args} (amz/parse-args (first args) (rest args))
            b (->bytes data)]
        (cond (and (string? delivery-stream-name) b)
-             (f cred :delivery-stream-name delivery-stream-name :record {:data b})
+             (if cred
+               (f cred :delivery-stream-name delivery-stream-name :record {:data b})
+               (f :delivery-stream-name delivery-stream-name :record {:data b}))
              
              (map? delivery-stream-name)
-             (f cred (maybe-update-in delivery-stream-name [:record :data] ->bytes))
+             (if cred
+               (f cred (maybe-update-in delivery-stream-name [:record :data] ->bytes))
+               (f (maybe-update-in delivery-stream-name [:record :data] ->bytes)))
              
              (and (keyword? delivery-stream-name) (even? (count args)))
              (put-record-impl cred (apply array-map args))

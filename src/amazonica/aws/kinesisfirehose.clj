@@ -92,10 +92,14 @@
      (let [{:keys [cred] [delivery-stream-name batch-data :as args] :args} (amz/parse-args (first args) (rest args))
            b (when (sequential? batch-data) (map ->bytes batch-data))]
        (cond (and (string? delivery-stream-name) (every? (complement nil?) b))
-             (f cred :delivery-stream-name delivery-stream-name :records (vec (map #(do {:data %}) b)))
+             (if cred
+               (f cred :delivery-stream-name delivery-stream-name :records (vec (map #(do {:data %}) b)))
+               (f :delivery-stream-name delivery-stream-name :records (vec (map #(do {:data %}) b))))
              
              (map? delivery-stream-name)
-             (f cred (assoc delivery-stream-name :records (map #(maybe-update-in % [:data] ->bytes) (:records delivery-stream-name))))
+             (if cred
+               (f cred (assoc delivery-stream-name :records (map #(maybe-update-in % [:data] ->bytes) (:records delivery-stream-name))))
+               (f (assoc delivery-stream-name :records (map #(maybe-update-in % [:data] ->bytes) (:records delivery-stream-name)))))
              
              (and (keyword? delivery-stream-name) (even? (count args)))
              (put-record-batch-impl cred (apply array-map args))

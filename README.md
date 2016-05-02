@@ -59,6 +59,7 @@ and the following dependency:
 * [ElasticTranscoder] (#elastictranscoder)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
+* [IoT] (#iot)
 * [Kinesis] (#kinesis)
 * [KinesisFirehose] (#kinesisfirehose)
 * [KMS] (#kms)
@@ -924,6 +925,25 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
+### IoT
+
+```clj
+(ns com.example
+  (:require [amazonica.aws.iot :refer :all]))
+
+(list-things {})
+;; => {:things [{:thing-name "YourThing"}]}
+
+(create-thing :thing-name "MyThing")
+;; => {:thing-name "MyThing" :thing-arn "arn:aws:iot:...thing/MyThing"}
+```
+
+```clj
+(ns com.example
+  (:require [amazonica.aws.iotdata :refer :all]))
+
+(get-thing-shadow :thing-name "MyThing")
+```
 
 ###Kinesis
 ```clj

@@ -908,9 +908,17 @@
     {}
     (.getDeclaredMethods client)))
 
+(defn- show-functions [ns]
+  (intern ns (symbol "show-functions")
+    (fn []
+      (->> (ns-publics ns)
+           sort
+           (map (comp println first))))))
+
 (defn set-client
   "Intern into the specified namespace all public methods
    from the Amazon*Client class as Clojure functions."
   [client ns]
+  (show-functions ns)
   (doseq [[k v] (client-methods client)]
     (intern-function client ns k v)))

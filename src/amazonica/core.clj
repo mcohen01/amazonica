@@ -618,7 +618,9 @@
   [method]
   (let [name (.getName method)
         type (.getName (.getReturnType method))]
-    (or (.startsWith name "get")
+    (or (and
+          (.startsWith name "get")
+          (= 0 (.getParameterCount method)))
         (and
           (.startsWith name "is")
           (= "boolean" type)))))

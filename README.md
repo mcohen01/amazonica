@@ -700,7 +700,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```clj
 (ns com.example
-  (:require [amazonica.aws.esc :refer :all]))
+  (:require [amazonica.aws.ecs :refer :all]))
 
 (register-task-definition
  {:family "grafana2",

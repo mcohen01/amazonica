@@ -1383,6 +1383,16 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (subscribe :protocol "email"
            :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
            :endpoint "mcohen01@gmail.com")
+           
+(subscribe :protocol "lambda"
+           :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
+           :endpoint "arn:aws:lambda:us-east-1:676820690883:function:my-function")
+
+;; provide endpoint in creds for topics in non-default region
+(subscribe {:endpoint "eu-west-1"}
+	   :protocol "lambda"
+           :topic-arn "arn:aws:sns:eu-west-1:676820690883:my-topic"
+           :endpoint "arn:aws:lambda:us-east-1:676820690883:function:my-function")
 
 (clojure.pprint/pprint
   (list-subscriptions))

@@ -620,7 +620,7 @@
         type (.getName (.getReturnType method))]
     (or (and
           (.startsWith name "get")
-          (= 0 (.getParameterCount method)))
+          (= 0 (count (.getParameterTypes method))))
         (and
           (.startsWith name "is")
           (= "boolean" type)))))

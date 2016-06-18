@@ -321,23 +321,32 @@
         (.getDeclaredMethod "values" (make-array Class 0))
         (.invoke type (make-array Object 0)))))
 
+(defn col->varargs []
+  (reduce
+    (fn [m e]
+      (let [arr (str "[Ljava.lang." (name e) ";")
+            clazz (Class/forName arr)]
+        (assoc m clazz into-array)))
+    {} [:String :Integer :Long :Double :Float]))
+
 ; assoc java Class to Clojure cast functions
-(defonce ^:private coercions (atom
-  {String     str
-   Integer    int
-   Long       long
-   Boolean    boolean
-   Double     double
-   Float      float
-   BigDecimal bigdec
-   BigInteger bigint
-   Date       to-date
-   File       to-file
-   "int"      int
-   "long"     long
-   "double"   double
-   "float"    float
-   "boolean"  boolean}))
+(def ^:private coercions (atom
+  (merge (col->varargs)
+    {String     str
+     Integer    int
+     Long       long
+     Boolean    boolean
+     Double     double
+     Float      float
+     BigDecimal bigdec
+     BigInteger bigint
+     Date       to-date
+     File       to-file
+     "int"      int
+     "long"     long
+     "double"   double
+     "float"    float
+     "boolean"  boolean})))
 
 (defn register-coercions
   "Accepts key/value pairs of class/function, which defines
@@ -413,18 +422,22 @@
 (defn- unwind-types
   [depth param]
   (if (instance? ParameterizedType param)
-      (let [f (partial unwind-types (inc depth))]
-        (-> param
-            (.getActualTypeArguments)
-            last
-            f))
+      (let [f (partial unwind-types (inc depth))
+            types (-> param .getActualTypeArguments)
+            t (-> types last f)]
+        (if (and (instance? ParameterizedType (last types))
+                 (.contains (-> types last str) "java.util")
+                 (.contains (-> types last str) "java.lang"))
+          {:type [(-> types last .getRawType)]
+           :depth depth}
+          t))
       {:type [param]
        :depth depth}))
 
 (defn- paramter-types
   [method]
   (let [types (seq (.getGenericParameterTypes method))
-        param (first types)
+        param (last types)
         rval  {:generic types}]
     (if (instance? ParameterizedType param)
         (let [t (unwind-types 1 param)]
@@ -581,7 +594,7 @@
   (doseq [[k v] args]
     (try
       (->> (find-methods pojo k v)
-          (some (partial invoke-method pojo v)))
+           (some (partial invoke-method pojo v)))
       (catch Throwable e
         (throw (ex-info
                  (str "Error setting " k ": " (.getMessage e) ". Perhaps the value isn't compatible with the setter?")

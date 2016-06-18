@@ -1,4 +1,5 @@
 (ns amazonica.test.ec2
+  (:import com.amazonaws.services.ec2.model.RunInstancesRequest)
   (:use [clojure.test]
         [clojure.pprint]
         [amazonica.aws.ec2]))
@@ -55,4 +56,12 @@
   ;                                   :delete-on-termination true}}])]
   ;   (deregister-image :image-id (:image-id image-id)))
     ;(deregister-image :image-id "ami-f00f9699")
+    
+  ;; test for marshalling map values 
+  ;; see https://github.com/mcohen01/amazonica/issues/219
+  (let [pojo (RunInstancesRequest.)]
+    (amazonica.core/set-fields pojo {:block-device-mappings [{:device-name "foobar"}]})
+    (is (= "foobar"
+           (-> pojo .getBlockDeviceMappings first .getDeviceName))))
+  
 )

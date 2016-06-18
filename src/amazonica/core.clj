@@ -321,32 +321,31 @@
         (.getDeclaredMethod "values" (make-array Class 0))
         (.invoke type (make-array Object 0)))))
 
-(defn col->varargs []
-  (reduce
-    (fn [m e]
-      (let [arr (str "[Ljava.lang." (name e) ";")
-            clazz (Class/forName arr)]
-        (assoc m clazz into-array)))
-    {} [:String :Integer :Long :Double :Float]))
-
 ; assoc java Class to Clojure cast functions
-(def ^:private coercions (atom
-  (merge (col->varargs)
-    {String     str
-     Integer    int
-     Long       long
-     Boolean    boolean
-     Double     double
-     Float      float
-     BigDecimal bigdec
-     BigInteger bigint
-     Date       to-date
-     File       to-file
-     "int"      int
-     "long"     long
-     "double"   double
-     "float"    float
-     "boolean"  boolean})))
+(defonce ^:private coercions 
+  (->> [:String :Integer :Long :Double :Float]
+       (reduce
+         (fn [m e]
+           (let [arr (str "[Ljava.lang." (name e) ";")
+                 clazz (Class/forName arr)]
+             (assoc m clazz into-array))) {})
+       (merge {
+         String     str
+         Integer    int
+         Long       long
+         Boolean    boolean
+         Double     double
+         Float      float
+         BigDecimal bigdec
+         BigInteger bigint
+         Date       to-date
+         File       to-file
+         "int"      int
+         "long"     long
+         "double"   double
+         "float"    float
+         "boolean"  boolean})
+       atom))
 
 (defn register-coercions
   "Accepts key/value pairs of class/function, which defines

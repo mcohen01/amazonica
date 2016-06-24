@@ -56,6 +56,7 @@ and the following dependency:
 * ElasticFileSystem
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
+* [ElasticsearchService] (#elasticsearchservice)
 * [ElasticTranscoder] (#elastictranscoder)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
@@ -851,6 +852,17 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (list-bootstrap-actions :cluster-id "j-38BW9W0NN8YGV")
 
+```
+
+
+###ElasticsearchService
+
+```clj
+(ns com.example
+  (:use [amazonica.aws
+          elasticsarch]))
+
+(list-domain-names {})
 ```
 
 

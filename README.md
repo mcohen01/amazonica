@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.61"]
+[amazonica "0.3.62"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.61</version>
+  <version>0.3.62</version>
 </dependency>
 ```
 
@@ -56,7 +56,7 @@ and the following dependency:
 * ElasticFileSystem
 * [ElasticLoadBalancing] (#elasticloadbalancing)
 * [ElasticMapReduce] (#elasticmapreduce)
-* [ElasticsearchService] (#elasticsearchservice)
+* [Elasticsearch] (#elasticsearch)
 * [ElasticTranscoder] (#elastictranscoder)
 * [Glacier] (#glacier)
 * [IdentityManagement] (#identitymanagement)
@@ -859,8 +859,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```clj
 (ns com.example
-  (:use [amazonica.aws
-          elasticsarch]))
+  (:use [amazonica.awselasticsarch]))
 
 (list-domain-names {})
 ```

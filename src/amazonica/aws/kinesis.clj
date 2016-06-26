@@ -159,7 +159,9 @@
            metrics-buffer-time-millis
            metrics-max-queue-size
            validate-sequence-number-before-checkpointing
-           region-name]
+           region-name
+           initial-lease-table-read-capacity
+           initial-lease-table-write-capacity]
     :or {worker-id (str (UUID/randomUUID))
          endpoint "kinesis.us-east-1.amazonaws.com"}}]
   (cond-> (KinesisClientLibConfiguration. (name app)
@@ -226,7 +228,13 @@
           (.withValidateSequenceNumberBeforeCheckpointing validate-sequence-number-before-checkpointing)
 
           region-name
-          (.withRegionName region-name)))
+          (.withRegionName region-name)
+
+          initial-lease-table-read-capacity
+          (.withInitialLeaseTableReadCapacity initial-lease-table-read-capacity)
+
+          initial-lease-table-write-capacity
+          (.withInitialLeaseTableWriteCapacity initial-lease-table-write-capacity)))
 
 (defn worker
   "Instantiate a kinesis Worker."

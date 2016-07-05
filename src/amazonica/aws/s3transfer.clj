@@ -6,6 +6,7 @@
             ProgressEventType
             ProgressListener]
            [com.amazonaws.services.s3.transfer            
+              Copy
               Download
               MultipleFileUpload
               MultipleFileDownload
@@ -63,6 +64,12 @@
              {:try-pause     #(.tryPause obj %)
               :upload-result #(marshall (.waitForUploadResult obj))})))
   
+  Copy
+  (marshall [obj]
+    (let [t (transfer obj)]
+      ((:add-progress-listener t) (partial default-listener t))
+      (merge t {:copy-result #(marshall (.waitForCopyResult obj))})))
+
   Download
   (marshall [obj]
     (let [t (transfer obj)]

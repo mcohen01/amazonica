@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.64"]
+[amazonica "0.3.65"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.64</version>
+  <version>0.3.65</version>
 </dependency>
 ```
 

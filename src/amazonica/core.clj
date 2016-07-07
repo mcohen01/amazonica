@@ -26,6 +26,7 @@
            java.lang.reflect.Modifier
            java.math.BigDecimal
            java.math.BigInteger
+           java.nio.ByteBuffer
            java.text.ParsePosition
            java.text.SimpleDateFormat
            java.util.Date))
@@ -340,6 +341,7 @@
          BigInteger bigint
          Date       to-date
          File       to-file
+         ByteBuffer #(-> % str .getBytes ByteBuffer/wrap)
          "int"      int
          "long"     long
          "double"   double

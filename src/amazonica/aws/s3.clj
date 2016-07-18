@@ -23,6 +23,16 @@
 
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(?:\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9]+)*(?:\.[A-Za-z]{2,})$")
 
+(defn set-account-owner [acl]
+  (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
+        sym  (symbol "get-s3account-owner")
+        own  (ns-resolve s3ns sym)]
+    (try
+      (.setOwner acl (coerce-value (marshall (own)) Owner))
+      (catch Throwable e
+        (println "[WARN] Unable to set account owner for ACL: "
+                 (.getMessage e))))))
+
 (extend-protocol IMarshall
   CORSRule$AllowedMethods
   (marshall [obj]
@@ -96,11 +106,7 @@
       om))
   AccessControlList
   (fn [col]
-    (let [acl   (AccessControlList.)
-          s3ns  (find-ns (symbol "amazonica.aws.s3"))
-          sym   (symbol "get-s3account-owner")
-          own   (delay (ns-resolve s3ns sym))
-          owner #(coerce-value (marshall (@own)) Owner)]
+    (let [acl (AccessControlList.)]
           ;; get-s3account-owner is not interned until runtime
       (if-let [revoked (:revoke-all-permissions col)]
         (.revokeAllPermissions acl
@@ -118,7 +124,7 @@
       ;; s3 complains about ACLs without owners (even though docs say internal)
       (if-let [o (:owner col)]
         (.setOwner acl (coerce-value o Owner))
-        (.setOwner acl (owner)))
+        (set-account-owner acl))
       acl))
   Grant
   (fn [value]

@@ -23,7 +23,7 @@
 
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(?:\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9]+)*(?:\.[A-Za-z]{2,})$")
 
-(defn set-account-owner [acl]
+(defn- set-account-owner [acl]
   (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
         sym  (symbol "get-s3account-owner")
         own  (ns-resolve s3ns sym)]

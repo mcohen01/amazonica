@@ -1310,6 +1310,21 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
   :configuration {
     :index-document-suffix "index.html"})
 
+(s3/set-bucket-notification-configuration
+  :bucket-name "my.bucket.name"
+  :notification-configuration
+    {:configurations 
+      {"queue-SomeConfigName" ;; prefix with queue|topic|lambda (prefix is removed from actual name)
+        {:events #{"ObjectCreatedByPut" "ObjectCreated"}
+         ;; list of key value pairs as maps or nexted 2 element list 
+         :filter [{"foo" "bar"}]}}})
+
+
+(s3/set-bucket-tagging-configuration
+   :bucket-name "my.bucket.name"
+   :tagging-configuration {:tag-sets [["Formation" "notlive"]]})
+
+
 ```
 
 ###SimpleDB

@@ -1,29 +1,51 @@
 (ns amazonica.aws.s3
   (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions 
-                               to-date kw->str)]
+                               set-fields to-date kw->str)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.s3
               AmazonS3Client]
            [com.amazonaws.services.s3.model
               AccessControlList
+              BucketNotificationConfiguration
               BucketTaggingConfiguration
               CanonicalGrantee
               CORSRule
               CORSRule$AllowedMethods
               DeleteObjectsRequest$KeyVersion
               EmailAddressGrantee
+              Filter
+              FilterRule
               Grant
               Grantee
               GroupGrantee
+              LambdaConfiguration
               ObjectMetadata
               Owner
               Permission
+              QueueConfiguration
+              S3KeyFilter
               S3Object
-              TagSet]))
+              TagSet
+              TopicConfiguration]))
 
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(?:\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9]+)*(?:\.[A-Za-z]{2,})$")
 
-(defn set-account-owner [acl]
+(defn- notification-configuration-instance
+  [config-name value]
+  (cond
+    (.startsWith config-name "queue")
+    (QueueConfiguration.)
+    (.startsWith config-name "topic")
+    (TopicConfiguration.)
+    (.startsWith config-name "lambda")
+    (LambdaConfiguration. (:function-ARN value)
+                          (into-array (:events value)))))
+
+(defn- normalize [s]
+  (clojure.string/replace s
+    #"(^\b(?:queue|topic|lambda)\b)([-]*)" ""))
+
+(defn- set-account-owner [acl]
   (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
         sym  (symbol "get-s3account-owner")
         own  (ns-resolve s3ns sym)]
@@ -32,6 +54,37 @@
       (catch Throwable e
         (println "[WARN] Unable to set account owner for ACL: "
                  (.getMessage e))))))
+
+(defn- as-bucket-notification-config
+  [value]
+  (let [bnc (BucketNotificationConfiguration.)]
+    (.setConfigurations bnc
+      (reduce
+        #(assoc %
+           (normalize (name (first %2)))
+           (set-fields (notification-configuration-instance
+                         (name (first %2))
+                         (last %2))
+                       (last %2)))
+        {}
+        (:configurations value)))
+    bnc))
+
+(defn- as-filter [value]
+  (let [fltr (Filter.)
+        s3ft (S3KeyFilter.)
+        _ (.setS3KeyFilter fltr s3ft)
+        f (fn [pair]
+            (let [fr (FilterRule.)]
+              (if (map? pair)
+                  (do (.setName fr (-> pair keys first name))
+                      (.setValue fr (-> pair vals last)))
+                  (do (.setName fr (first pair))
+                      (.setValue fr (last pair))))
+              fr))]
+    (.setFilterRules s3ft (map f value))
+    fltr))
+
 
 (extend-protocol IMarshall
   CORSRule$AllowedMethods
@@ -126,6 +179,12 @@
         (.setOwner acl (coerce-value o Owner))
         (set-account-owner acl))
       acl))
+  BucketNotificationConfiguration
+  (fn [value]
+    (as-bucket-notification-config value))
+  Filter
+  (fn [value]
+    (as-filter value))
   Grant
   (fn [value]
     (Grant.
@@ -147,6 +206,11 @@
   Owner
   (fn [col]
     (Owner. (:id col) (:displayName col)))
+  TagSet
+  (fn [value]
+    (doto (TagSet.)
+          (.setTag (or (:key value) (first value))
+                   (or (:value value) (last value)))))
   Permission
   (fn [value]
     (Permission/valueOf value))

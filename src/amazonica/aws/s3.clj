@@ -31,31 +31,18 @@
 (def email-pattern #"^[_A-Za-z0-9-\\+]+(?:\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9]+)*(?:\.[A-Za-z]{2,})$")
 
 (defn- notification-configuration-instance
-  [config-name value]
-  (cond
-    (.startsWith config-name "queue")
-    (QueueConfiguration. (:queue-ARN value)
-                         (into-array (:events value)))
-    (.startsWith config-name "topic")
-    (TopicConfiguration. (:topic-ARN value)
-                         (into-array (:events value)))
-    (.startsWith config-name "lambda")
-    (LambdaConfiguration. (:function-ARN value)
-                          (into-array (:events value)))))
-
-(defn- normalize [s]
-  (clojure.string/replace s
-    #"(^\b(?:queue|topic|lambda)\b)([-]*)" ""))
-
-(defn- set-account-owner [acl]
-  (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
-        sym  (symbol "get-s3account-owner")
-        own  (ns-resolve s3ns sym)]
-    (try
-      (.setOwner acl (coerce-value (marshall (own)) Owner))
-      (catch Throwable e
-        (println "[WARN] Unable to set account owner for ACL: "
-                 (.getMessage e))))))
+  [value]
+  (let [ks (->> value keys (reduce str))]
+    (cond
+      (.contains ks "queue")
+      (QueueConfiguration. (or (:queue-ARN value) (:queue value))
+                           (into-array (:events value)))
+      (.contains ks "topic")
+      (TopicConfiguration. (or (:topic-ARN value) (:topic value))
+                           (into-array (:events value)))
+      (.contains ks "function")
+      (LambdaConfiguration. (or (:function-ARN value) (:function value))
+                            (into-array (:events value))))))
 
 (defn- as-bucket-notification-config
   [value]
@@ -63,10 +50,8 @@
     (.setConfigurations bnc
       (reduce
         #(assoc %
-           (normalize (name (first %2)))
-           (set-fields (notification-configuration-instance
-                         (name (first %2))
-                         (last %2))
+           (name (first %2))
+           (set-fields (notification-configuration-instance (last %2))
                        (last %2)))
         {}
         (:configurations value)))
@@ -86,6 +71,16 @@
               fr))]
     (.setFilterRules s3ft (map f value))
     fltr))
+
+(defn- set-account-owner [acl]
+  (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
+        sym  (symbol "get-s3account-owner")
+        own  (ns-resolve s3ns sym)]
+    (try
+      (.setOwner acl (coerce-value (marshall (own)) Owner))
+      (catch Throwable e
+        (println "[WARN] Unable to set account owner for ACL: "
+                 (.getMessage e))))))
 
 
 (extend-protocol IMarshall

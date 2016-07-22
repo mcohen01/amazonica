@@ -34,9 +34,11 @@
   [config-name value]
   (cond
     (.startsWith config-name "queue")
-    (QueueConfiguration.)
+    (QueueConfiguration. (:queue-ARN value)
+                         (into-array (:events value)))
     (.startsWith config-name "topic")
-    (TopicConfiguration.)
+    (TopicConfiguration. (:topic-ARN value)
+                         (into-array (:events value)))
     (.startsWith config-name "lambda")
     (LambdaConfiguration. (:function-ARN value)
                           (into-array (:events value)))))

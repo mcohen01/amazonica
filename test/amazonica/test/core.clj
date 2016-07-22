@@ -4,7 +4,6 @@
              autoscaling
              cloudformation
              cloudfront
-             cloudsearch
              cloudsearchv2
              cloudsearchdomain
              cloudtrail

@@ -98,8 +98,10 @@
 
 ; Java methods on the AWS*Client class which won't be exposed
 (def ^:private excluded
-  #{:invoke
-    :init
+  #{:anonymous-invoke
+    :do-invoke
+    :invoke
+    :init    
     :set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
@@ -935,6 +937,6 @@
   "Intern into the specified namespace all public methods
    from the Amazon*Client class as Clojure functions."
   [client ns]
-  (show-functions ns)
+  ;(show-functions ns)
   (doseq [[k v] (client-methods client)]
     (intern-function client ns k v)))

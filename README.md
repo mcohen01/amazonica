@@ -1325,7 +1325,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (s3/set-bucket-tagging-configuration
    :bucket-name "my.bucket.name"
-   :tagging-configuration {:tag-sets [["Formation" "notlive"]]})
+   :tagging-configuration
+     {:tag-sets [{:Formation "notlive" :foo "bar" :baz "quux"}]})
 
 
 ```

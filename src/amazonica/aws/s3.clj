@@ -205,9 +205,9 @@
     (Owner. (:id col) (:displayName col)))
   TagSet
   (fn [value]
-    (doto (TagSet.)
-          (.setTag (or (:key value) (first value))
-                   (or (:value value) (last value)))))
+    (->> value
+         (reduce #(assoc % (name (first %2)) (last %2)) {})
+         (TagSet.)))
   Permission
   (fn [value]
     (Permission/valueOf value))

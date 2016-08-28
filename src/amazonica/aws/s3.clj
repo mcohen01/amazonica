@@ -4,6 +4,7 @@
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.s3
               AmazonS3Client]
+           [com.amazonaws.regions Region Regions]
            [com.amazonaws.services.s3.model
               AccessControlList
               BucketNotificationConfiguration
@@ -208,6 +209,9 @@
     (->> value
          (reduce #(assoc % (name (first %2)) (last %2)) {})
          (TagSet.)))
+  Region
+  (fn [value]
+    (Region/getRegion (Regions/fromName value)))
   Permission
   (fn [value]
     (Permission/valueOf value))

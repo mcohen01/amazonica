@@ -508,11 +508,13 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (clojure.pprint/pprint
   (amazonica.aws.cloudsearchv2/describe-domains))
 
-(csd/set-endpoint "search-domain-name-6fihexkq1234567895wm.us-east-1.cloudsearch.amazonaws.com")
+(csd/set-endpoint "doc-domain-name-6fihexkq1234567895wm.us-east-1.cloudsearch.amazonaws.com")
 
 (csd/upload-documents
   :content-type "application/json"
   :documents (io/input-stream json-documents))
+
+(csd/set-endpoint "search-domain-name-6fihexkq1234567895wm.us-east-1.cloudsearch.amazonaws.com")
 
 ;; http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/cloudsearchdomain/model/SearchRequest.html
 (csd/search :query "drumpf")

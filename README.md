@@ -37,6 +37,7 @@ and the following dependency:
 * [CloudFront] (#cloudfront)
 * [CloudSearch] (#cloudsearch)
 * [CloudSearchV2] (#cloudsearchv2)
+* [CloudSearchDomain] (#cloudsearchdomain)
 * [CloudWatch] (#cloudwatch)
 * [CloudWatchEvents] (#cloudwatchevents)
 * CodeCommit
@@ -500,6 +501,27 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (list-domains)
 
 ```
+
+###CloudSearchDomain
+```clj
+;; get the document and search service endpoints
+(clojure.pprint/pprint
+  (amazonica.aws.cloudsearchv2/describe-domains))
+
+(csd/set-endpoint "search-domain-name-6fihexkq1234567895wm.us-east-1.cloudsearch.amazonaws.com")
+
+(csd/upload-documents
+  :content-type "application/json"
+  :documents (io/input-stream json-documents))
+
+;; http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/cloudsearchdomain/model/SearchRequest.html
+(csd/search :query "drumpf")
+
+(csd/suggest :query "{\"query\": \"make donald drumpf\""
+             :suggester "url_suggester")
+
+```
+
 
 ###CloudWatch
 ```clj

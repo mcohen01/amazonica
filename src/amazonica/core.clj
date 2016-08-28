@@ -343,6 +343,7 @@
          BigInteger bigint
          Date       to-date
          File       to-file
+         Region     #(Region/getRegion (Regions/fromName %))
          ByteBuffer #(-> % str .getBytes ByteBuffer/wrap)
          "int"      int
          "long"     long
@@ -801,7 +802,7 @@
 (def ^:private transfer-manager
   (memoize transfer-manager*))
 
-(defn- candidate-client
+(defn candidate-client
   [clazz args]
   (let [cred-bound (or *credentials* (:credential args))
         credential (if (map? cred-bound)
@@ -937,6 +938,6 @@
   "Intern into the specified namespace all public methods
    from the Amazon*Client class as Clojure functions."
   [client ns]
-  ;(show-functions ns)
+  (show-functions ns)
   (doseq [[k v] (client-methods client)]
     (intern-function client ns k v)))

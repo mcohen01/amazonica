@@ -3,3 +3,8 @@
   (:import com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient))
 
 (amz/set-client AmazonCloudSearchDomainClient *ns*)
+
+(defn set-endpoint [& args]
+  (.setEndpoint
+    (amz/candidate-client AmazonCloudSearchDomainClient args)
+    (last args)))

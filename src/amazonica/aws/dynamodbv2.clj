@@ -8,6 +8,7 @@
               AmazonDynamoDBClient]
            [com.amazonaws.services.dynamodbv2.model
              AttributeValue
+             KeysAndAttributes
              ProvisionedThroughput]
            java.nio.ByteBuffer))
 
@@ -41,6 +42,20 @@
        (contains? #{:s :b :BOOL :SS :BS :n :NS :l :m :NULL} (first-key value))))
 
 (register-coercions
+  KeysAndAttributes
+  (fn [value]
+    (let [ka (KeysAndAttributes.)
+          _ (.setAttributesToGet ka (:attributes-to-get value))
+          _ (.setConsistentRead ka (:consistent-read value))
+          _ (.setExpressionAttributeNames ka (:expression-attribute-names value))
+          _ (.setProjectionExpression ka (:projection-expression value))
+          coercion (fn [attr-vals]
+                     (fmap #(coerce-value
+                              %
+                              AttributeValue)
+                           attr-vals))]
+      (.setKeys ka (map coercion (:keys value)))
+      ka))
   AttributeValue
   (fn [value]
       (let [attr (AttributeValue.)]

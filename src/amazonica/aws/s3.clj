@@ -106,6 +106,7 @@
      ;; :raw-metadata            (.getRawMetadata obj)
      :restore-expiration-time (marshall (.getRestoreExpirationTime obj))
      :server-side-encryption  (.getServerSideEncryption obj)
+     :server-side-encryption-aws-kms-key-id (.getSSEAwsKmsKeyId obj)
      :user-metadata           (marshall (.getUserMetadata obj))
      :version-id              (.getVersionId obj)})
   S3Object
@@ -149,6 +150,8 @@
         (.setRestoreExpirationTime om (to-date rt)))
       (when-let [sse (:server-side-encryption col)]
         (.setServerSideEncryption om sse))
+      (when-let [sse-kms-key-id (:server-side-encryption-aws-kms-key-id col)]
+        (.setHeader om "x-amz-server-side-encryption-aws-kms-key-id" sse-kms-key-id))
       (when-let [metadata (:user-metadata col)]
         (doseq [[k v] metadata]
           (.addUserMetadata om

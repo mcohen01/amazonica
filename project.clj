@@ -7,10 +7,10 @@
   :javac-options ["-target" "1.6" "-source" "1.6"]
   :target-path "target"
   :deploy-repositories [["releases" :clojars]]
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/algo.generic "0.1.2"]
-                 [com.amazonaws/aws-java-sdk "1.11.26" :exclusions [joda-time]]
+                 [com.amazonaws/aws-java-sdk "1.11.63" :exclusions [joda-time]]
                  [com.amazonaws/amazon-kinesis-client "1.6.5" :exclusions [joda-time]]
-                 [joda-time "2.8.1"]
+                 [joda-time "2.9.6"]
                  [robert/hooke "1.3.0"]
-                 [com.taoensso/nippy "2.7.0"]])
+                 [com.taoensso/nippy "2.12.2"]])

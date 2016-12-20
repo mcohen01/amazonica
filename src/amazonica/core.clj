@@ -898,7 +898,9 @@
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."
   [client ns fname methods]
-  (intern ns (symbol (name fname))
+  (intern ns (with-meta (symbol (name fname))
+               {:amazonica/client client
+                :amazonica/methods methods})
     (fn [& args]
       (if-let [method (best-method methods args)]
         (if-not args

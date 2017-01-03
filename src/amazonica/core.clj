@@ -941,5 +941,6 @@
    from the Amazon*Client class as Clojure functions."
   [client ns]
   (show-functions ns)
+  (intern ns 'client-class client)
   (doseq [[k v] (client-methods client)]
     (intern-function client ns k v)))

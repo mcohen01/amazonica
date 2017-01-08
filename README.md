@@ -677,7 +677,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                  :column1 "funky"}}}]})
 
 ;; dynamodb-expressions https://github.com/brabster/dynamodb-expressions
-;; was written to help make update expressions easier to write with Amazonica.
+;; exists to make update expressions easier to write for Amazonica.
 (update-item
   cred
   :table-name "TestTable"

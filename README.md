@@ -676,6 +676,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                  :text "bunny"
                  :column1 "funky"}}}]})
 
+;; dynamodb-expressions https://github.com/brabster/dynamodb-expressions
+;; was written to help make update expressions easier to write with Amazonica.
 (update-item
   cred
   :table-name "TestTable"
@@ -684,9 +686,6 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
   :expression-attribute-names {"#my_foo" "my-foo"}
   :expression-attribute-values {":x" 1
                                 ":y" "barbaz"})
-
-;; [dynamodb-expressions](https://github.com/brabster/dynamodb-expressions)
-;; was written to help make update expressions easier to write with Amazonica.
 
 (batch-get-item
   cred

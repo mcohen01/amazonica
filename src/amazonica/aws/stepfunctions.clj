@@ -19,6 +19,10 @@
   (send-task-failure {:taskToken token})
   )
 
+(defn send-heartbeat [token]
+  (send-task-heartbeat {:taskToken token})
+  )
+
 (defn start-state-machine [input state-machine-arn]
   (start-execution {:stateMachineArn state-machine-arn
                     :input input})

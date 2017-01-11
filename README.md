@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api] [1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.81"]
+[amazonica "0.3.82"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.81</version>
+  <version>0.3.82</version>
 </dependency>
 ```
 
@@ -78,6 +78,7 @@ and the following dependency:
 * [SimpleWorkflow] (#simpleworkflow)
 * [SNS] (#sns)
 * [SQS] (#sqs)
+* [StepFunctions] (#stepfunctions)
 * StorageGateway
 
 
@@ -1515,6 +1516,28 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (-> "my-queue" find-queue delete-queue)
 (-> "DLQ" find-queue delete-queue)
+
+```
+
+###StepFunctions
+```clj
+
+(ns com.example
+  (:use [amazonica.aws.stepfunctions]))
+
+;this is to start the execution, then you need to run get-activity-task-result ultimately to monitor for pending requests from the state machine components
+;to execute a worker task.
+(start-state-machine "arn:aws:states:us-east-1:xxxxxxxxxx:stateMachine:test-sf" "{\"test\":\"test\"}")
+
+;this will block until it returns a task in the queue from a state machine execution,
+;so you need to run it in a while loop on the worker side of your app.
+(let [tr (get-activity-task-result "arn:aws:states:us-east-1:xxxxxxxxx:activity:test-sf-activity")
+      input (:input tr)
+      token (:task-token tr)]
+      (if (<validate input here....>)
+        (mark-task-success "<json stuff to pipe back into the state machine....>" token)
+        (mark-task-failure token))
+      )
 
 ```
 

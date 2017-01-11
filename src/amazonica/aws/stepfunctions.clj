@@ -10,7 +10,7 @@
   (get-activity-task {:activityArn arn})
   )
 
-(defn mark-task-success [token output]
+(defn mark-task-success [output token]
   (send-task-success {:output output
                       :taskToken token})
   )

@@ -616,9 +616,10 @@
    Amazon*Client class. (Note that we assume all AWS
    service calls take at most a single argument.)"
   [method args]
-  (-> (.getParameterTypes method)
-      first
-      (create-bean args)))
+  (let [clazz (first (.getParameterTypes method))]
+    (if (contains? @coercions clazz)
+        (coerce-value (into {} args) clazz)
+        (create-bean clazz args))))
 
 
 (defprotocol IMarshall

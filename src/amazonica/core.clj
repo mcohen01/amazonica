@@ -589,6 +589,42 @@
         (f v)
         (f (coerce-value v generic))))))
 
+(def primitive->boxed
+  {Byte/TYPE java.lang.Byte
+   Short/TYPE java.lang.Short
+   Integer/TYPE java.lang.Integer
+   Long/TYPE java.lang.Long
+   Float/TYPE java.lang.Float
+   Double/TYPE java.lang.Double
+   Character/TYPE java.lang.Character
+   Boolean/TYPE java.lang.Boolean})
+
+(defn compatible-types?
+  "Returns true if `value` is of a type which can be cast to `type`.
+  If `type` is a primitive type it will first be converted to its boxed
+  version, since Clojure will pass a boxed value. Finally, if there is
+  a coercion registered for `type` we assume that any `value` is fine
+  (or, if not, will be dealt with elsewhere)."
+  [value type]
+  (or (contains? @coercions type)
+      (let [boxed-primitive-type (primitive->boxed type)]
+        (try
+          (cond
+            ;; nil can not be converted to a primitive type
+            (and boxed-primitive-type (nil? value)) false
+            (some? value) (do (cast (or boxed-primitive-type type) value)
+                              true)
+            :else true)
+          (catch ClassCastException e
+            false)))))
+
+(defn compatible-setter? [v setter]
+  (let [parameter-types (.getParameterTypes setter)
+        coll-v (if (coll? v) v [v])]
+    (and (= (count coll-v) (count parameter-types))
+         (->> (map compatible-types? coll-v parameter-types)
+              (every? true?)))))
+
 (defn set-fields
   "Returns the populated AWS *Request bean with 'args' as
    the values. args is a map with keywords as keys and any
@@ -598,6 +634,7 @@
   (doseq [[k v] args]
     (try
       (->> (find-methods pojo k v)
+           (filter (partial compatible-setter? v))
            (some (partial invoke-method pojo v)))
       (catch Throwable e
         (throw (ex-info

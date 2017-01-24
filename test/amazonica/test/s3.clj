@@ -370,7 +370,8 @@
   (get-object
     cred
     :bucket-name bucket1
-    :key "jenny")
+    :key "jenny"
+    :range 0)
   
   (get-object
     cred

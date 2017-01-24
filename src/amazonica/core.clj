@@ -470,20 +470,29 @@
    in the DynamoDBV2Client.
    http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/DeleteItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)
    http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/GetItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)"
-  [method name getter?]
+  [method name value]
   (let [args (.getParameterTypes method)]
     (and (= name (normalized-name (.getName method)))
-         (case getter?
+         (case (empty? value)
            true  (= 0 (count args))
            false (and (< 0 (count args))
+                      (or (= (count args) (count (flatten value)))
+                          (and (coll? value)
+                               (= 1 (count args))
+                               (or (contains? @coercions (first args))
+                                   (.isArray (first args))
+                                   (and (.getPackage (first args))
+                                        (.startsWith
+                                          (.getName (.getPackage (first args)))
+                                          "java.util")))))
                       (not (and (= 2 (count args))
                                 (every? (partial = java.util.Map$Entry)
                                         args))))))))
 
 (defn- accessor-methods
-  [class-methods name getter?]
+  [class-methods name value]
   (reduce
-    #(if (matches? %2 name getter?)
+    #(if (matches? %2 name value)
       (conj %1 %2)
       %1)
     []
@@ -495,7 +504,7 @@
       (.getMethods)
       (accessor-methods
         (.toLowerCase (keyword->camel k))
-        (empty? v))))
+        v)))
 
 (defn to-java-coll
   "Need this only because S3 methods actually try to

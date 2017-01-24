@@ -1,9 +1,8 @@
 (ns amazonica.test.securitytoken
   (:use [clojure.test]
-        [amazonica.aws 
-          identitymanagement
-          s3
-          securitytoken]))
+        [amazonica.aws.identitymanagement :exclude [show-functions waiters client-class]]
+        [amazonica.aws.s3 :exclude [show-functions client-class]]
+        [amazonica.aws.securitytoken :exclude [show-functions waiters client-class]]))
 
 (deftest securitytoken []
 

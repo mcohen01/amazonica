@@ -2,6 +2,7 @@
   (:require [amazonica.core :refer [with-credential defcredential]]
             [amazonica.aws.s3 :as s3])
   (:use [amazonica.aws.s3transfer]
+        [clojure.set]
         [clojure.test]))
 
 (def cred

@@ -1,6 +1,7 @@
 (ns amazonica.test.sns
   (:import java.util.UUID)
   (:use [clojure.test]
+        [clojure.pprint]
         [amazonica.aws.sns]))
 
 (deftest sns []

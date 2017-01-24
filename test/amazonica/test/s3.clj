@@ -306,6 +306,7 @@
   (let [config {:rules [{:id "rm after 14 days"
                          :expiration-in-days 14
                          :noncurrent-version-expiration-in-days -1
+                         :expired-object-delete-marker? false
                          :prefix "some-prefix/"
                          :status "Enabled"}]}]
     (set-bucket-lifecycle-configuration cred bucket1 config)

@@ -473,21 +473,21 @@
   [method name value]
   (let [args (.getParameterTypes method)]
     (and (= name (normalized-name (.getName method)))
-         (case (empty? value)
-           true  (= 0 (count args))
-           false (and (< 0 (count args))
-                      (or (= (count args) (count (flatten value)))
-                          (and (coll? value)
-                               (= 1 (count args))
-                               (or (contains? @coercions (first args))
-                                   (.isArray (first args))
-                                   (and (.getPackage (first args))
-                                        (.startsWith
-                                          (.getName (.getPackage (first args)))
-                                          "java.util")))))
-                      (not (and (= 2 (count args))
-                                (every? (partial = java.util.Map$Entry)
-                                        args))))))))
+         (if (empty? value)
+             (= 0 (count args))
+             (and (< 0 (count args))
+                  (or (= (count args) (count (flatten value)))
+                      (and (coll? value)
+                           (= 1 (count args))
+                           (or (contains? @coercions (first args))
+                               (.isArray (first args))
+                               (and (.getPackage (first args))
+                                    (.startsWith
+                                      (.getName (.getPackage (first args)))
+                                      "java.util")))))
+                  (not (and (= 2 (count args))
+                            (every? (partial = java.util.Map$Entry)
+                                    args))))))))
 
 (defn- accessor-methods
   [class-methods name value]

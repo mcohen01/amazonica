@@ -229,6 +229,25 @@
             (println e)))
         (.setEndpoint client endpoint))))
 
+(defn- client-memo [f]
+  (let [mem (atom {})]
+    (fn [& args]
+      (let [[clazz credentials configuration] args]
+        (if-let [cache (:client-cache configuration)]
+          (let [conf (dissoc configuration :client-cache)
+                args (list clazz credentials conf)]
+            (if (.has? cache args)
+                (do (.hit cache args)
+                    (.lookup cache args))
+                (let [client (f clazz credentials conf)]
+                  (.miss cache args client)
+                    client)))
+          (if-let [e (find @mem args)]
+            (val e)
+            (let [ret (apply f args)]
+              (swap! mem assoc args ret)
+              ret)))))))
+
 (defn- encryption-client*
   [encryption credentials configuration]
   (let [creds     (get-credentials credentials)
@@ -263,12 +282,9 @@
     (set-endpoint! client credentials)
     client))
 
-(def ^:private encryption-client
-  (memoize encryption-client*))
+(def ^:private encryption-client (client-memo encryption-client*))
 
-(def ^:private amazon-client
-  (memoize amazon-client*))
-
+(def ^:private amazon-client (client-memo amazon-client*))
 
 (defn- camel->keyword
   "from Emerick, Grande, Carper 2012 p.70"
@@ -809,8 +825,7 @@
                         credential
                         client-config)])))
 
-(def ^:private transfer-manager
-  (memoize transfer-manager*))
+(def ^:private transfer-manager (client-memo transfer-manager*))
 
 (defn candidate-client
   [clazz args]

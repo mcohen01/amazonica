@@ -229,7 +229,7 @@
             (println e)))
         (.setEndpoint client endpoint))))
 
-(defn- encryption-client*
+(defn encryption-client*
   [encryption credentials configuration]
   (let [creds     (get-credentials credentials)
         config    (get-client-configuration configuration)
@@ -255,7 +255,9 @@
     (set-endpoint! client credentials)
     client))
 
-(defn- amazon-client*
+(swap! client-config assoc :encryption-client-fn (memoize encryption-client*))
+
+(defn amazon-client*
   [clazz credentials configuration]
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
@@ -263,12 +265,7 @@
     (set-endpoint! client credentials)
     client))
 
-(def ^:private encryption-client
-  (memoize encryption-client*))
-
-(def ^:private amazon-client
-  (memoize amazon-client*))
-
+(swap! client-config assoc :amazon-client-fn (memoize amazon-client*))
 
 (defn- camel->keyword
   "from Emerick, Grande, Carper 2012 p.70"
@@ -797,20 +794,19 @@
                (if (seq m) m {}))}
       :default {:args args})))
 
-(declare candidate-client)
-
-(defn- transfer-manager*
+(defn transfer-manager*
   [credential client-config crypto]
-  (invoke-constructor
-    "com.amazonaws.services.s3.transfer.TransferManager"
-    (if crypto
+  (let [encryption-client (:encryption-client-fn client-config)
+        amazon-client (:amazon-client-fn client-config)]
+    (invoke-constructor
+      "com.amazonaws.services.s3.transfer.TransferManager"
+      (if crypto
         [(encryption-client crypto credential client-config)]
         [(amazon-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
                         credential
-                        client-config)])))
+                        client-config)]))))
 
-(def ^:private transfer-manager
-  (memoize transfer-manager*))
+(swap! client-config assoc :transfer-manager-fn (memoize transfer-manager*))
 
 (defn candidate-client
   [clazz args]
@@ -820,6 +816,9 @@
                              (or cred-bound @credential))
         config-bound (or *client-config* (:client-config args))
         client-config (merge @client-config config-bound)
+        encryption-client (:encryption-client-fn client-config)
+        amazon-client (:amazon-client-fn client-config)
+        transfer-manager (:transfer-manager-fn client-config)
         crypto (if (even? (count (:args args)))
                    (:encryption (apply hash-map (:args args))))
         client  (if (and crypto (or (= (.getSimpleName clazz) "AmazonS3Client")

@@ -432,7 +432,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 (create-stack :stack-name "my-stack"
               :template-url "abcd1234.s3.amazonaws.com")
 
-(describe-stack-resources)
+(describe-stack-resources :stack-name "my_cloud_stack")
 
 ```
 

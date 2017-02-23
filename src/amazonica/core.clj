@@ -929,14 +929,13 @@
                          (name fname) args)))))))
 
 (defn- client-methods
-  "Returns a map with keys of idiomatic Clojure hyphenated
-   keywords corresponding to the public Java method names of
-   the class argument, vals are vectors of
-   java.lang.reflect.Methods."
-  [client]
+  "Returns a map with keys of idiomatic Clojure hyphenated keywords (as produced
+  by the provided converter) corresponding to the public Java method names of
+  the class argument, vals are vectors of java.lang.reflect.Methods."
+  [client converter]
   (reduce
     (fn [col method]
-      (let [fname (camel->keyword (.getName method))]
+      (let [fname (converter (.getName method))]
         (if (and (contains? excluded fname)
                  (not= (.getSimpleName client) "AWSLambdaClient")
                  (not= (.getSimpleName client) "AmazonCloudSearchDomainClient"))
@@ -960,5 +959,5 @@
   [client ns]
   (show-functions ns)
   (intern ns 'client-class client)
-  (doseq [[k v] (client-methods client)]
+  (doseq [[k v] (client-methods client camel->keyword)]
     (intern-function client ns k v)))

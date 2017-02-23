@@ -1,5 +1,6 @@
 (ns amazonica.test.core
-  (:require [amazonica.core]
+  (:require [clojure.test :refer [deftest is]]
+            [amazonica.core :as c]
             [amazonica.aws
              autoscaling
              cloudformation
@@ -40,3 +41,10 @@
              sqs
              storagegateway
              ]))
+
+(deftest camel->keyword-tests
+  (let [c->k #'c/camel->keyword]
+    (is (= :abc-def (c->k "abcDef")))
+    (is (= :abc-def (c->k "AbcDef")))
+
+    (is (= :abcdef (c->k "ABCDef")))))

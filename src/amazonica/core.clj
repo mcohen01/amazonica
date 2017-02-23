@@ -267,14 +267,25 @@
 
 (swap! client-config assoc :amazon-client-fn (memoize amazon-client*))
 
-(defn- camel->keyword
+(defn- keyword-converter
+  "Given something that tokenizes a string into parts, turn it into
+  a :kebab-case-keyword."
+  [separator-regex]
+  (fn [s]
+    (->> (str/split s separator-regex)
+         (map str/lower-case)
+         (interpose \-)
+         str/join
+         keyword)))
+
+(def ^:private camel->keyword
   "from Emerick, Grande, Carper 2012 p.70"
-  [s]
-  (->> (str/split s #"(?<=[a-z])(?=[A-Z])")
-       (map str/lower-case)
-       (interpose \-)
-       str/join
-       keyword))
+  (keyword-converter #"(?<=[a-z])(?=[A-Z])"))
+
+(def ^:private camel->keyword2
+  "Like [[camel->keyword]], but smarter about acronyms and concepts like iSCSI
+  and OpenID which should be treated as a single concept."
+  (keyword-converter #"(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])"))
 
 (defn- keyword->camel
   [kw]

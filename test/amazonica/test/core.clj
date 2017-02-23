@@ -48,3 +48,10 @@
     (is (= :abc-def (c->k "AbcDef")))
 
     (is (= :abcdef (c->k "ABCDef")))))
+
+(deftest camel->keyword2-tests
+  (let [c->k #'c/camel->keyword2]
+    (is (= :abc-def (c->k "abcDef")))
+    (is (= :abc-def (c->k "AbcDef")))
+
+    (is (= :abc-def (c->k "ABCDef")))))

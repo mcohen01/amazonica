@@ -101,7 +101,7 @@
   #{:anonymous-invoke
     :do-invoke
     :invoke
-    :init    
+    :init
     :set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
@@ -284,7 +284,6 @@
          (fmap str/capitalize)
          str/join)))
 
-
 (defn- aws-package?
   [clazz]
   (->> (.getName clazz)
@@ -322,7 +321,7 @@
         (.invoke type (make-array Object 0)))))
 
 ; assoc java Class to Clojure cast functions
-(defonce ^:private coercions 
+(defonce ^:private coercions
   (->> [:String :Integer :Long :Double :Float]
        (reduce
          (fn [m e]
@@ -358,7 +357,7 @@
 
 (defn coerce-value
   "Coerces the supplied stringvalue to the required type as
-  defined by the AWS method signature. String or keyword 
+  defined by the AWS method signature. String or keyword
   conversion to Enum types (e.g. via valueOf()) is supported."
   [value type]
   (let [value (if (keyword? value) (name value) value)]
@@ -685,7 +684,7 @@
 (extend-protocol IMarshall
   nil
   (marshall [obj] nil)
-  
+
   java.util.Map
   (marshall [obj]
     (if-not (empty? obj)
@@ -695,21 +694,21 @@
                 (apply vector (keys obj)))
           (fmap marshall
                 (apply vector (vals obj)))))))
-  
+
   java.util.Collection
   (marshall [obj]
     (if (instance? clojure.lang.IPersistentSet obj)
       obj
       (fmap marshall (apply vector obj))))
-  
+
   java.util.Date
   (marshall [obj] (DateTime. (.getTime obj)))
-  
+
   ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
   ; .doesBucketExist, which wreak havoc on Clojure truthiness
   Boolean
   (marshall [obj] (when-not (nil? obj) (.booleanValue obj)))
-  
+
   Object
   (marshall [obj]
     (if (aws-package? (class obj))
@@ -828,7 +827,7 @@
         (if (= (.getSimpleName clazz) "TransferManager")
             (transfer-manager credential client-config crypto)
             @client)))
-        
+
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on

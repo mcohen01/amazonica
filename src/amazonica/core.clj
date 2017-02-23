@@ -288,8 +288,7 @@
   [clazz]
   (->> (.getName clazz)
        (re-find #"com\.amazonaws\.services")
-       nil?
-       not))
+       some?))
 
 (defn to-date
   [date]

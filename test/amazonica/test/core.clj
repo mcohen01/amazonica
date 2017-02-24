@@ -102,7 +102,7 @@
    "storagegateway" [['describe-storedi-scsivolumes
                       'describe-stored-iscsi-volumes]
                      ['describe-cachedi-scsivolumes
-                      'describe-cached-iscsivolumes]]})
+                      'describe-cached-iscsi-volumes]]})
 
 (deftest camel->keyword-changes-tests
   "See https://github.com/mcohen01/amazonica/issues/256"

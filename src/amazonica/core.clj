@@ -287,7 +287,8 @@
   and OpenID which should be treated as a single concept."
   (comp
    (keyword-converter #"(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
-   #(str/replace % #"(?i)iscsi" "ISCSI")))
+   #(str/replace % #"(?i)iscsi" "ISCSI")
+   #(str/replace % #"(?i)openid" "OPENID")))
 
 (defn- keyword->camel
   [kw]

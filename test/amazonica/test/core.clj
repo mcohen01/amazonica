@@ -103,3 +103,14 @@
                       'describe-stored-iscsi-volumes]
                      ['describe-cachedi-scsivolumes
                       'describe-cached-iscsivolumes]]})
+
+(deftest camel->keyword-changes-tests
+  "See https://github.com/mcohen01/amazonica/issues/256"
+  (doseq [[service changed-fn-names] changed-camel->keyword-vars
+          [old-name new-name] changed-fn-names
+          :let [service-ns-sym (symbol (str "amazonica.aws." service))
+                old (ns-resolve service-ns-sym old-name)
+                new (ns-resolve service-ns-sym new-name)]]
+    (is (not= old-name new-name))
+    (is (some? old) (str "missing old var: " service " " old-name))
+    (is (some? new) (str "missing new var: " service " " new-name))))

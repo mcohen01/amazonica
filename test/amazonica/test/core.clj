@@ -49,14 +49,18 @@
     (is (= :abc-def (c->k "abcDef")))
     (is (= :abc-def (c->k "AbcDef")))
 
-    (is (= :abcdef (c->k "ABCDef")))))
+    (is (= :abcdef (c->k "ABCDef")))
+
+    (is (= :describe-storedi-scsivolumes (c->k "DescribeStorediSCSIVolumes")))))
 
 (deftest camel->keyword2-tests
   (let [c->k #'c/camel->keyword2]
     (is (= :abc-def (c->k "abcDef")))
     (is (= :abc-def (c->k "AbcDef")))
 
-    (is (= :abc-def (c->k "ABCDef")))))
+    (is (= :abc-def (c->k "ABCDef")))
+
+    (is (= :describe-stored-iscsi-volumes (c->k "DescribeStorediSCSIVolumes")))))
 
 (def changed-camel->keyword-vars
   "These are vars that were converted to kebab-case in a way that didn't deal

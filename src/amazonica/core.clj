@@ -932,13 +932,13 @@
                          (name fname) args)))))))
 
 (defn- client-methods
-  "Returns a map with keys of idiomatic Clojure hyphenated keywords (as produced
-  by the provided converter) corresponding to the public Java method names of
-  the class argument, vals are vectors of java.lang.reflect.Methods."
-  [client converter]
+  "Returns a map with keys of idiomatic Clojure hyphenated keywords
+  corresponding to the public Java method names of the class argument, vals are
+  vectors of java.lang.reflect.Methods."
+  [client]
   (reduce
     (fn [col method]
-      (let [fname (converter (.getName method))]
+      (let [fname (camel->keyword (.getName method))]
         (if (and (contains? excluded fname)
                  (not= (.getSimpleName client) "AWSLambdaClient")
                  (not= (.getSimpleName client) "AmazonCloudSearchDomainClient"))
@@ -962,6 +962,9 @@
   [client ns]
   (show-functions ns)
   (intern ns 'client-class client)
-  (doseq [[fname methods] (concat (client-methods client camel->keyword)
-                                  (client-methods client camel->keyword2))]
-    (intern-function client ns fname methods)))
+  (doseq [[fname methods] (client-methods client)
+          :let [the-var (intern-function client ns fname methods)
+                fname2 (-> methods first .getName camel->keyword2)]]
+    (when (not= fname fname2)
+      (let [the-var2 (intern-function client ns fname2 methods)]
+        (alter-meta! the-var assoc :amazonica/deprecated-in-favor-of the-var2)))))

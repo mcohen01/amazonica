@@ -962,5 +962,6 @@
   [client ns]
   (show-functions ns)
   (intern ns 'client-class client)
-  (doseq [[k v] (client-methods client camel->keyword)]
-    (intern-function client ns k v)))
+  (doseq [[fname methods] (concat (client-methods client camel->keyword)
+                                  (client-methods client camel->keyword2))]
+    (intern-function client ns fname methods)))

@@ -285,7 +285,9 @@
 (def ^:private camel->keyword2
   "Like [[camel->keyword]], but smarter about acronyms and concepts like iSCSI
   and OpenID which should be treated as a single concept."
-  (keyword-converter #"(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])"))
+  (comp
+   (keyword-converter #"(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
+   #(str/replace % #"(?i)iscsi" "ISCSI")))
 
 (defn- keyword->camel
   [kw]

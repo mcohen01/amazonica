@@ -1,5 +1,6 @@
 (ns amazonica.test.core
   (:require [clojure.test :refer [deftest is]]
+            [clojure.set :as set]
             [amazonica.core :as c]
             [amazonica.aws
              autoscaling
@@ -119,4 +120,20 @@
                 new (ns-resolve service-ns-sym new-name)]]
     (is (not= old-name new-name))
     (is (some? old) (str "missing old var: " service " " old-name))
-    (is (some? new) (str "missing new var: " service " " new-name))))
+    (is (some? new) (str "missing new var: " service " " new-name))
+
+    (is (= #{:ns
+             :name
+             :amazonica/client
+             :amazonica/methods
+             :amazonica/deprecated-in-favor-of}
+           (set (keys (meta old)))))
+    (is (= #{:ns :name :amazonica/client :amazonica/methods}
+           (set (keys (meta new)))))
+    (is (= new (-> old meta :amazonica/deprecated-in-favor-of))))
+
+  ;; Make sure we don't accidentally attach new metadata keys to old, untouched
+  ;; vars:
+  (let [unrelated-var #'amazonica.aws.ec2/describe-addresses]
+    (is (= (set (keys (meta unrelated-var)))
+           #{:ns :name :amazonica/client :amazonica/methods}))))

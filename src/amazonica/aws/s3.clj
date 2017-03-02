@@ -83,6 +83,10 @@
         (println "[WARN] Unable to set account owner for ACL: "
                  (.getMessage e))))))
 
+(defn- notification-config [obj]
+  {:events (.getEvents obj)
+   :filter (marshall (.getFilter obj))})
+
 
 (extend-protocol IMarshall
   CORSRule$AllowedMethods
@@ -120,6 +124,18 @@
   BucketTaggingConfiguration
   (marshall [obj]
     {:tag-sets (map marshall (.getAllTagSets obj))})
+  LambdaConfiguration
+  (marshall [obj]
+    (merge (notification-config obj)
+           {:function-arn (.getFunctionARN obj)}))
+  QueueConfiguration
+  (marshall [obj]
+    (merge (notification-config obj)
+           {:queue-arn (.getQueueARN obj)}))
+  TopicConfiguration
+  (marshall [obj]
+    (merge (notification-config obj)
+           {:topic-arn (.getTopicARN obj)}))
   TagSet
   (marshall [obj]
     {:tags (.getAllTags obj)}))

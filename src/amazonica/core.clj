@@ -101,7 +101,7 @@
   #{:anonymous-invoke
     :do-invoke
     :invoke
-    :init    
+    :init
     :set-endpoint
     :get-cached-response-metadata
     :get-service-abbreviation})
@@ -267,14 +267,28 @@
 
 (swap! client-config assoc :amazon-client-fn (memoize amazon-client*))
 
-(defn- camel->keyword
+(defn- keyword-converter
+  "Given something that tokenizes a string into parts, turn it into
+  a :kebab-case-keyword."
+  [separator-regex]
+  (fn [s]
+    (->> (str/split s separator-regex)
+         (map str/lower-case)
+         (interpose \-)
+         str/join
+         keyword)))
+
+(def ^:private camel->keyword
   "from Emerick, Grande, Carper 2012 p.70"
-  [s]
-  (->> (str/split s #"(?<=[a-z])(?=[A-Z])")
-       (map str/lower-case)
-       (interpose \-)
-       str/join
-       keyword))
+  (keyword-converter #"(?<=[a-z])(?=[A-Z])"))
+
+(def ^:private camel->keyword2
+  "Like [[camel->keyword]], but smarter about acronyms and concepts like iSCSI
+  and OpenID which should be treated as a single concept."
+  (comp
+   (keyword-converter #"(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
+   #(str/replace % #"(?i)iscsi" "ISCSI")
+   #(str/replace % #"(?i)openid" "OPENID")))
 
 (defn- keyword->camel
   [kw]
@@ -284,13 +298,11 @@
          (fmap str/capitalize)
          str/join)))
 
-
 (defn- aws-package?
   [clazz]
   (->> (.getName clazz)
        (re-find #"com\.amazonaws\.services")
-       nil?
-       not))
+       some?))
 
 (defn to-date
   [date]
@@ -322,7 +334,7 @@
         (.invoke type (make-array Object 0)))))
 
 ; assoc java Class to Clojure cast functions
-(defonce ^:private coercions 
+(defonce ^:private coercions
   (->> [:String :Integer :Long :Double :Float]
        (reduce
          (fn [m e]
@@ -358,7 +370,7 @@
 
 (defn coerce-value
   "Coerces the supplied stringvalue to the required type as
-  defined by the AWS method signature. String or keyword 
+  defined by the AWS method signature. String or keyword
   conversion to Enum types (e.g. via valueOf()) is supported."
   [value type]
   (let [value (if (keyword? value) (name value) value)]
@@ -685,7 +697,7 @@
 (extend-protocol IMarshall
   nil
   (marshall [obj] nil)
-  
+
   java.util.Map
   (marshall [obj]
     (if-not (empty? obj)
@@ -695,21 +707,21 @@
                 (apply vector (keys obj)))
           (fmap marshall
                 (apply vector (vals obj)))))))
-  
+
   java.util.Collection
   (marshall [obj]
     (if (instance? clojure.lang.IPersistentSet obj)
       obj
       (fmap marshall (apply vector obj))))
-  
+
   java.util.Date
   (marshall [obj] (DateTime. (.getTime obj)))
-  
+
   ; `false` boolean objects (i.e. (Boolean. false)) come out of e.g.
   ; .doesBucketExist, which wreak havoc on Clojure truthiness
   Boolean
   (marshall [obj] (when-not (nil? obj) (.booleanValue obj)))
-  
+
   Object
   (marshall [obj]
     (if (aws-package? (class obj))
@@ -828,7 +840,7 @@
         (if (= (.getSimpleName clazz) "TransferManager")
             (transfer-manager credential client-config crypto)
             @client)))
-        
+
 
 (defn- fn-call
   "Returns a function that reflectively invokes method on
@@ -920,10 +932,9 @@
                          (name fname) args)))))))
 
 (defn- client-methods
-  "Returns a map with keys of idiomatic Clojure hyphenated
-   keywords corresponding to the public Java method names of
-   the class argument, vals are vectors of
-   java.lang.reflect.Methods."
+  "Returns a map with keys of idiomatic Clojure hyphenated keywords
+  corresponding to the public Java method names of the class argument, vals are
+  vectors of java.lang.reflect.Methods."
   [client]
   (reduce
     (fn [col method]
@@ -951,5 +962,9 @@
   [client ns]
   (show-functions ns)
   (intern ns 'client-class client)
-  (doseq [[k v] (client-methods client)]
-    (intern-function client ns k v)))
+  (doseq [[fname methods] (client-methods client)
+          :let [the-var (intern-function client ns fname methods)
+                fname2 (-> methods first .getName camel->keyword2)]]
+    (when (not= fname fname2)
+      (let [the-var2 (intern-function client ns fname2 methods)]
+        (alter-meta! the-var assoc :amazonica/deprecated-in-favor-of the-var2)))))

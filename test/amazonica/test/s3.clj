@@ -11,7 +11,8 @@
            java.util.UUID
            java.security.KeyPairGenerator
            java.security.SecureRandom)
-  (:require [amazonica.aws.sqs :as sqs])
+  (:require [amazonica.aws.sqs :as sqs]
+            [amazonica.aws.identitymanagement :as im])
   (:use [clojure.test]
         [clojure.set]
         [clojure.pprint]
@@ -404,12 +405,13 @@
   (def queue1-config-suffix ".json")
 
   (create-bucket bucket1)
-  (let [policy (str "{\"Version\":\"2008-10-17\","
+  (let [account-id (nth (clojure.string/split (get-in (im/get-user) [:user :arn]) #":") 4)
+        policy (str "{\"Version\":\"2008-10-17\","
                     "\"Statement\":[{"
                       "\"Effect\":\"Allow\","
                       "\"Principal\":{\"AWS\":\"*\"},"
                       "\"Action\": [\"SQS:SendMessage\"],"
-                      "\"Resource\": \"arn:aws:sqs:us-east-1:" (:Id (get-s3account-owner cred)) ":" queue1 "\","
+                      "\"Resource\": \"arn:aws:sqs:us-east-1:" account-id ":" queue1 "\","
                       "\"Condition\": {\"ArnLike\": {\"aws:SourceArn\": \"arn:aws:s3:::" bucket1 "\"}}}]}")]
     (sqs/create-queue :queue-name queue1
                       :attributes {:Policy policy}))
@@ -420,7 +422,6 @@
      {(keyword queue1-config-id)
       {:queue-arn queue1-arn
        :events #{"s3:ObjectCreated:*"}
-       :object-prefixes []
        :filter [["prefix" queue1-config-prefix]
                 ["suffix" queue1-config-suffix]]}}})
 
@@ -428,8 +429,7 @@
     {:configurations
      {(keyword queue1-config-id)
       {:queue-arn queue1-arn
-       :events ["s3:ObjectCreated:*"]
-       :object-prefixes []
+       :events #{"s3:ObjectCreated:*"}
        :filter
        {:s3key-filter
         {:filter-rules

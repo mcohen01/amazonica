@@ -31,6 +31,7 @@
              kms
              lambda
              logs
+             machinelearning
              opsworks
              rds
              redshift
@@ -111,7 +112,9 @@
                      ['describe-cachedi-scsivolumes
                       'describe-cached-iscsi-volumes]
                      ['describe-nfsfile-shares
-                      'describe-nfs-file-shares]]})
+                      'describe-nfs-file-shares]]
+   "machinelearning" [['describe-mlmodels
+                       'describe-ml-models]]})
 
 (deftest camel->keyword-changes-tests
   "See https://github.com/mcohen01/amazonica/issues/256"

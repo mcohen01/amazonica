@@ -11,7 +11,7 @@
            java.util.UUID
            java.security.KeyPairGenerator
            java.security.SecureRandom)
-  (:require [clojure.string :as str])
+  (:require [amazonica.aws.sqs :as sqs])
   (:use [clojure.test]
         [clojure.set]
         [clojure.pprint]
@@ -409,6 +409,56 @@
     (is (= ["foo" "bar" "baz"]
            (.getCommonPrefixes pojo))))
 
+  ;; test bucket notification configuration
+  (def bucket1 (.. (UUID/randomUUID) toString))
+  (def queue1 (.. (UUID/randomUUID) toString))
+  (def queue1-config-id (.. (UUID/randomUUID) toString))
+  (def queue1-config-prefix "test")
+  (def queue1-config-suffix ".json")
+
+  (create-bucket bucket1)
+  (let [policy (str "{\"Version\":\"2008-10-17\","
+                    "\"Statement\":[{"
+                      "\"Effect\":\"Allow\","
+                      "\"Principal\":{\"AWS\":\"*\"},"
+                      "\"Action\": [\"SQS:SendMessage\"],"
+                      "\"Resource\": \"arn:aws:sqs:us-east-1:" (:Id (get-s3account-owner cred)) ":" queue1 "\","
+                      "\"Condition\": {\"ArnLike\": {\"aws:SourceArn\": \"arn:aws:s3:::" bucket1 "\"}}}]}")]
+    (sqs/create-queue :queue-name queue1
+                      :attributes {:Policy policy}))
+
+  (def queue1-arn (:QueueArn (sqs/get-queue-attributes queue1)))
+  (def bucket1-queue1-configuration
+    {:configurations
+     {(keyword queue1-config-id)
+      {:queue-arn queue1-arn
+       :events #{"s3:ObjectCreated:*"}
+       :object-prefixes []
+       :filter [["prefix" queue1-config-prefix]
+                ["suffix" queue1-config-suffix]]}}})
+
+  (def bucket1-queue1-configuration-response
+    {:configurations
+     {(keyword queue1-config-id)
+      {:queue-arn queue1-arn
+       :events ["s3:ObjectCreated:*"]
+       :object-prefixes []
+       :filter
+       {:s3key-filter
+        {:filter-rules
+         [{:name  "Prefix" :value queue1-config-prefix}
+          {:name  "Suffix" :value queue1-config-suffix}]}}}}})
+
+
+  (set-bucket-notification-configuration
+    :bucket-name bucket1
+    :notification-configuration bucket1-queue1-configuration)
+
+  (is (= (:configurations bucket1-queue1-configuration-response)
+         (:configurations (get-bucket-notification-configuration bucket1))))
+
+  (sqs/delete-queue queue1)
+  (delete-bucket bucket1)
 )
 
 (deftest email-test []

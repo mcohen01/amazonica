@@ -653,14 +653,15 @@
   "Returns a vector of getters or setters for the class."
   [clazz getters?]
   (reduce
-    #(if (or
-           (and getters? (getter? %2))
-           (and (not getters?)
-                (.startsWith (.getName %2) "set")))
-      (conj % %2)
-      %)
+    #(if (and (aws-package? (.getDeclaringClass %2))
+              (or
+                (and getters? (getter? %2))
+                (and (not getters?)
+                     (.startsWith (.getName %2) "set"))))
+       (conj % %2)
+       %)
     []
-    (.getDeclaredMethods clazz)))
+    (.getMethods clazz)))
 
 (defn- prop->name
   [method]

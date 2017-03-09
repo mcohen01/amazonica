@@ -49,15 +49,16 @@
  (fn [f]
    (fn [& args]
      (let [{:keys [cred] [limit exclusive-start-delivery-stream-name :as args] :args} (amz/parse-args (first args) (rest args))
-           call-list-delivery-streams (fn call-list-delivery-streams [cred limit exclusive-start-delivery-stream-name]
+           f (if cred (partial f cred) f)
+           call-list-delivery-streams (fn call-list-delivery-streams [limit exclusive-start-delivery-stream-name]
                                         (if exclusive-start-delivery-stream-name
-                                          (f cred :limit limit :exclusive-start-delivery-stream-name exclusive-start-delivery-stream-name)
-                                          (f cred :limit limit)))]
-       (cond (number? limit)       (call-list-delivery-streams cred limit exclusive-start-delivery-stream-name)
-             (map? limit)          (f cred limit)
-             (and (keyword? limit) (even? (count args))) (apply f cred args)
+                                          (f :limit limit :exclusive-start-delivery-stream-name exclusive-start-delivery-stream-name)
+                                          (f :limit limit)))]
+       (cond (number? limit)       (call-list-delivery-streams limit exclusive-start-delivery-stream-name)
+             (map? limit)          (f limit)
+             (and (keyword? limit) (even? (count args))) (apply f args)
              (nil? limit)          (let [rs (->> nil
-                                                 (iterate #(call-list-delivery-streams cred *list-delivery-streams-default-limit* (last (:delivery-stream-names %))))
+                                                 (iterate #(call-list-delivery-streams *list-delivery-streams-default-limit* (last (:delivery-stream-names %))))
                                                  (drop 1)
                                                  (take-until :has-more-delivery-streams))]
                                      (assoc (last rs) :delivery-stream-names (mapcat :delivery-stream-names rs)))

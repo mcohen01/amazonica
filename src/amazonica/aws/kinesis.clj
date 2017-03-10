@@ -20,12 +20,11 @@
               KinesisClientLibDependencyException
               ShutdownException
               ThrottlingException]
-           [com.amazonaws.services.kinesis.clientlibrary.types
-            ShutdownReason]
            [com.amazonaws.services.kinesis.clientlibrary.lib.worker
               InitialPositionInStream
               KinesisClientLibConfiguration
-              Worker]
+              Worker
+              ShutdownReason]
            java.nio.ByteBuffer
            java.util.UUID))
 
@@ -142,6 +141,7 @@
            stream
            worker-id
            endpoint
+           dynamodb-endpoint
            initial-position-in-stream
            failover-time-millis
            shard-sync-interval-millis
@@ -171,6 +171,9 @@
 
           endpoint
           (.withKinesisEndpoint endpoint)
+
+          dynamodb-endpoint
+          (.withDynamoDBEndpoint dynamodb-endpoint)
 
           initial-position-in-stream
           (.withInitialPositionInStream

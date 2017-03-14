@@ -25,6 +25,8 @@
               KinesisClientLibConfiguration
               Worker
               ShutdownReason]
+           [com.amazonaws.services.kinesis.metrics.interfaces
+            MetricsLevel]
            java.nio.ByteBuffer
            java.util.UUID))
 
@@ -157,6 +159,7 @@
            cloud-watch-client-config
            user-agent
            task-backoff-time-millis
+           metrics-level
            metrics-buffer-time-millis
            metrics-max-queue-size
            validate-sequence-number-before-checkpointing
@@ -225,6 +228,9 @@
 
           task-backoff-time-millis
           (.withTaskBackoffTimeMillis task-backoff-time-millis)
+
+          metrics-level
+          (.withMetricsLevel (MetricsLevel/valueOf (name metrics-level)))
 
           metrics-buffer-time-millis
           (.withMetricsBufferTimeMillis metrics-buffer-time-millis)

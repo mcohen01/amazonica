@@ -143,6 +143,7 @@
            endpoint
            dynamodb-endpoint
            initial-position-in-stream
+           ^java.util.Date initial-position-in-stream-date
            failover-time-millis
            shard-sync-interval-millis
            max-records
@@ -178,6 +179,10 @@
           initial-position-in-stream
           (.withInitialPositionInStream
            (InitialPositionInStream/valueOf (name initial-position-in-stream)))
+
+          initial-position-in-stream-date
+          (.withTimestampAtInitialPositionInStream
+           initial-position-in-stream-date)
 
           failover-time-millis
           (.withFailoverTimeMillis failover-time-millis)

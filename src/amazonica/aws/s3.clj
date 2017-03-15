@@ -84,7 +84,7 @@
                  (.getMessage e))))))
 
 (defn- notification-config [obj]
-  {:events (.getEvents obj)
+  {:events (set (.getEvents obj))
    :filter (marshall (.getFilter obj))})
 
 

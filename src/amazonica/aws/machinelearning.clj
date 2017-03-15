@@ -1,4 +1,5 @@
 (ns amazonica.aws.machinelearning
+  (:use [clojure.walk :only (stringify-keys)])
   (:require [amazonica.core :as amz])
   (:import [com.amazonaws.services.machinelearning
              AmazonMachineLearningClient]
@@ -14,4 +15,4 @@
       (.setMLModelId (or (:mLModelId value)
                          (:mlmodel-id value)))
       (.setPredictEndpoint (:predict-endpoint value))
-      (.setRecord (clojure.walk/stringify-keys (:record value))))))
+      (.setRecord (stringify-keys (:record value))))))

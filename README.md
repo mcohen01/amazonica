@@ -394,7 +394,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ## Examples
 
-###Autoscaling
+### Autoscaling
 
 ```clj
 (ns com.example
@@ -424,7 +424,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudFormation
+### CloudFormation
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudformation]))
@@ -436,7 +436,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudFront
+### CloudFront
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudfront]))
@@ -477,7 +477,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudSearch
+### CloudSearch
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudsearch]))
@@ -488,7 +488,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudSearchV2
+### CloudSearchV2
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudsearchv2]))
@@ -503,7 +503,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 ```
 
-###CloudSearchDomain
+### CloudSearchDomain
 ```clj
 ;; get the document and search service endpoints
 (clojure.pprint/pprint
@@ -526,7 +526,7 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 ```
 
 
-###CloudWatch
+### CloudWatch
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudwatch]))
@@ -550,7 +550,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                    :value 1.0}])
 ```
 
-###CloudWatchEvents
+### CloudWatchEvents
 ```clj
 (ns com.example
   (:use [amazonica.aws.cloudwatchevents]))
@@ -567,7 +567,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                :input (json/write-str {"whatever" "arguments"})}])
 ```
     
-###CodeDeploy
+### CodeDeploy
 ```clj
 (ns com.example
   (:use [amazonica.aws.codedeploy]))
@@ -576,7 +576,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###DataPipeline
+### DataPipeline
 ```clj
 (ns com.example
   (:use [amazonica.aws.datapipeline]))
@@ -596,7 +596,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###DynamoDBV2
+### DynamoDBV2
 ```clj
 (ns com.example
   (:use [amazonica.aws.dynamodbv2]))
@@ -709,7 +709,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 
 
-###EC2
+### EC2
 ```clj
 (ns com.example
   (:use [amazonica.aws.ec2]))
@@ -734,7 +734,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###ECS
+### ECS
 
 ```clj
 (ns com.example
@@ -773,7 +773,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (delete-cluster :cluster "Amazonica")
 ```
 
-###ECR
+### ECR
 
 ```clj
 (require '[amazonica.aws.ecr :as ecr])
@@ -789,7 +789,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (ecr/delete-repository :repository-name "amazonica")
 ```
 
-###Elasticache
+### Elasticache
 ```clj
 (ns com.example
   (:use [amazonica.aws.elasticache]))
@@ -810,7 +810,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###ElasticBeanstalk
+### ElasticBeanstalk
 
 ```clj
 (ns com.example
@@ -835,7 +835,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (describe-configuration-settings {:application-name "app" :environment-name "env"})
 ```
 
-###ElasticLoadBalancing
+### ElasticLoadBalancing
 
 ```clj
 (ns com.example
@@ -849,7 +849,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###ElasticMapReduce
+### ElasticMapReduce
 
 ```clj
 (ns com.example
@@ -892,7 +892,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###ElasticsearchService
+### ElasticsearchService
 
 ```clj
 (ns com.example
@@ -902,7 +902,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###ElasticTranscoder
+### ElasticTranscoder
 ```clj
 (ns com.example
 (:use [amazonica.aws.elastictranscoder))
@@ -933,7 +933,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###Glacier
+### Glacier
 
 ```clj
 (ns com.example
@@ -957,7 +957,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
  ```
 
 
-###IdentityManagement
+### IdentityManagement
 ```clj
 (ns com.example
   (:use [amazonica.aws.identitymanagement]))
@@ -993,7 +993,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (get-thing-shadow :thing-name "MyThing")
 ```
 
-###Kinesis
+### Kinesis
 ```clj
 (ns com.example
   (:use [amazonica.aws.kinesis]))
@@ -1079,7 +1079,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###KinesisFirehose
+### KinesisFirehose
 ```clj
 (ns com.example
   (:require [amazonica.aws.kinesisfirehose :as fh])
@@ -1137,7 +1137,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (disable-key "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
 ```
 
-###Logs
+### Logs
 ```clj
 (ns com.example
   (:use [amazonica.aws.logs]))
@@ -1147,7 +1147,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                       :descending true)
 ```
 
-###Lambda
+### Lambda
 ```clj
 (ns com.example
   (:use [amazonica.aws.lambda]))
@@ -1167,7 +1167,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###OpsWorks
+### OpsWorks
 ```clj
 (ns com.example
   (:use [amazonica.aws.opsworks]))
@@ -1212,7 +1212,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 
 
-###Redshift
+### Redshift
 ```clj
 (ns com.example
   (:use [amazonica.aws.redshift]))
@@ -1227,7 +1227,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###Route53
+### Route53
 ```clj
 (ns com.example
   (:use [amazonica.aws.route53]))
@@ -1257,7 +1257,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###S3
+### S3
 ```clj
 (ns com.example
   (:use [amazonica.aws.s3]
@@ -1368,7 +1368,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###SimpleDB
+### SimpleDB
 ```clj
 (ns com.example
   (:require [amazonica.aws.simpledb :as sdb]))
@@ -1391,7 +1391,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###SimpleEmail
+### SimpleEmail
 ```clj
 (ns com.example
   (:require [amazonica.aws.simpleemail :as ses]))
@@ -1403,7 +1403,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                                  :text "testing 1-2-3-4"}})
 ```
 
-###SimpleWorkflow
+### SimpleWorkflow
 ```clj
 
 (ns com.example
@@ -1437,7 +1437,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ```
 
 
-###SNS
+### SNS
 ```clj
 
 (ns com.example
@@ -1473,7 +1473,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###SQS
+### SQS
 ```clj
 
 (ns com.example
@@ -1519,7 +1519,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
-###StepFunctions
+### StepFunctions
 ```clj
 
 (ns com.example

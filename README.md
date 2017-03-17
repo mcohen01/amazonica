@@ -1,4 +1,4 @@
-![AWS logo] (claws.png)
+![AWS logo](claws.png)
 # `Amazonica`
 
 A comprehensive Clojure client for the entire [Amazon AWS api] [1].
@@ -33,52 +33,52 @@ and the following dependency:
 ## Supported Services
 * Api Gateway
 * [Autoscaling](#autoscaling)
-* [CloudFormation] (#cloudformation)
-* [CloudFront] (#cloudfront)
-* [CloudSearch] (#cloudsearch)
-* [CloudSearchV2] (#cloudsearchv2)
-* [CloudSearchDomain] (#cloudsearchdomain)
-* [CloudWatch] (#cloudwatch)
-* [CloudWatchEvents] (#cloudwatchevents)
+* [CloudFormation](#cloudformation)
+* [CloudFront](#cloudfront)
+* [CloudSearch](#cloudsearch)
+* [CloudSearchV2](#cloudsearchv2)
+* [CloudSearchDomain](#cloudsearchdomain)
+* [CloudWatch](#cloudwatch)
+* [CloudWatchEvents](#cloudwatchevents)
 * CodeCommit
-* [CodeDeploy] (#codedeploy)
+* [CodeDeploy](#codedeploy)
 * CodePipeline
 * Config
-* [DataPipeline] (#datapipeline)
+* [DataPipeline](#datapipeline)
 * DeviceFarm
 * DirectConnect
 * Directory
-* [DynamoDBV2] (#dynamodbv2)
-* [EC2] (#ec2)
-* [ECR] (#ecr)
-* [ECS] (#ecs)
-* [ElastiCache] (#elasticache)
-* [ElasticBeanstalk] (#elasticbeanstalk)
+* [DynamoDBV2](#dynamodbv2)
+* [EC2](#ec2)
+* [ECR](#ecr)
+* [ECS](#ecs)
+* [ElastiCache](#elasticache)
+* [ElasticBeanstalk](#elasticbeanstalk)
 * ElasticFileSystem
-* [ElasticLoadBalancing] (#elasticloadbalancing)
-* [ElasticMapReduce] (#elasticmapreduce)
-* [Elasticsearch] (#elasticsearch)
-* [ElasticTranscoder] (#elastictranscoder)
-* [Glacier] (#glacier)
-* [IdentityManagement] (#identitymanagement)
-* [IoT] (#iot)
-* [Kinesis] (#kinesis)
-* [KinesisFirehose] (#kinesisfirehose)
-* [KMS] (#kms)
-* [Logs] (#logs)
-* [Lambda] (#lambda)
+* [ElasticLoadBalancing](#elasticloadbalancing)
+* [ElasticMapReduce](#elasticmapreduce)
+* [Elasticsearch](#elasticsearch)
+* [ElasticTranscoder](#elastictranscoder)
+* [Glacier](#glacier)
+* [IdentityManagement](#identitymanagement)
+* [IoT](#iot)
+* [Kinesis](#kinesis)
+* [KinesisFirehose](#kinesisfirehose)
+* [KMS](#kms)
+* [Logs](#logs)
+* [Lambda](#lambda)
 * MachineLearning
-* [OpsWorks] (#opsworks)
+* [OpsWorks](#opsworks)
 * RDS
-* [Redshift] (#redshift)
-* [Route53] (#route53)
-* [S3] (#s3)
-* [SimpleDB] (#simpledb)
+* [Redshift](#redshift)
+* [Route53](#route53)
+* [S3](#s3)
+* [SimpleDB](#simpledb)
 * [SimpleEmail](#simpleemail)
-* [SimpleWorkflow] (#simpleworkflow)
-* [SNS] (#sns)
-* [SQS] (#sqs)
-* [StepFunctions] (#stepfunctions)
+* [SimpleWorkflow](#simpleworkflow)
+* [SNS](#sns)
+* [SQS](#sqs)
+* [StepFunctions](#stepfunctions)
 * StorageGateway
 
 
@@ -1545,7 +1545,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 YourKit is kindly supporting the Amazonica open source project with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products: [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp) and [YourKit .NET Profiler](http://www.yourkit.com/.net/profiler/index.jsp).
 
-![YourKit logo] (https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR_CQwZIosvDJU0Ntmt_70HsbwcrJpROK4Jbf35mQcsjXN0MXzU)
+![YourKit logo](https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR_CQwZIosvDJU0Ntmt_70HsbwcrJpROK4Jbf35mQcsjXN0MXzU)
 
 [![Analytics](https://ga-beacon.appspot.com/UA-5925374-11/amazonica/readme?pixel)](https://github.com/mcohen01/amazonica)
 

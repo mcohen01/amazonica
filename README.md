@@ -1,7 +1,7 @@
 ![AWS logo](claws.png)
 # `Amazonica`
 
-A comprehensive Clojure client for the entire [Amazon AWS api] [1].
+A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 ## Installation
 
@@ -83,7 +83,7 @@ and the following dependency:
 
 
 ## Documentation
-[Minimum Viable Snippet] [9]:
+[Minimum Viable Snippet][9]:
 ```clj
 (ns com.example
   (:use [amazonica.aws.ec2]))
@@ -94,18 +94,18 @@ and the following dependency:
                  :description "my_new_snapshot")
 ```
 
-Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs] [2].
+Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs][2].
 
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj
 (create-snapshot :volume-id "vol-8a4857fa"
                  :description "my_new_snapshot")
 ```
-which delegates to the [createSnapshot()] [3] method of AmazonEC2Client. If the Java method on the Amazon\*Client takes a parameter, such as [CreateSnapshotRequest] [4] in this case, the bean properties exposed via mutators of the form set\* can be supplied as key-value pairs passed as arguments to the Clojure function.
+which delegates to the [createSnapshot()][3] method of AmazonEC2Client. If the Java method on the Amazon\*Client takes a parameter, such as [CreateSnapshotRequest][4] in this case, the bean properties exposed via mutators of the form set\* can be supplied as key-value pairs passed as arguments to the Clojure function.
 
 All of the AWS Java apis (except S3) follow this pattern, either having a single implementation method which takes an AWS Java bean as its only argument, or being overloaded and having a no-arg implementation. The corresponding Clojure function will either require key-value pairs as arguments, or be variadic and allow a no-arg invocation.
 
-For example, AmazonEC2Client's [describeImages()] [7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest] [8]. So the Clojure invocation would look like
+For example, AmazonEC2Client's [describeImages()][7] method is overloaded, and can be invoked either with no args, or with a [DescribeImagesRequest][8]. So the Clojure invocation would look like
 ```clj
 (describe-images)
 ```
@@ -171,7 +171,7 @@ invokes a Java method on AmazonEC2Client which returns a `com.amazonaws.services
      :tags [{:value "CXCI_nightly", :key "Name"}]}],
    :reservation-id "r-8a23d6f7"}
 ```
-If you look at the `Reservation` [Javadoc] [10] you'll see that `getGroups()` returns a `java.util.List` of `GroupIdentifiers`, which is converted to a vector of maps containing keys `:group-name` and `:group-id`, under the `:groups` key. Ditto for :block-device-mappings and :tags, and so and so on...
+If you look at the `Reservation` [Javadoc][10] you'll see that `getGroups()` returns a `java.util.List` of `GroupIdentifiers`, which is converted to a vector of maps containing keys `:group-name` and `:group-id`, under the `:groups` key. Ditto for :block-device-mappings and :tags, and so and so on...
 
 Similar in concept to JSON unwrapping in Jackson, Amazonica supports root unwrapping of the returned data. So calling
 ```clj
@@ -208,7 +208,7 @@ When complex objects consisting of types outside of those in the `java.lang` pac
 ```
 can be used to set the pattern supplied to the underlying `java.text.SimpleDateFormat`.
 
-In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()] [5] can take a [DescribeAvailabilityZonesRequest] [6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
+In cases where collection arguments contain instances of AWS "model" classes, Clojure maps will be converted to the appropriate AWS Java bean instance. So for example, [describeAvailabilityZones()][5] can take a [DescribeAvailabilityZonesRequest][6] which itself has a `filters` property, which is a `java.util.List` of `com.amazonaws.services.ec2.model.Filters`. Passing the filters argument would look like:
 ```clj
 (describe-availability-zones :filters [{:name   "environment"
                                         :values ["dev" "qa" "staging"]}])
@@ -249,7 +249,7 @@ function, which takes a map of class/function pairs defining how a value should 
 (get-item :table-name "MyTable"
           :key "foo")
 ```
-The [GetItemRequest] [11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:
+The [GetItemRequest][11] takes a `com.amazonaws.services.dynamodb.model.Key` which is composed of a hash key of type `com.amazonaws.services.dynamodb.model.AttributeValue` and optional range key also of type `AttributeValue`. Without the coercions registered for `Key` and `AttributeValue` in `amazonica.aws.dynamodb` we would need to write:
 ```clj
 (get-item :table-name "TestTable"
           :key {:hash-key-element {:s "foo"}})
@@ -258,7 +258,7 @@ Note that either form will work. This allows contributors to the library to incr
 
 
 ### Authentication
-The default authentication scheme is to use the [chained Provider class] [15] from the AWS SDK, whereby authentication is attempted in the following order:
+The default authentication scheme is to use the [chained Provider class][15] from the AWS SDK, whereby authentication is attempted in the following order:
 - Environment Variables - AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 - Java System Properties - aws.accessKeyId and aws.secretKey
 - Credential profiles file at the default location (~/.aws/credentials) shared by all AWS SDKs and the AWS CLI
@@ -266,7 +266,7 @@ The default authentication scheme is to use the [chained Provider class] [15] fr
 
 Note that in order for the Instance Profile Metadata to be found, you must have launched the instance with a provided IAM role, and the same permissions as the IAM Role the instance was launched with will apply.
 
-See the [AWS docs] [14] for reference.
+See the [AWS docs][14] for reference.
 
 Additionally, all of the functions may take as their first argument an optional map of credentials:
 
@@ -280,12 +280,12 @@ Additionally, all of the functions may take as their first argument an optional 
 
 The credentials map may contain zero or one of the following:
 
-- `:access-key` and `:secret-key`, in which case an instance of [`BasicAWSCredentials`] [20] will be created.
-- `:session-token`, in which case an instance of [`BasicSessionCredentials`] [21] will be created.
-- `:profile`, in which case an instance of [`ProfileCredentialsProvider`] [22] will be created.
-- Or rather than a Clojure map, the argument may be an actual instance or subclass of either [`AWSCredentialsProvider`] [23] or [`AWSCredentials`] [24].
+- `:access-key` and `:secret-key`, in which case an instance of [`BasicAWSCredentials`][20] will be created.
+- `:session-token`, in which case an instance of [`BasicSessionCredentials`][21] will be created.
+- `:profile`, in which case an instance of [`ProfileCredentialsProvider`][22] will be created.
+- Or rather than a Clojure map, the argument may be an actual instance or subclass of either [`AWSCredentialsProvider`][23] or [`AWSCredentials`][24].
 
-In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums] [16], [.setRegion] [17] will be called on the Client, otherwise [.setEndpoint] [18] will be called.
+In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums][16], [.setRegion][17] will be called on the Client, otherwise [.setEndpoint][18] will be called.
 
 **Note:** The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.
 
@@ -386,7 +386,7 @@ aws_secret_access_key = 6rqzvpAbcd1234++zyx987WUV654sRq
 
 
 ### Performance
-Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary] [13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark] [12]
+Amazonica uses reflection extensively, to generate the public Vars, to set the bean properties passed as arguments to those functions, and to invoke the actual service method calls on the underlying AWS Client class. As such, one may wonder if such pervasive use of reflection will result in unacceptable performance. In general, this shouldn't be an issue, as the cost of reflection should be relatively minimal compared to the latency incurred by making a remote call across the network. Furthermore, typical AWS usage is not going to be terribly concerned with performance, except with specific services such as DynamoDB, RDS, SimpleDB, or SQS. But we have done some basic benchmarking against the excellent DynamoDB [rotary][13] library, which uses no explicit reflection. Results are shown below. Benchmarking code is available at [https://github.com/mcohen01/amazonica-benchmark][12]
 
 ![Benchmark results](https://raw.github.com/mcohen01/amazonica-benchmark/master/reflection.png)
 
@@ -1114,7 +1114,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                                                      :RoleARN "arn:aws:iam::123456789012:role/firehose_delivery_role"}})
 
 ;; Put batch of records to stream. Records are converted to instances of ByteBuffer if possible. Sequences are converted to CSV formatted strings for injestion into RedShift.
-(fh/put-record-batch cred stream-name [[1 2 3 4] ["test" 2 3 4] "\"test\",2,3,4" (ByteBuffer. (.getBytes "test,2,3,4"))])
+(fh/put-record-batch cred stream-name [[1 2 3 4]["test" 2 3 4] "\"test\",2,3,4" (ByteBuffer. (.getBytes "test,2,3,4"))])
 
 ;; Put individual record to stream.
 (fh/put-record stream-name "test")

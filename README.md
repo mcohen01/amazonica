@@ -714,6 +714,12 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (ns com.example
   (:use [amazonica.aws.ec2]))
 
+(-> (run-instances :image-id "ami-54f71039"
+                   :instance-type "c3.large"
+                   :min-count 1
+                   :max-count 1)
+    (get-in [:reservation :instances 0 :instance-id]))
+
 (describe-images :owners ["self"])
 
 (describe-instances :filters [{:name "tag:env" :values ["production"]}])

@@ -32,7 +32,7 @@ and the following dependency:
 
 ## Supported Services
 * Api Gateway
-* [Autoscaling] (#autoscaling)
+* [Autoscaling](#autoscaling)
 * [CloudFormation] (#cloudformation)
 * [CloudFront] (#cloudfront)
 * [CloudSearch] (#cloudsearch)

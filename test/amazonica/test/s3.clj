@@ -11,7 +11,8 @@
            java.util.UUID
            java.security.KeyPairGenerator
            java.security.SecureRandom)
-  (:require [clojure.string :as str])
+  (:require [amazonica.aws.sqs :as sqs]
+            [amazonica.aws.identitymanagement :as im])
   (:use [clojure.test]
         [clojure.set]
         [clojure.pprint]
@@ -19,24 +20,11 @@
         [amazonica.aws.s3]))
 
 (def cred
-  (let [access "aws_access_key_id"
-        secret "aws_secret_access_key"
-        file   "/.aws/credentials"
-        creds  (-> "user.home"
-                   System/getProperty
-                   (str file)
-                   slurp
-                   (.split "\n"))]
-    (clojure.set/rename-keys 
-      (reduce
-        (fn [m e]
-          (let [pair (.split e "=")]
-            (if (some #{access secret} [(first pair)])
-                (apply assoc m pair)
-                m)))
-        {}
-        creds)
-      {access :access-key secret :secret-key})))
+  (let [file  (str (System/getProperty "user.home") "/.aws/credentials")
+        lines (clojure.string/split (slurp file) #"\n")
+        creds (into {} (filter second (map #(clojure.string/split % #"\s*=\s*") lines)))]
+    {:access-key (get creds "aws_access_key_id")
+     :secret-key (get creds "aws_secret_access_key")}))
 
 (deftest s3 []
 
@@ -409,6 +397,55 @@
     (is (= ["foo" "bar" "baz"]
            (.getCommonPrefixes pojo))))
 
+  ;; test bucket notification configuration
+  (def bucket1 (.. (UUID/randomUUID) toString))
+  (def queue1 (.. (UUID/randomUUID) toString))
+  (def queue1-config-id (.. (UUID/randomUUID) toString))
+  (def queue1-config-prefix "test")
+  (def queue1-config-suffix ".json")
+
+  (create-bucket bucket1)
+  (let [account-id (nth (clojure.string/split (get-in (im/get-user) [:user :arn]) #":") 4)
+        policy (str "{\"Version\":\"2008-10-17\","
+                    "\"Statement\":[{"
+                      "\"Effect\":\"Allow\","
+                      "\"Principal\":{\"AWS\":\"*\"},"
+                      "\"Action\": [\"SQS:SendMessage\"],"
+                      "\"Resource\": \"arn:aws:sqs:us-east-1:" account-id ":" queue1 "\","
+                      "\"Condition\": {\"ArnLike\": {\"aws:SourceArn\": \"arn:aws:s3:::" bucket1 "\"}}}]}")]
+    (sqs/create-queue :queue-name queue1
+                      :attributes {:Policy policy}))
+
+  (def queue1-arn (:QueueArn (sqs/get-queue-attributes queue1)))
+  (def bucket1-queue1-configuration
+    {:configurations
+     {(keyword queue1-config-id)
+      {:queue-arn queue1-arn
+       :events #{"s3:ObjectCreated:*"}
+       :filter [["prefix" queue1-config-prefix]
+                ["suffix" queue1-config-suffix]]}}})
+
+  (def bucket1-queue1-configuration-response
+    {:configurations
+     {(keyword queue1-config-id)
+      {:queue-arn queue1-arn
+       :events #{"s3:ObjectCreated:*"}
+       :filter
+       {:s3key-filter
+        {:filter-rules
+         [{:name  "Prefix" :value queue1-config-prefix}
+          {:name  "Suffix" :value queue1-config-suffix}]}}}}})
+
+
+  (set-bucket-notification-configuration
+    :bucket-name bucket1
+    :notification-configuration bucket1-queue1-configuration)
+
+  (is (= (:configurations bucket1-queue1-configuration-response)
+         (:configurations (get-bucket-notification-configuration bucket1))))
+
+  (sqs/delete-queue queue1)
+  (delete-bucket bucket1)
 )
 
 (deftest email-test []

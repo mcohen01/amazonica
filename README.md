@@ -705,11 +705,11 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (delete-table cred :table-name "TestTable")
 
-Amazonica depends on `[com.amazonaws/amazon-kinesis-client]`
-which has a dependency on `[com.amazonaw/aws-java-sdk-dynamodb]`.
-The version of this dependency is too old to support TTL,
-so you'll need to exclude it and explicitly depend on a recent version
-of `com.amazonaw/aws-java-sdk-dynamodb` like `1.0.9` to use this feature for now.
+;; Amazonica depends on `[com.amazonaws/amazon-kinesis-client]`
+;; which has a dependency on `[com.amazonaw/aws-java-sdk-dynamodb]`.
+;; The version of this dependency is too old to support TTL,
+;; so you'll need to exclude it and explicitly depend on a recent version
+;; of `com.amazonaw/aws-java-sdk-dynamodb` like `1.0.9` to use this feature for now.
 
 (update-time-to-live
   cred

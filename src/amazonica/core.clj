@@ -936,18 +936,12 @@
   corresponding to the public Java method names of the class argument, vals are
   vectors of java.lang.reflect.Methods."
   [client]
-  (reduce
-    (fn [col method]
-      (let [fname (camel->keyword (.getName method))]
-        (if (and (contains? excluded fname)
-                 (not= (.getSimpleName client) "AWSLambdaClient")
-                 (not= (.getSimpleName client) "AmazonCloudSearchDomainClient"))
-            col
-            (if (contains? col fname)
-                (update-in col [fname] conj method)
-                (assoc col fname [method])))))
-    {}
-    (.getDeclaredMethods client)))
+  (let [methods (->> (.getDeclaredMethods client)
+                     (remove #(.isSynthetic %))
+                     (group-by #(camel->keyword (.getName %))))]
+    (if (#{"AWSLambdaClient" "AmazonCloudSearchDomainClient"} (.getSimpleName client))
+      methods
+      (apply dissoc methods excluded))))
 
 (defn- show-functions [ns]
   (intern ns (symbol "show-functions")

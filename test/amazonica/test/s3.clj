@@ -417,3 +417,8 @@
     "foo@"
     "foo@bar"
     "foo@bao.c"))
+
+(deftest no-internal-methods-exported-tests
+  (is (= nil
+         (resolve 'amazonica.aws.s3/access$000)
+         (resolve 'amazonica.aws.s3/access$200))))

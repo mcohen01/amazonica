@@ -38,7 +38,7 @@
         creds)
       {access :access-key secret :secret-key})))
 
-(deftest s3 []
+(deftest s3
 
   (def bucket1 (.. (UUID/randomUUID) toString))
   (def bucket2 (.. (UUID/randomUUID) toString))
@@ -408,7 +408,7 @@
     (is (= ["foo" "bar" "baz"]
            (.getCommonPrefixes pojo)))))
 
-(deftest email-test []
+(deftest email-test
   (are [x] (= x (re-find email-pattern x))
     "foo@bar.com"
     "foo@bar.co.jp")

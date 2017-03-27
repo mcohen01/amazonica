@@ -96,18 +96,6 @@
    :message      (.getMessage e)
    :stack-trace  (stack->string e)})
 
-; Java methods on the AWS*Client class which won't be exposed
-(def ^:private excluded
-  #{:anonymous-invoke
-    :do-invoke
-    :invoke
-    :init
-    :set-endpoint
-    :get-cached-response-metadata
-    :get-service-abbreviation})
-    ; addRequestHandler???
-
-
 (defn keys->cred
   [access-key secret-key & [endpoint]]
   (let [credential {:access-key access-key
@@ -936,12 +924,14 @@
   corresponding to the public Java method names of the class argument, vals are
   vectors of java.lang.reflect.Methods."
   [client]
-  (let [methods (->> (.getDeclaredMethods client)
-                     (remove #(.isSynthetic %))
-                     (group-by #(camel->keyword (.getName %))))]
-    (if (#{"AWSLambdaClient" "AmazonCloudSearchDomainClient"} (.getSimpleName client))
-      methods
-      (apply dissoc methods excluded))))
+  (->> (.getDeclaredMethods client)
+       (remove (fn [method]
+                 (let [mods (.getModifiers method)]
+                   (or (.isSynthetic method)
+                       (Modifier/isPrivate mods)
+                       (Modifier/isProtected mods)
+                       (Modifier/isStatic mods)))))
+       (group-by #(camel->keyword (.getName %)))))
 
 (defn- show-functions [ns]
   (intern ns (symbol "show-functions")

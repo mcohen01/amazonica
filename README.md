@@ -559,14 +559,14 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
     :name "nightly-backup"
     :description "Backup DB nightly at 10:00 UTC (2 AM or 3 AM Pacific)"
     :schedule-expression "cron(0 10 * * ? *)")
-   
+
 (put-targets
     :rule "nightly-backup"
     :targets [{:id    "backup-lambda"
                :arn   "arn:aws:lambda:us-east-1:123456789012:function:backup-lambda"
                :input (json/write-str {"whatever" "arguments"})}])
 ```
-    
+
 ### CodeDeploy
 ```clj
 (ns com.example
@@ -704,6 +704,17 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (describe-table cred :table-name "TestTable")
 
 (delete-table cred :table-name "TestTable")
+
+;; Amazonica depends on `[com.amazonaws/amazon-kinesis-client]`
+;; which has a dependency on `[com.amazonaw/aws-java-sdk-dynamodb]`.
+;; The version of this dependency is too old to support TTL,
+;; so you'll need to exclude it and explicitly depend on a recent version
+;; of `com.amazonaw/aws-java-sdk-dynamodb` like `1.0.9` to use this feature for now.
+
+(update-time-to-live
+  cred
+  :table-name "TestTable"
+  :time-to-live-specification {:attribute-name "foo" :enabled true}
 
 ```
 
@@ -1114,7 +1125,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                              :s3-destination-update {:BucketARN (str "arn:aws:s3:::" new-bucket-name)
                                                      :BufferingHints {:IntervalInSeconds 300
                                                                       :SizeInMBs 5}
-	                                                 :CompressionFormat "UNCOMPRESSED"
+                                                     :CompressionFormat "UNCOMPRESSED"
                                                      :EncryptionConfiguration {:NoEncryptionConfig "NoEncryption"}
                                                      :Prefix "string"
                                                      :RoleARN "arn:aws:iam::123456789012:role/firehose_delivery_role"}})
@@ -1356,7 +1367,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (s3/set-bucket-notification-configuration
   :bucket-name "my.bucket.name"
   :notification-configuration
-    {:configurations 
+    {:configurations
       {:some-config-name
         {:queue "arn:aws:sqs:eu-west-1:123456789012:my-sqs-queue-name"
          :events #{"ObjectCreatedByPut" "ObjectCreated"}
@@ -1456,14 +1467,14 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (subscribe :protocol "email"
            :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
            :endpoint "mcohen01@gmail.com")
-           
+
 (subscribe :protocol "lambda"
            :topic-arn "arn:aws:sns:us-east-1:676820690883:my-topic"
            :endpoint "arn:aws:lambda:us-east-1:676820690883:function:my-function")
 
 ;; provide endpoint in creds for topics in non-default region
 (subscribe {:endpoint "eu-west-1"}
-	   :protocol "lambda"
+       :protocol "lambda"
            :topic-arn "arn:aws:sns:eu-west-1:676820690883:my-topic"
            :endpoint "arn:aws:lambda:us-east-1:676820690883:function:my-function")
 

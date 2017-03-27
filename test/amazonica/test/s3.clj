@@ -27,7 +27,7 @@
                    (str file)
                    slurp
                    (.split "\n"))]
-    (clojure.set/rename-keys 
+    (clojure.set/rename-keys
       (reduce
         (fn [m e]
           (let [pair (.split e "=")]
@@ -38,7 +38,7 @@
         creds)
       {access :access-key secret :secret-key})))
 
-(deftest s3 []
+(deftest s3
 
   (def bucket1 (.. (UUID/randomUUID) toString))
   (def bucket2 (.. (UUID/randomUUID) toString))
@@ -49,9 +49,9 @@
   (spit upload-file "hello world")
 
   (create-bucket bucket1)
-  
+
   (list-buckets cred)
-  
+
   (list-buckets (DefaultAWSCredentialsProviderChain.))
 
   ; (def uuid-regex #"[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}")
@@ -65,76 +65,76 @@
   ;               (delete-object (:name e) (:key ee))
   ;               mm)
   ;             []
-  ;             (:object-summaries 
+  ;             (:object-summaries
   ;               (list-objects :bucket-name (:name e))))
   ;           (delete-bucket (:name e))))
   ;     m)
   ;   []
   ;   (list-buckets))
-  
+
   (list-buckets)
-  
+
   (defcredential (:access-key cred)
                  (:secret-key cred)
                  (:endpoint cred))
-  
+
   (list-buckets)
-  
+
   (with-credential [(:access-key cred)
                     (:secret-key cred)
                     (:endpoint cred)]
-    (list-buckets)) 
-  
-  ;; test the various invocations   
+    (list-buckets))
+
+  ;; test the various invocations
   (list-objects bucket1)
-  
+
   (list-objects :bucket-name bucket1 :prefix "")
   (list-objects {:bucket-name bucket1 :prefix ""})
   (list-objects cred :bucket-name bucket1 :prefix "")
   (list-objects cred {:bucket-name bucket1 :prefix ""})
-  
+
   (list-objects :bucket-name bucket1)
   (list-objects {:bucket-name bucket1})
   (list-objects cred :bucket-name bucket1)
   (list-objects cred {:bucket-name bucket1})
-    
+
   (def key-pair
     (let [kg (KeyPairGenerator/getInstance "RSA")]
       (.initialize kg 1024 (SecureRandom.))
-      (.generateKeyPair kg)))    
-  
+      (.generateKeyPair kg)))
+
   ;; encrypted upload
   (put-object :bucket-name bucket1
               :key "jenny"
               :encryption {:key-pair key-pair}
               :file upload-file)
-  
+
   ;; UNencrypted download
   (is (not= "hello world"
             (slurp (:input-stream
               (get-object :bucket-name bucket1
                           :key "jenny")))))
-  
+
   ;; encrypted download
   (is (= "hello world"
          (slurp (:input-stream
            (get-object :bucket-name bucket1
                        :encryption {:key-pair key-pair}
                        :key "jenny")))))
-  
+
   ;; server-side, not client side encryption
   (put-object :bucket-name bucket1
               :key "jenny"
               :metadata {:server-side-encryption "AES256"}
               :file upload-file)
-  
+
   ;; client side UNdecrypted, but server side decrypted download
   (is (= "hello world"
          (slurp (:input-stream
            (get-object :bucket-name bucket1
                        :key "jenny")))))
-  
-  
+
+
 
   ;; upload file with credentials and client options
   (put-object
@@ -175,10 +175,10 @@
                              :key "options")))))
 
   (.createNewFile upload-file)
-  (spit upload-file (Date.))  
+  (spit upload-file (Date.))
 
   (try
-    (abort-multipart-upload cred 
+    (abort-multipart-upload cred
                             :bucket-name "some-bucket"
                             :key "some-key"
                             :upload-id "my-upload")
@@ -186,7 +186,7 @@
       (is (= (:error-code (ex->map e)) "NoSuchUpload"))))
 
   (try
-    (complete-multipart-upload cred 
+    (complete-multipart-upload cred
                                :bucket-name "some-bucket"
                                :key "some-key"
                                :upload-id "my-upload"
@@ -195,31 +195,31 @@
                                   :etag "my-etag"}])
     (catch Exception e
       (is (is (= (:error-code (ex->map e)) "NoSuchUpload")))))
-  
-  
+
+
   (delete-object bucket1 "jenny")
   (delete-object bucket1 "creds-and-options")
   (delete-object bucket1 "options")
   (delete-object bucket1 "creds")
   (delete-bucket bucket1)
-  
+
   (def bucket1 (.. (UUID/randomUUID) toString))
-  (create-bucket cred 
+  (create-bucket cred
                  :region "us-west-1"
-                 :bucket-name bucket1)  
+                 :bucket-name bucket1)
   (create-bucket cred bucket2 "us-west-1")
 
   (put-object cred bucket1 "jenny" upload-file)
 
   (copy-object
-    cred 
+    cred
     :source-bucket-name bucket1
     :destination-bucket-name bucket2
-    :source-key "jenny" 
-    :destination-key "jenny" 
-    :new-object-metadata 
-      {:content-type "text/html" 
-       :user-metadata 
+    :source-key "jenny"
+    :destination-key "jenny"
+    :new-object-metadata
+      {:content-type "text/html"
+       :user-metadata
          {:foo "bar"
           :baz "barry"}})
 
@@ -228,11 +228,11 @@
         (get-in
           (get-object cred bucket2 "jenny")
           [:object-metadata :user-metadata])))
-  
+
   (is (= (get-in
           (get-object-acl cred bucket1 "jenny")
           [:grants 0 :permission :header-name])
-         "x-amz-grant-full-control"))        
+         "x-amz-grant-full-control"))
 
   (put-object cred
              :bucket-name bucket1
@@ -259,14 +259,14 @@
         f   #(fn [{{p :header-name} :permission}]
                (= p %))]
     (is (= 2 (count (:grants obj))))
-    (is 
+    (is
       (->
         (f "x-amz-grant-read")
         (filter (:grants obj))
         first
         (get-in [:grantee :identifier])
         (.contains "AllUsers")))
-    (is 
+    (is
       (->
         (f "x-amz-grant-write")
         (filter (:grants obj))
@@ -283,7 +283,7 @@
 
   (let [obj (get-object-acl cred bucket1 "jenny")]
     (is (= 1 (count (:grants obj)))))
-  
+
   (clojure.pprint/pprint
     (list-objects cred bucket1))
 
@@ -292,15 +292,15 @@
 
 
 
-  (copy-object cred 
+  (copy-object cred
                :source-bucket-name bucket1
-               :source-key "jenny" 
+               :source-key "jenny"
                :destination-bucket-name bucket2
                :destination-key "jenny")
-  
+
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
 
-  (change-object-storage-class 
+  (change-object-storage-class
       cred bucket1 "jenny" "REDUCED_REDUNDANCY")
 
   (let [config {:rules [{:id "rm after 14 days"
@@ -321,11 +321,11 @@
   (delete-bucket-policy cred bucket1)
   (delete-bucket-tagging-configuration cred bucket1)
   (delete-bucket-website-configuration cred bucket1)
-  
+
   (get-s3account-owner cred)
 
   (list-buckets cred)
-  
+
   (does-bucket-exist cred bucket1)
 
   (generate-presigned-url cred bucket1 "jenny" date)
@@ -339,13 +339,13 @@
   (get-bucket-website-configuration cred bucket1)
 
   (get-bucket-website-configuration
-    cred 
+    cred
     :bucket-name bucket1)
-  
+
   (list-objects cred bucket1)
   (list-objects cred bucket1 "")
   (list-objects cred :bucket-name bucket1)
-  
+
   (clojure.pprint/pprint
     (get-object cred bucket1 "jenny"))
 
@@ -354,7 +354,7 @@
     (clojure.java.io/copy in download-file))
 
   (is (= (slurp upload-file)
-         (slurp download-file)))          
+         (slurp download-file)))
 
   (let [etag (put-object cred
                 :bucket-name bucket1
@@ -362,8 +362,8 @@
                 :file upload-file)]
     (is 32 (.length (:etag etag))))
 
-  
-  (is "text/plain" 
+
+  (is "text/plain"
     (get-in (get-object cred bucket1 "jenny")
             [:object-metadata :raw-metadata :Content-Type]))
 
@@ -372,7 +372,7 @@
     :bucket-name bucket1
     :key "jenny"
     :range 0)
-  
+
   (get-object
     cred
     :bucket-name bucket1
@@ -380,9 +380,9 @@
     :range [0 100])
 
   (get-object cred bucket1 "jenny")
-  
+
   (copy-object cred bucket1 "jenny" bucket2 "jenny")
-    
+
 
   (generate-presigned-url cred bucket1 "jenny" date)
   (generate-presigned-url cred bucket2 "jenny" date "POST")
@@ -396,22 +396,19 @@
   (if (.exists download-file)
     (.delete download-file))
 
-   
-  ;; test for marshalling map values 
+  ;; test for marshalling map values
   ;; see https://github.com/mcohen01/amazonica/issues/219
   (let [pojo (CORSRule.)]
     (amazonica.core/set-fields pojo {:allowed-headers ["foo" "bar" "baz"]})
     (is (= ["foo" "bar" "baz"]
            (.getAllowedHeaders pojo))))
-  
+
   (let [pojo (ObjectListing.)]
     (amazonica.core/set-fields pojo {:common-prefixes ["foo" "bar" "baz"]})
     (is (= ["foo" "bar" "baz"]
-           (.getCommonPrefixes pojo))))
+           (.getCommonPrefixes pojo)))))
 
-)
-
-(deftest email-test []
+(deftest email-test
   (are [x] (= x (re-find email-pattern x))
     "foo@bar.com"
     "foo@bar.co.jp")
@@ -420,3 +417,8 @@
     "foo@"
     "foo@bar"
     "foo@bao.c"))
+
+(deftest no-internal-methods-exported-tests
+  (is (= nil
+         (resolve 'amazonica.aws.s3/access$000)
+         (resolve 'amazonica.aws.s3/access$200))))

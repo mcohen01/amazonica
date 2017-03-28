@@ -897,8 +897,7 @@
   "Finds the appropriate method to invoke in cases where
   the Amazon*Client has overloaded methods by arity or type."
   [methods & arg]
-  (let [args (:args (args-from arg))
-        methods (filter #(not (Modifier/isPrivate (.getModifiers %))) methods)]
+  (let [args (:args (args-from arg))]
     (or (some (partial types-match-args args) methods)
         (choose-from (possible-methods methods args)))))
 

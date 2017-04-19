@@ -1290,7 +1290,12 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (copy-object bucket1 "key-1" bucket2 "key-2")
 
-(get-object bucket2 "key-2"))
+(-> (get-object bucket2 "key-2")
+    :input-stream
+    slurp)
+;; (note that the InputStream returned by GetObject should be closed,
+;; e.g. via slurp here, or the HTTP connection pool will be exhausted
+;; after several objects are retrieved)
 
 (generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
 

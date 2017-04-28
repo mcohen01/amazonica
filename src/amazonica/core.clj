@@ -783,7 +783,9 @@
           (instance? AWSCredentialsProvider (first args))
           (instance? AWSCredentials (first args)))
       {:args (if (-> args rest first map?)
-                 (mapcat identity (-> args rest args-from :args))
+                 (if (-> args rest first empty?)
+                     {}
+                     (mapcat identity (-> args rest args-from :args)))
                  (rest args))
        :credential (if (map? (first args))
                        (dissoc (first args) :client-config)

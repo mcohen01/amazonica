@@ -7,8 +7,14 @@
               AWSCredentials
               AWSCredentialsProviderChain
               DefaultAWSCredentialsProviderChain]
+           com.amazonaws.ClientConfiguration
            com.amazonaws.internal.StaticCredentialsProvider
-           com.amazonaws.services.kinesis.AmazonKinesisClient
+           com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
+           com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+           com.amazonaws.services.dynamodbv2.streamsadapter.AmazonDynamoDBStreamsAdapterClient
+           [com.amazonaws.services.kinesis
+            AmazonKinesis
+            AmazonKinesisClient]
            [com.amazonaws.services.kinesis.model
             Record]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces
@@ -256,17 +262,31 @@
   (let [opts (if (associative? (first args))
                  (first args)
                  (apply hash-map args))
-        {:keys [processor deserializer checkpoint credentials]
+        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client?]
          :or   {checkpoint 60
                 deserializer unwrap}} opts
         next-check (atom 0)
-        factory  (processor-factory processor deserializer checkpoint next-check)
-        creds    (amz/get-credentials credentials)
-        provider (if (instance? AWSCredentials creds)
-                     (StaticCredentialsProvider. creds)
-                     creds)
-        config   (kinesis-client-lib-configuration provider opts)]
-    [(Worker. factory config) (.getWorkerIdentifier config)]))
+        factory           (processor-factory processor deserializer checkpoint next-check)
+        creds             (amz/get-credentials credentials)
+        provider          (if (instance? AWSCredentials creds)
+                            (StaticCredentialsProvider. creds)
+                            creds)
+        config            (kinesis-client-lib-configuration provider opts)
+        worker-identifier (.getWorkerIdentifier config)]
+    (if dynamodb-adaptor-client?
+      (let [adapterClient (AmazonDynamoDBStreamsAdapterClient.)
+            ;; It is recommended that fluent builders are used to create the DynamoDBClient and the CloudWatchClient.
+            ;; However, this creates immutable objects, and if a region is specified, then the Worker
+            ;; will try to modify them leading to an exception being thrown
+            dynamoDBClient    (AmazonDynamoDBClient.)
+            cloudWatchClient  (AmazonCloudWatchClient.)]
+        [(Worker. ^IRecordProcessorFactory            factory
+                  ^KinesisClientLibConfiguration      config
+                  ^AmazonDynamoDBStreamsAdapterClient adapterClient
+                  ^AmazonDynamoDBClient               dynamoDBClient
+                  ^AmazonCloudWatchClient             cloudWatchClient)
+         worker-identifier])
+      [(Worker. factory config) worker-identifier])))
 
 (defn worker!
   "Instantiate a new kinesis Worker and invoke its run method in a

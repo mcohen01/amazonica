@@ -946,7 +946,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (create-job :pipeline-id "1111111111111-11aa11"
             :input {:key "my/s3/input/obj/key.avi"}
             :outputs [{:key "my/s3/output/obj/key.avi"
-                       :preset-id "1351620000001-000030"}
+                       :preset-id "1351620000001-000030"}])
 ```
 
 

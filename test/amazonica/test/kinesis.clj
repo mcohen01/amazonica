@@ -2,9 +2,14 @@
   (:import org.joda.time.DateTime
            java.nio.ByteBuffer
            java.util.UUID)
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [amazonica.aws.dynamodbv2 :as dyna])
   (:use [clojure.test]
         [amazonica.aws.kinesis]))
+
+(def ^:private table "KinesisTestTable")
+
+(def ^:private dynamodb-stream-timeout 60) ; seconds
 
 (def cred
   (let [file  (str (System/getProperty "user.home") "/.aws/credentials")
@@ -107,3 +112,94 @@
   (delete-stream my-stream)
 
   )
+
+
+(def ^:private streamed-data (atom []))
+
+(defn- deserializer [byte-buffer]
+  (try
+    (let [bytes (byte-array (.remaining byte-buffer))]
+      (.get byte-buffer bytes)
+      (String. bytes "UTF-8"))
+    (catch Exception e
+      (println e )
+      (is false))))
+
+(defn- processor! [records]
+  (try
+    (swap! streamed-data concat (map :data records))
+    true
+    (catch Exception e
+      (println e)
+      (is false)
+      false)))
+
+(def ^:private expected-data "\"NewImage\":{\"name\":{\"S\":\"example\"},\"id\":{\"S\":\"1\"}}")
+
+(defn- get-region [stream-arn]
+  (second (re-matches #"^arn:aws:dynamodb:(.+?):.*$" stream-arn)))
+
+(deftest kinesis-dynamodb-streams
+  (reset! streamed-data [])
+
+  (try
+    (dyna/create-table
+      :table-name table
+      :key-schema
+      [{:attribute-name "id" :key-type "HASH"}]
+      :attribute-definitions
+      [{:attribute-name "id" :attribute-type "S"}]
+      :provisioned-throughput
+      {:read-capacity-units  1
+       :write-capacity-units 1}
+      :stream-specification {:stream-enabled true
+                              :stream-view-type "NEW_IMAGE"})
+
+    ; wait for the tables to be created
+    (doseq [table (:table-names (dyna/list-tables))]
+      (loop [status (get-in (dyna/describe-table :table-name table)
+                            [:table :table-status])]
+        (if-not (= "ACTIVE" status)
+          (do
+            (println "waiting for status" status "to be active")
+            (Thread/sleep 1000)
+            (recur (get-in (dyna/describe-table :table-name table)
+                           [:table :table-status]))))))
+
+    (let [stream-arn (get-in (dyna/describe-table :table-name table) [:table :latest-stream-arn])
+          [w _] (worker :app                        (str (UUID/randomUUID))
+                        :dynamodb-adaptor-client?   true
+                        :stream                     stream-arn
+                        :endpoint                   (str "streams.dynamodb." (get-region stream-arn) ".amazonaws.com")
+                        :initial-position-in-stream "TRIM_HORIZON"
+                        :deserializer               deserializer
+                        :processor                  processor!)]
+      (future
+        (try
+          (.run w)
+          (catch Exception e
+            (println e)
+            (is false))))
+
+      (dyna/put-item
+        :table-name table
+        :item {:id "1" :name "example"})
+
+      (try
+        (loop [c 0]
+          (println "Waiting for streamed data to arrive " c " seconds")
+          (Thread/sleep 1000)
+          (when (and (empty? @streamed-data)
+                     (< c dynamodb-stream-timeout))
+            (recur (inc c))))
+
+        (is (= 1 (count @streamed-data)))
+        (is (.contains (first @streamed-data) expected-data))
+
+        (finally
+          (.shutdown w))))
+
+    (finally
+      (dyna/delete-table :table-name table))))
+
+

@@ -1071,7 +1071,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ;; better way to consume a shard....create and run a worker
 ;; :app :stream and :processor keys are required
-;; :credentials and :checkpoint keys are optional
+;; :credentials, :checkpoint and :dynamodb-adaptor-client? keys are optional
 
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
 ;; alternatively, supply a numeric value for duration in seconds between checkpoints
@@ -1080,6 +1080,10 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ;; if no :credentials key is provided the default authentication scheme is used (preferable),
 ;; see the [Authentication] #(authentication) section above
+
+;; if no :dynamodb-adaptor-client? is provided, then it defaults to not using the 
+;; DynamoDB Streams Kinesis Adaptor. Set this flag to true when consuming streams
+;; from DynamoDB
 
 ;; returns the UUID assigned to this worker
 (worker! :app "app-name"

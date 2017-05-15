@@ -134,7 +134,7 @@
   "Per invocation binding of client-config for ad-hoc
   service calls using alternate client configuration."
   [config & body]
-  `(binding [*client-config* config]
+  `(binding [*client-config* ~config]
      (do ~@body)))
 
 (declare new-instance)

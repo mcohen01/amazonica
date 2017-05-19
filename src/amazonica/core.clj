@@ -16,6 +16,7 @@
            [com.amazonaws.regions
              Region
              Regions]
+           com.amazonaws.client.builder.AwsSyncClientBuilder
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -23,6 +24,7 @@
            java.io.StringWriter
            java.lang.reflect.InvocationTargetException
            java.lang.reflect.ParameterizedType
+           java.lang.reflect.Method
            java.lang.reflect.Modifier
            java.math.BigDecimal
            java.math.BigInteger
@@ -137,23 +139,25 @@
   `(binding [*client-config* ~config]
      (do ~@body)))
 
-(declare new-instance)
+(defn- builder ^AwsSyncClientBuilder [^Class clazz]
+  (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
+    (.invoke method clazz (make-array Object 0))))
+
+(defn- build-client [^Class clazz credentials configuration]
+  (let [builder (builder clazz)
+        builder (if credentials (.withCredentials builder credentials) builder)
+        builder (if configuration (.withClientConfiguration builder configuration) builder)]
+    (.build builder)))
 
 (defn- create-client
   [clazz credentials configuration]
-  (if (every? nil? [credentials configuration])
-    (new-instance (Class/forName clazz))
-    ; TransferManager is the only client to date that doesn't accept AWSCredentialsProviders
-    (if (= (.getSimpleName clazz) "TransferManager")
-        (invoke-constructor
-          "com.amazonaws.services.s3.transfer.TransferManager"
-          [(create-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
-                          credentials
-                          configuration)])
-        (invoke-constructor (.getName clazz)
-                            (->> [credentials configuration]
-                                 (filter (comp not nil?))
-                                 vec)))))
+  (if (= (.getSimpleName clazz) "TransferManager")
+    (invoke-constructor
+      "com.amazonaws.services.s3.transfer.TransferManager"
+      [(create-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
+                      credentials
+                      configuration)])
+    (build-client clazz credentials configuration)))
 
 (defn get-credentials
   [credentials]

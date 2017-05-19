@@ -1411,7 +1411,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                                   :value 42}])
 
 (sdb/select :select-expression
-            "select * from domain where baz = '42' ")
+            "select * from `test.domain` where baz = '42' ")
 
 (sdb/delete-domain :domain-name "domain")
 

@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.95"]
+[amazonica "0.3.99"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.95</version>
+  <version>0.3.99</version>
 </dependency>
 ```
 
@@ -946,7 +946,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (create-job :pipeline-id "1111111111111-11aa11"
             :input {:key "my/s3/input/obj/key.avi"}
             :outputs [{:key "my/s3/output/obj/key.avi"
-                       :preset-id "1351620000001-000030"}
+                       :preset-id "1351620000001-000030"}])
 ```
 
 
@@ -1071,7 +1071,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ;; better way to consume a shard....create and run a worker
 ;; :app :stream and :processor keys are required
-;; :credentials and :checkpoint keys are optional
+;; :credentials, :checkpoint and :dynamodb-adaptor-client? keys are optional
 
 ;; if no :checkpoint is provided the worker will automatically checkpoint every 60 seconds
 ;; alternatively, supply a numeric value for duration in seconds between checkpoints
@@ -1080,6 +1080,10 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ;; if no :credentials key is provided the default authentication scheme is used (preferable),
 ;; see the [Authentication] #(authentication) section above
+
+;; if no :dynamodb-adaptor-client? is provided, then it defaults to not using the 
+;; DynamoDB Streams Kinesis Adaptor. Set this flag to true when consuming streams
+;; from DynamoDB
 
 ;; returns the UUID assigned to this worker
 (worker! :app "app-name"
@@ -1290,7 +1294,12 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 (copy-object bucket1 "key-1" bucket2 "key-2")
 
-(get-object bucket2 "key-2"))
+(-> (get-object bucket2 "key-2")
+    :input-stream
+    slurp)
+;; (note that the InputStream returned by GetObject should be closed,
+;; e.g. via slurp here, or the HTTP connection pool will be exhausted
+;; after several objects are retrieved)
 
 (generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
 
@@ -1402,7 +1411,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                                   :value 42}])
 
 (sdb/select :select-expression
-            "select * from domain where baz = '42' ")
+            "select * from `test.domain` where baz = '42' ")
 
 (sdb/delete-domain :domain-name "domain")
 

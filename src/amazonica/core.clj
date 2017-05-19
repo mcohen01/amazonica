@@ -136,7 +136,7 @@
   "Per invocation binding of client-config for ad-hoc
   service calls using alternate client configuration."
   [config & body]
-  `(binding [*client-config* config]
+  `(binding [*client-config* ~config]
      (do ~@body)))
 
 (defn- builder ^AwsSyncClientBuilder [^Class clazz]
@@ -787,7 +787,9 @@
           (instance? AWSCredentialsProvider (first args))
           (instance? AWSCredentials (first args)))
       {:args (if (-> args rest first map?)
-                 (mapcat identity (-> args rest args-from :args))
+                 (if (-> args rest first empty?)
+                     {}
+                     (mapcat identity (-> args rest args-from :args)))
                  (rest args))
        :credential (if (map? (first args))
                        (dissoc (first args) :client-config)

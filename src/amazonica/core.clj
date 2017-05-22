@@ -9,6 +9,7 @@
            [com.amazonaws.auth
              AWSCredentials
              AWSCredentialsProvider
+             AWSStaticCredentialsProvider
              BasicAWSCredentials
              BasicSessionCredentials
              DefaultAWSCredentialsProviderChain]
@@ -143,39 +144,45 @@
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
     (.invoke method clazz (make-array Object 0))))
 
-(defn- build-client [^Class clazz credentials configuration]
+(defn- build-client [^Class clazz credentials configuration raw-creds]
   (let [builder (builder clazz)
         builder (if credentials (.withCredentials builder credentials) builder)
-        builder (if configuration (.withClientConfiguration builder configuration) builder)]
+        builder (if configuration (.withClientConfiguration builder configuration) builder)
+        endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
+        builder (if endpoint (.withRegion builder endpoint) builder)]
     (.build builder)))
 
 (defn- create-client
-  [clazz credentials configuration]
+  [clazz credentials configuration raw-creds]
   (if (= (.getSimpleName clazz) "TransferManager")
     (invoke-constructor
       "com.amazonaws.services.s3.transfer.TransferManager"
       [(create-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
                       credentials
-                      configuration)])
-    (build-client clazz credentials configuration)))
+                      configuration
+                      raw-creds)])
+    (build-client clazz credentials configuration raw-creds)))
 
 (defn get-credentials
   [credentials]
   (cond
-    (or (instance? AWSCredentialsProvider credentials)
-        (instance? AWSCredentials credentials))
-    credentials
+    (instance? AWSCredentialsProvider credentials)
+      credentials
+    (instance? AWSCredentials credentials)
+      (AWSStaticCredentialsProvider. credentials)
     (and (associative? credentials)
          (contains? credentials :session-token))
-    (BasicSessionCredentials.
+    (AWSStaticCredentialsProvider.
+      (BasicSessionCredentials.
         (:access-key credentials)
         (:secret-key credentials)
-        (:session-token credentials))
+        (:session-token credentials)))
     (and (associative? credentials)
          (contains? credentials :access-key))
-    (BasicAWSCredentials.
+    (AWSStaticCredentialsProvider.
+      (BasicAWSCredentials.
         (:access-key credentials)
-        (:secret-key credentials))
+        (:secret-key credentials)))
     (and (associative? credentials)
          (contains? credentials :profile))
     (ProfileCredentialsProvider.
@@ -253,8 +260,7 @@
   [clazz credentials configuration]
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
-        client     (create-client clazz aws-creds aws-config)]
-    (set-endpoint! client credentials)
+        client     (create-client clazz aws-creds aws-config credentials)]
     client))
 
 (swap! client-config assoc :amazon-client-fn (memoize amazon-client*))

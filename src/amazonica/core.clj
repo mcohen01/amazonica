@@ -18,6 +18,7 @@
              Region
              Regions]
            com.amazonaws.client.builder.AwsSyncClientBuilder
+           com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -149,7 +150,13 @@
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
         endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
-        builder (if endpoint (.withRegion builder endpoint) builder)]
+        builder (if endpoint
+                  (if (.startsWith endpoint "http")
+                      (.withEndpointConfiguration
+                        builder
+                        (AwsClientBuilder$EndpointConfiguration. endpoint nil))
+                      (.withRegion builder endpoint))
+                  builder)]
     (.build builder)))
 
 (defn- create-client

@@ -547,7 +547,8 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
     :namespace "test_namespace"
     :metric-data [{:metric-name "test_metric"
                    :unit "Count"
-                   :value 1.0}])
+                   :value 1.0
+                   :dimensions [{:name "test_name" :value "test_value"}]}])
 ```
 
 ### CloudWatchEvents

@@ -145,8 +145,11 @@
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
     (.invoke method clazz (make-array Object 0))))
 
-(defn- build-client [^Class clazz credentials configuration raw-creds]
+(declare set-fields)
+
+(defn- build-client [^Class clazz credentials configuration raw-creds options]
   (let [builder (builder clazz)
+        _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
         endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
@@ -160,15 +163,15 @@
     (.build builder)))
 
 (defn- create-client
-  [clazz credentials configuration raw-creds]
+  [clazz credentials configuration raw-creds options]
   (if (= (.getSimpleName clazz) "TransferManager")
     (invoke-constructor
       "com.amazonaws.services.s3.transfer.TransferManager"
       [(create-client (Class/forName "com.amazonaws.services.s3.AmazonS3Client")
                       credentials
                       configuration
-                      raw-creds)])
-    (build-client clazz credentials configuration raw-creds)))
+                      raw-creds {})])
+    (build-client clazz credentials configuration raw-creds options)))
 
 (defn get-credentials
   [credentials]
@@ -267,7 +270,7 @@
   [clazz credentials configuration]
   (let [aws-creds  (get-credentials credentials)
         aws-config (get-client-configuration configuration)
-        client     (create-client clazz aws-creds aws-config credentials)]
+        client     (create-client clazz aws-creds aws-config credentials configuration)]
     client))
 
 (swap! client-config assoc :amazon-client-fn (memoize amazon-client*))
@@ -548,8 +551,6 @@
           [(to-java-coll v)])
           [v])))
   true)
-
-(declare set-fields)
 
 (defn kw->str [k]
   (if (keyword? k) (name k) k))

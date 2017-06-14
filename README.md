@@ -1307,6 +1307,15 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (def down-dir (java.io.File. (str "/tmp/" file)))
 (def bucket "my-bucket")
 
+;; set S3 Client Options
+(s3/list-buckets
+  {:client-config {
+    :path-style-access-enabled false
+    :chunked-encoding-disabled false
+    :accelerate-mode-enabled false
+    :payload-signing-enabled true
+    :dualstack-enabled true
+    :force-global-bucket-access-enabled true}})
 
 
 (def key-pair

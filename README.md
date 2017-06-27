@@ -1082,7 +1082,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 ;; if no :credentials key is provided the default authentication scheme is used (preferable),
 ;; see the [Authentication] #(authentication) section above
 
-;; if no :dynamodb-adaptor-client? is provided, then it defaults to not using the 
+;; if no :dynamodb-adaptor-client? is provided, then it defaults to not using the
 ;; DynamoDB Streams Kinesis Adaptor. Set this flag to true when consuming streams
 ;; from DynamoDB
 
@@ -1337,6 +1337,10 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ;; get tags for the bucket
 (get-bucket-tagging-configuration {:bucket-name bucket})
+
+;; get just object metadata, e.g. content-length without fetching content:
+(get-object-metadata :bucket-name bucket1
+                     :key "foo")
 
 ;; put object from stream
 (def some-bytes (.getBytes "Amazonica" "UTF-8"))

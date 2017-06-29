@@ -949,22 +949,35 @@
   "Derives a Clojure `:arglist` vector from a
   `java.lang.reflect.Method`."
   [method]
-  (let [parameters (. method getParameters)]
+  (let [parameters (. method getParameters)
+        names (map parameter-clojure-name parameters)
+        ;; This will help determine when parameter names should be
+        ;; suffixed with an index i.e. `parameter-1`.
+        name-frequency (frequencies names)]
     (loop [names (map parameter-clojure-name parameters)
-           name-count {}
+           ;; This map keeps track of the index of names when they
+           ;; appear more than once.
+           name-index {}
            arglist []]
       (if (empty? names)
         arglist
-        (let [[name & names*] names
-              count (get name-count name 0)
-              name-count* (assoc name-count name (inc count))
-              arg-symbol (if (zero? count)
-                           (symbol name)
-                           (symbol (str name "-" count)))
-              arglist* (conj arglist arg-symbol)]
-          (recur names*
-                 name-count*
-                 arglist*))))))
+        (let [[name & names*] names]
+          (if (= (name-frequency name) 1)
+            (let [arg-symbol (symbol name)
+                  arglist* (conj arglist arg-symbol)]
+              (recur names*
+                     name-index
+                     arglist*))
+            ;; The parameter name appears more than once so we need to
+            ;; attach an index to it and update our name-index for the
+            ;; next parameter with the same name.
+            (let [index (get name-index name 1)
+                  name-index* (assoc name-index name (inc index))
+                  arg-symbol (symbol (str name "-" index))
+                  arglist* (conj arglist arg-symbol)]
+              (recur names*
+                     name-index*
+                     arglist*))))))))
 
 (defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function

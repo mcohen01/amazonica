@@ -925,18 +925,17 @@
   "Given a `java.lang.reflect.Parameter` return it's name in kabob
   case."
   [parameter]
-  (let [name (. parameter getName)
-        name (if (re-matches #"arg\d+" name)
-               ;; The name was most likely synthesized so we derive
-               ;; it's name from it's type.
+  (let [name (if (. parameter isNamePresent)
+               (. parameter getName)
+               ;; The name will be synthesized so instead we'll derive
+               ;; it from it's type.
                (let [type (. parameter getType)
                      type-name (last (.. type getName (split "\\.")))
                      type-name (if-let [;; Check for a type name like "[C" etc. 
                                         [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
                                  name
                                  type-name)]
-                 type-name)
-               name)]
+                 type-name))]
     (-> name
         ;; Replace the space between a non-upper-case letter and an
         ;; upper-case letter with a dash.

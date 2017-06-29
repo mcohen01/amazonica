@@ -921,6 +921,51 @@
     (or (some (partial types-match-args args) methods)
         (choose-from (possible-methods methods args)))))
 
+(defn- parameter-clojure-name
+  "Given a `java.lang.reflect.Parameter` return it's name in kabob
+  case."
+  [parameter]
+  (let [name (. parameter getName)
+        name (if (re-matches #"arg\d+" name)
+               ;; The name was most likely synthesized so we derive
+               ;; it's name from it's type.
+               (let [type (. parameter getType)
+                     type-name (last (.. type getName (split "\\.")))
+                     type-name (if-let [;; Check for a type name like "[C" etc. 
+                                        [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
+                                 name
+                                 type-name)]
+                 type-name)
+               name)]
+    (-> name
+        ;; Replace the space between a non-upper-case letter and an
+        ;; upper-case letter with a dash.
+        (str/replace #"(?<=[^A-Z])(?=[A-Z])" "-")
+        ;; Remove anything that is not a letter, digit, or dash.
+        (str/replace #"[^A-Za-z0-9\-]" "")
+        (str/lower-case))))
+
+(defn- method-arglist
+  "Derives a Clojure `:arglist` vector from a
+  `java.lang.reflect.Method`."
+  [method]
+  (let [parameters (. method getParameters)]
+    (loop [names (map parameter-clojure-name parameters)
+           name-count {}
+           arglist []]
+      (if (empty? names)
+        arglist
+        (let [[name & names*] names
+              count (get name-count name 0)
+              name-count* (assoc name-count name (inc count))
+              arg-symbol (if (zero? count)
+                           (symbol name)
+                           (symbol (str name "-" count)))
+              arglist* (conj arglist arg-symbol)]
+          (recur names*
+                 name-count*
+                 arglist*))))))
+
 (defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function
    derived from the java.lang.reflect.Method(s). Overloaded
@@ -928,7 +973,8 @@
   [client ns fname methods]
   (intern ns (with-meta (symbol (name fname))
                {:amazonica/client client
-                :amazonica/methods methods})
+                :amazonica/methods methods
+                :arglists (sort (map method-arglist methods))})
     (fn [& args]
       (if-let [method (best-method methods args)]
         (if-not args

@@ -951,7 +951,9 @@
   (let [parameters (. method getParameters)
         names (map parameter-clojure-name parameters)
         ;; This will help determine when parameter names should be
-        ;; suffixed with an index i.e. `parameter-1`.
+        ;; suffixed with an index i.e. `parameter-1`. Suffixing is
+        ;; necessary when parameter names are synthesized from their
+        ;; type names and the likelihood duplicates is high.
         name-frequency (frequencies names)]
     (loop [names (map parameter-clojure-name parameters)
            ;; This map keeps track of the index of names when they

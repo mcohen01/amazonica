@@ -127,18 +127,28 @@
     (is (some? old) (str "missing old var: " service " " old-name))
     (is (some? new) (str "missing new var: " service " " new-name))
 
-    (is (= #{:ns
+    (is (= #{:arglists
+             :ns
              :name
              :amazonica/client
              :amazonica/methods
              :amazonica/deprecated-in-favor-of}
            (set (keys (meta old)))))
-    (is (= #{:ns :name :amazonica/client :amazonica/methods}
+    (is (= #{:arglists
+             :ns
+             :name
+             :amazonica/client
+             :amazonica/methods}
            (set (keys (meta new)))))
-    (is (= new (-> old meta :amazonica/deprecated-in-favor-of))))
+    (is (= new
+           (get (meta old) :amazonica/deprecated-in-favor-of))))
 
   ;; Make sure we don't accidentally attach new metadata keys to old, untouched
   ;; vars:
   (let [unrelated-var #'amazonica.aws.ec2/describe-addresses]
     (is (= (set (keys (meta unrelated-var)))
-           #{:ns :name :amazonica/client :amazonica/methods}))))
+           #{:arglists
+             :name
+             :ns
+             :amazonica/client
+             :amazonica/methods}))))

@@ -921,6 +921,65 @@
     (or (some (partial types-match-args args) methods)
         (choose-from (possible-methods methods args)))))
 
+(defn- parameter-clojure-name
+  "Given a `java.lang.reflect.Parameter` return it's name in kabob
+  case."
+  [parameter]
+  (let [name (if (. parameter isNamePresent)
+               (. parameter getName)
+               ;; The name will be synthesized so instead we'll derive
+               ;; it from it's type.
+               (let [type (. parameter getType)
+                     type-name (last (.. type getName (split "\\.")))
+                     type-name (if-let [;; Check for a type name like "[C" etc. 
+                                        [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
+                                 name
+                                 type-name)]
+                 type-name))]
+    (-> name
+        ;; Replace the space between a non-upper-case letter and an
+        ;; upper-case letter with a dash.
+        (str/replace #"(?<=[^A-Z])(?=[A-Z])" "-")
+        ;; Remove anything that is not a letter, digit, or dash.
+        (str/replace #"[^A-Za-z0-9\-]" "")
+        (str/lower-case))))
+
+(defn- method-arglist
+  "Derives a Clojure `:arglist` vector from a
+  `java.lang.reflect.Method`."
+  [method]
+  (let [parameters (. method getParameters)
+        names (map parameter-clojure-name parameters)
+        ;; This will help determine when parameter names should be
+        ;; suffixed with an index i.e. `parameter-1`. Suffixing is
+        ;; necessary when parameter names are synthesized from their
+        ;; type names and the likelihood duplicates is high.
+        name-frequency (frequencies names)]
+    (loop [names (map parameter-clojure-name parameters)
+           ;; This map keeps track of the index of names when they
+           ;; appear more than once.
+           name-index {}
+           arglist []]
+      (if (empty? names)
+        arglist
+        (let [[name & names*] names]
+          (if (= (name-frequency name) 1)
+            (let [arg-symbol (symbol name)
+                  arglist* (conj arglist arg-symbol)]
+              (recur names*
+                     name-index
+                     arglist*))
+            ;; The parameter name appears more than once so we need to
+            ;; attach an index to it and update our name-index for the
+            ;; next parameter with the same name.
+            (let [index (get name-index name 1)
+                  name-index* (assoc name-index name (inc index))
+                  arg-symbol (symbol (str name "-" index))
+                  arglist* (conj arglist arg-symbol)]
+              (recur names*
+                     name-index*
+                     arglist*))))))))
+
 (defn intern-function
   "Interns into ns, the symbol mapped to a Clojure function
    derived from the java.lang.reflect.Method(s). Overloaded
@@ -928,7 +987,8 @@
   [client ns fname methods]
   (intern ns (with-meta (symbol (name fname))
                {:amazonica/client client
-                :amazonica/methods methods})
+                :amazonica/methods methods
+                :arglists (sort (map method-arglist methods))})
     (fn [& args]
       (if-let [method (best-method methods args)]
         (if-not args

@@ -921,41 +921,65 @@
     (or (some (partial types-match-args args) methods)
         (choose-from (possible-methods methods args)))))
 
+(defn- clojure-case
+  "Similar to \"kabob case\" but the returned string is suitable for
+  reading a single symbol with `read-string`."
+  [string]
+  (-> string
+      ;; Replace the space between a non-upper-case letter and an
+      ;; upper-case letter with a dash.
+      (str/replace #"(?<=[^A-Z])(?=[A-Z])" "-")
+      ;; Remove anything that a Clojure reader would not accept in a
+      ;; symbol.
+      (str/replace #"[\\'\"\[\]\(\){}\s]" "")
+      (str/lower-case)))
+
+(defn- type-clojure-name
+  "Given a `java.lang.Class` return it's name in kabob case"
+  [type]
+  (let [type-name (last (.. type getName (split "\\.")))
+        type-name (if-let [;; Check for a type name like "[C" etc. 
+                           [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
+                    name
+                    type-name)]
+    (clojure-case type-name)))
+
 (defn- parameter-clojure-name
   "Given a `java.lang.reflect.Parameter` return it's name in kabob
   case."
   [parameter]
-  (let [name (if (. parameter isNamePresent)
-               (. parameter getName)
-               ;; The name will be synthesized so instead we'll derive
-               ;; it from it's type.
-               (let [type (. parameter getType)
-                     type-name (last (.. type getName (split "\\.")))
-                     type-name (if-let [;; Check for a type name like "[C" etc. 
-                                        [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
-                                 name
-                                 type-name)]
-                 type-name))]
-    (-> name
-        ;; Replace the space between a non-upper-case letter and an
-        ;; upper-case letter with a dash.
-        (str/replace #"(?<=[^A-Z])(?=[A-Z])" "-")
-        ;; Remove anything that is not a letter, digit, or dash.
-        (str/replace #"[^A-Za-z0-9\-]" "")
-        (str/lower-case))))
+  (if (. parameter isNamePresent)
+    (clojure-case (. parameter getName))
+    ;; The name will be synthesized so instead we'll derive
+    ;; it from it's type.
+    (type-clojure-name (. parameter getType))))
+
+(def ^{:arglists '([method])
+       :private true}
+  parameter-names
+  "Given a `java.lang.reflect.Method` return a list of it's parameter
+  names."
+  ;; The regular expression here will only match against version
+  ;; numbers that are 1.7.X and below.
+  (if (re-matches #"[^2-9]\.[1-7]\..+" (System/getProperty "java.version")) 
+    ;; Java 1.7 and below.
+    (fn [method]
+      (map type-clojure-name (. method getParameterTypes)))
+    ;; Java 1.8 and above.
+    (fn [method]
+      (map parameter-clojure-name (. method getParameters)))))
 
 (defn- method-arglist
   "Derives a Clojure `:arglist` vector from a
   `java.lang.reflect.Method`."
   [method]
-  (let [parameters (. method getParameters)
-        names (map parameter-clojure-name parameters)
+  (let [names (parameter-names method)
         ;; This will help determine when parameter names should be
         ;; suffixed with an index i.e. `parameter-1`. Suffixing is
         ;; necessary when parameter names are synthesized from their
         ;; type names and the likelihood duplicates is high.
         name-frequency (frequencies names)]
-    (loop [names (map parameter-clojure-name parameters)
+    (loop [names names
            ;; This map keeps track of the index of names when they
            ;; appear more than once.
            name-index {}

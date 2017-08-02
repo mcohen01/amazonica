@@ -105,9 +105,11 @@
 
 (defn marshall
   [deserializer ^Record record]
-  {:sequence-number (.getSequenceNumber record)
-   :partition-key   (.getPartitionKey record)
-   :data            (deserializer (.getData record))})
+  {:approximate-arrival-timestamp (.getApproximateArrivalTimestamp record)
+   :encryption-type               (.getEncryptionType record)
+   :sequence-number               (.getSequenceNumber record)
+   :partition-key                 (.getPartitionKey record)
+   :data                          (deserializer (.getData record))})
 
 (defn- mark-checkpoint [^IRecordProcessorCheckpointer checkpointer _]
   (try

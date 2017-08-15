@@ -105,7 +105,7 @@
 
 (defn marshall
   [deserializer ^Record record]
-  {:approximate-arrival-timestamp (.getApproximateArrivalTimestamp record)
+  {:approximate-arrival-timestamp (amz/marshall (.getApproximateArrivalTimestamp record))
    :encryption-type               (.getEncryptionType record)
    :sequence-number               (.getSequenceNumber record)
    :partition-key                 (.getPartitionKey record)

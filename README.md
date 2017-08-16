@@ -43,6 +43,7 @@ and the following dependency:
 * CodeCommit
 * [CodeDeploy](#codedeploy)
 * CodePipeline
+* [CognitoIdentityProviders](#cognitoidentityproviders)
 * Config
 * [DataPipeline](#datapipeline)
 * DeviceFarm
@@ -575,6 +576,16 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
   (:use [amazonica.aws.codedeploy]))
 
 (list-applications)
+
+```
+
+### CognitoIdentityProviders
+```clj
+(ns com.example
+  (:require [amazaonica.aws.cognitoidp :refer :all]))
+
+(list-user-pools {:max-results 2})
+=> {:user-pools [{:lambda-config {}, :last-modified-date "2017-06-16T14:16:28.950-03:00"], :creation-date "2017-06-15T16:23:04.555-03:00"], :name "Amazonica", :id "us-west-1_example"}]}
 
 ```
 

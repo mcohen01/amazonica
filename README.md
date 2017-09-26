@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.111"]
+[amazonica "0.3.112"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.111</version>
+  <version>0.3.112</version>
 </dependency>
 ```
 
@@ -70,6 +70,7 @@ and the following dependency:
 * [Lambda](#lambda)
 * MachineLearning
 * [OpsWorks](#opsworks)
+* [Pinpoint](#pinpoint)
 * RDS
 * [Redshift](#redshift)
 * [Route53](#route53)
@@ -1243,6 +1244,40 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 
 ```
 
+
+### Pinpoint
+```clj
+(ns com.example
+  (:require [amazonica.aws.pinpoint :as pp]))
+
+(defn app-id []
+  (-> (pp/get-apps {})
+      :applications-response
+      :item
+      first
+      :id))
+
+(pp/create-segment {:application-id (app-id)})
+
+(pp/create-campaign
+  {:application-id (app-id)
+   :write-campaign-request
+    {:segment-id "a668b484bec94cb1252772032ecdf540"
+     :name "my-campaign"
+     :schedule
+       {:frequency "ONCE"
+        :start-time "2017-09-27T20:36:11+00:00"}
+     :message-configuration
+       {:default-message
+         {:body "hello world"}}}})
+
+
+(pp/send-messages
+  {:application-id (app-id)
+   :message-request
+     {:addresses {"+18132401139" {:channel-type "SMS"}}
+      :message-configuration {:default-message {:body "hello world"}}}})
+```
 
 
 

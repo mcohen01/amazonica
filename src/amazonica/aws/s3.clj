@@ -1,5 +1,5 @@
 (ns amazonica.aws.s3
-  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions
+  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions 
                                set-fields to-date kw->str)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.s3

@@ -1,5 +1,5 @@
 (ns amazonica.aws.s3
-  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions 
+  (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions
                                set-fields to-date kw->str)]
         [clojure.algo.generic.functor :only (fmap)])
   (:import [com.amazonaws.services.s3
@@ -167,7 +167,8 @@
       (when-let [sse (:server-side-encryption col)]
         (.setServerSideEncryption om sse))
       (when-let [sse-kms-key-id (:server-side-encryption-aws-kms-key-id col)]
-        (.setHeader om "x-amz-server-side-encryption" sse-kms-key-id))
+        (.setHeader om "x-amz-server-side-encryption" "aws:kms")
+        (.setHeader om "x-amz-server-side-encryption-aws-kms-key-id" sse-kms-key-id))
       (when-let [metadata (:user-metadata col)]
         (doseq [[k v] metadata]
           (.addUserMetadata om

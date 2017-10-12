@@ -147,12 +147,12 @@
                           (vec (seq records)))))
             (if (or (processor (functor/fmap (partial marshall deserializer)
                                              (vec (seq records))))
-                    (and checkpoint
+                    (and checkpoint-timeout
                          (> (System/currentTimeMillis) @next-check)))
-              (do (if checkpoint
+              (do (if checkpoint-timeout
                     (reset! next-check
                             (+' (System/currentTimeMillis)
-                                (*' 1000 checkpoint))))
+                                (*' 1000 checkpoint-timeout))))
                   (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))))))))
 
 (defn- kinesis-client-lib-configuration

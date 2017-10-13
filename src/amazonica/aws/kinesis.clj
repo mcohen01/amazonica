@@ -140,20 +140,20 @@
                    (not= checkpoint-strategy :manual))
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
-          (if (= checkpoint-strategy :manual)
-            (binding [*checkpointer* checkpointer]
-              (processor (functor/fmap
-                          (partial marshall deserializer)
-                          (vec (seq records)))))
-            (if (or (processor (functor/fmap (partial marshall deserializer)
-                                             (vec (seq records))))
-                    (and checkpoint-timeout
-                         (> (System/currentTimeMillis) @next-check)))
-              (do (if checkpoint-timeout
-                    (reset! next-check
-                            (+' (System/currentTimeMillis)
-                                (*' 1000 checkpoint-timeout))))
-                  (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))))))))
+          (let [processor-result (binding [*checkpointer* checkpointer]
+                                   (processor (functor/fmap
+                                               (partial marshall deserializer)
+                                               (vec (seq records)))))
+                checkpoint #(some (partial mark-checkpoint checkpointer) [1 2 3 4 5])]
+            (case checkpoint-strategy
+              :timeout (when (> (System/currentTimeMillis) @next-check)
+                         (reset! next-check
+                                 (+' (System/currentTimeMillis)
+                                     (*' 1000 checkpoint-timeout)))
+                         (checkpoint))
+              :boolean (when processor-result
+                         (checkpoint))
+              nil)))))))
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."

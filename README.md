@@ -1365,6 +1365,12 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
     :dualstack-enabled true
     :force-global-bucket-access-enabled true}})
 
+;; list objects in bucket
+(list-objects-v2
+  {:bucket-name bucket
+   :prefix "keys/start/with/this"  ; optional
+   :continuation-token (:next-continuation-token prev-response)})  ; when paging through results
+
 
 (def key-pair
     (let [kg (KeyPairGenerator/getInstance "RSA")]

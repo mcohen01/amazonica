@@ -106,7 +106,6 @@
 (defn marshall
   [deserializer ^Record record]
   {:approximate-arrival-timestamp (amz/marshall (.getApproximateArrivalTimestamp record))
-   :encryption-type               (.getEncryptionType record)
    :sequence-number               (.getSequenceNumber record)
    :partition-key                 (.getPartitionKey record)
    :data                          (deserializer (.getData record))})
@@ -124,7 +123,8 @@
       false)))
 
 (def ^:dynamic *checkpointer*
-  "Bound to an IRecordProcessorCheckpointer when using manual checkpointing.")
+  "Bound to an IRecordProcessorCheckpointer when processor executes."
+  nil)
 
 (defn- processor-factory
   [processor deserializer checkpoint-strategy checkpoint-timeout next-check]

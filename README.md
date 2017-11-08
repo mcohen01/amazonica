@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.113"]
+[amazonica "0.3.114"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.113</version>
+  <version>0.3.114</version>
 </dependency>
 ```
 
@@ -74,6 +74,7 @@ and the following dependency:
 * RDS
 * [Redshift](#redshift)
 * [Route53](#route53)
+* [Route53Domains](#route53domains)
 * [S3](#s3)
 * [SimpleDB](#simpledb)
 * [SimpleEmail](#simpleemail)
@@ -1322,6 +1323,39 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (delete-health-check :health-check-id "99999999-1234-4923-a116-cd9ae2c30ee3")
 
 (delete-hosted-zone :id "my-bogus-hosted-zone")
+
+```
+
+### Route53Domains
+```clj
+(ns com.example
+  (:use [amazonica.aws.route53domains]))
+
+(list-domains)
+
+(check-domain-availability :domain-name "amazon.com")
+
+(check-domain-transferability :domain-name "amazon.com")
+
+(get-domain-detail :domain-name "amazon.com")
+
+(let [contact {:first-name "Michael"
+               :last-name "Cohen"
+               :organization-name "amazonica"
+               :address-line1 "375 11th St"
+               :city "San Francisco"
+               :state "CA"
+               :zip-code "94103-2097"
+               :country-code "US"
+               :email ""
+               :phone-number "+1.4158675309"
+               :contact-type "PERSON"}]
+  (register-domain :admin-contact contact
+                   :duration-in-years 10
+                   :auto-renew true
+                   :domain-name "amazon.com"
+                   :registrant-contact contact
+                   :tech-contact contact))
 
 ```
 

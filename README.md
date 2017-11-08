@@ -1350,12 +1350,12 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                :email ""
                :phone-number "+1.4158675309"
                :contact-type "PERSON"}]
-  (register-domain :admin-contact contact
+  (register-domain :domain-name "amazon.com"
                    :duration-in-years 10
                    :auto-renew true
-                   :domain-name "amazon.com"
-                   :registrant-contact contact
-                   :tech-contact contact))
+                   :tech-contact contact
+                   :admin-contact contact
+                   :registrant-contact contact))
 
 ```
 

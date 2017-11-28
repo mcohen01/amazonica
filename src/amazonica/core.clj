@@ -938,7 +938,7 @@
   "Given a `java.lang.Class` return it's name in kabob case"
   [type]
   (let [type-name (last (.. type getName (split "\\.")))
-        type-name (if-let [;; Check for a type name like "[C" etc. 
+        type-name (if-let [;; Check for a type name like "[C" etc.
                            [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
                     name
                     type-name)]
@@ -961,7 +961,7 @@
   names."
   ;; The regular expression here will only match against version
   ;; numbers that are 1.7.X and below.
-  (if (re-matches #"[^2-9]\.[1-7]\..+" (System/getProperty "java.version")) 
+  (if (re-matches #"[^2-9]\.[1-7]\..+" (System/getProperty "java.version"))
     ;; Java 1.7 and below.
     (fn [method]
       (map type-clojure-name (. method getParameterTypes)))

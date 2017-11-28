@@ -1030,10 +1030,9 @@
   (->> (.getDeclaredMethods client)
        (remove (fn [method]
                  (let [mods (.getModifiers method)]
-                   (or (.isSynthetic method)
-                       (Modifier/isPrivate mods)
-                       (Modifier/isProtected mods)
-                       (Modifier/isStatic mods)))))
+                   (or (not (Modifier/isPublic mods))
+                       (Modifier/isStatic mods)
+                       (.isSynthetic method)))))
        (group-by #(camel->keyword (.getName %)))))
 
 (defn- show-functions [ns]

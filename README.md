@@ -33,6 +33,7 @@ and the following dependency:
 ## Supported Services
 * Api Gateway
 * [Autoscaling](#autoscaling)
+* [Batch](#batch)
 * [CloudFormation](#cloudformation)
 * [CloudFront](#cloudfront)
 * [CloudSearch](#cloudsearch)
@@ -426,6 +427,17 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 (describe-auto-scaling-instances)
 
+```
+
+### Batch
+```clj
+(ns com.example
+  (:use [amazonica.aws.batch]))
+
+(submit-job :job-name "my-job"
+            :job-definition "my-job-definition"
+            :job-queue "my-job-queue"
+            :parameters {"example-url" "example.com"})
 ```
 
 ### CloudFormation

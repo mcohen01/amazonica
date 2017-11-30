@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.115"]
+[amazonica "0.3.116"]
 ```
 
 For Maven users:
@@ -26,13 +26,15 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.115</version>
+  <version>0.3.116</version>
 </dependency>
 ```
 
 ## Supported Services
 * Api Gateway
 * [Autoscaling](#autoscaling)
+* Budgets
+* CloudDirectory
 * [CloudFormation](#cloudformation)
 * [CloudFront](#cloudfront)
 * [CloudSearch](#cloudsearch)
@@ -43,9 +45,14 @@ and the following dependency:
 * CodeCommit
 * [CodeDeploy](#codedeploy)
 * CodePipeline
+* CodeStar
 * [CognitoIdentityProviders](#cognitoidentityproviders)
 * Config
+* CostAndUsageReport
+* CostExplorer
+* DatabaseMigrationService
 * [DataPipeline](#datapipeline)
+* Dax
 * DeviceFarm
 * DirectConnect
 * Directory
@@ -60,8 +67,13 @@ and the following dependency:
 * [ElasticMapReduce](#elasticmapreduce)
 * [Elasticsearch](#elasticsearch)
 * [ElasticTranscoder](#elastictranscoder)
+* GameLift
 * [Glacier](#glacier)
+* Glue
+* GreenGrass
+* GuardDuty
 * [IdentityManagement](#identitymanagement)
+* ImportExport
 * [IoT](#iot)
 * [Kinesis](#kinesis)
 * [KinesisFirehose](#kinesisfirehose)
@@ -69,13 +81,24 @@ and the following dependency:
 * [Logs](#logs)
 * [Lambda](#lambda)
 * MachineLearning
+* MediaConvert
+* MediaLive
+* MediaPackage
+* MediaStore
+* MigrationHub
+* Mobile
+* MQ
+* MechanicalTurk
 * [OpsWorks](#opsworks)
 * [Pinpoint](#pinpoint)
+* Pricing
 * RDS
 * [Redshift](#redshift)
 * [Route53](#route53)
 * [Route53Domains](#route53domains)
 * [S3](#s3)
+* ServerMigration
+* ServiceCatalog
 * [SimpleDB](#simpledb)
 * [SimpleEmail](#simpleemail)
 * [SimpleWorkflow](#simpleworkflow)
@@ -83,6 +106,8 @@ and the following dependency:
 * [SQS](#sqs)
 * [StepFunctions](#stepfunctions)
 * StorageGateway
+* WAF
+* Workspaces
 
 
 ## Documentation

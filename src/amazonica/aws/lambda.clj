@@ -29,7 +29,7 @@
         attrs   (merge {:timeout 10
                         :memory-size 256
                         :mode "event"
-                        :runtime "nodejs"
+                        :runtime "nodejs6.10"
                         :description "uploaded via amazonica"} attrs)
         fn-name (or (:function-name attrs) (function-name (:function attrs)))
         attrs   (if (:function attrs)

@@ -7,7 +7,7 @@ A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 Leiningen coordinates:
 ```clj
-[amazonica "0.3.119"]
+[amazonica "0.3.120"]
 ```
 
 For Maven users:
@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.119</version>
+  <version>0.3.120</version>
 </dependency>
 ```
 
@@ -77,6 +77,7 @@ and the following dependency:
 * ImportExport
 * [IoT](#iot)
 * [Kinesis](#kinesis)
+* [Kinesis Analytics](#kinesisanalytics)
 * [KinesisFirehose](#kinesisfirehose)
 * [KMS](#kms)
 * [Logs](#logs)
@@ -1149,6 +1150,23 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
                                  (:partition-key row)))))
 
 (delete-stream "my-stream")
+
+```
+
+
+### Kinesis Analytics
+```clj
+(ns com.example
+  (:require [amazonica.aws.kinesisanalytics :as ka]))
+
+(ka/create-application
+  :application-name "my-ka-app"
+  :inputs [
+    {:name-prefix "prefix_"
+     :input-schema {:record-format {:record-format-type "json"}}
+     :kinesis-treams-input {:resource-ARN "fobar"}}
+  ]
+  :outputs [...]})
 
 ```
 

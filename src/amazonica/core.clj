@@ -17,6 +17,7 @@
            [com.amazonaws.regions
              Region
              Regions]
+           com.amazonaws.services.s3.AmazonS3EncryptionClientBuilder
            com.amazonaws.client.builder.AwsSyncClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
@@ -220,8 +221,8 @@
   (when (associative? configuration)
     (create-bean ClientConfiguration configuration)))
 
-(defn- set-endpoint!
-  [client credentials]
+(defn- get-region
+  [credentials]
   (when-let [endpoint (or (:endpoint credentials)
                           (System/getenv "AWS_DEFAULT_REGION"))]
     (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
@@ -231,37 +232,39 @@
         (try
           (->> (-> (str/upper-case endpoint)
                    (str/replace "-" "_"))
-               Regions/valueOf
-               Region/getRegion
-               (.setRegion client))
+               Regions/valueOf)
           (catch NoSuchMethodException e
-            (println e)))
-        (.setEndpoint client endpoint))))
+            (println e))))))
 
 (defn encryption-client*
   [encryption credentials configuration]
   (let [creds     (get-credentials credentials)
         config    (get-client-configuration configuration)
         key       (or (:secret-key encryption)
-                      (:key-pair encryption))
+                      (:key-pair encryption)
+                      (:kms-customer-master-key encryption))
         crypto    (invoke-constructor
                     "com.amazonaws.services.s3.model.CryptoConfiguration" [])
-        em        (invoke-constructor
-                    "com.amazonaws.services.s3.model.EncryptionMaterials"
-                    [key])
-        materials (invoke-constructor
+        _         (when (:kms-customer-master-key encryption)
+                    (.setAwsKmsRegion crypto (Region/getRegion (get-region {:endpoint (:region key)})) ))
+        em        (when-not (:kms-customer-master-key encryption)
+                    (invoke-constructor "com.amazonaws.services.s3.model.EncryptionMaterials"
+                    [key]))
+        materials (if-not (or key (:kms-customer-master-key encryption))
+                    (invoke-constructor
                     "com.amazonaws.services.s3.model.StaticEncryptionMaterialsProvider"
                     [em])
+                    (invoke-constructor "com.amazonaws.services.s3.model.KMSEncryptionMaterialsProvider"
+                    [(:id key)]))
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
-        client    (if config
-                      (invoke-constructor
-                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
-                        [creds materials config crypto])
-                      (invoke-constructor
-                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
-                        [creds materials crypto]))]
-    (set-endpoint! client credentials)
+        client   (cond-> (AmazonS3EncryptionClientBuilder/standard)
+                   (get-region credentials) (.withRegion (get-region credentials))
+                   true                     (.withCredentials creds)
+                   true                     (.withEncryptionMaterials materials)
+                   true                     (.withCryptoConfiguration crypto)
+                   config                   (.withClientConfiguration config)
+                   true                     (.build))]
     client))
 
 (swap! client-config assoc :encryption-client-fn (memoize encryption-client*))

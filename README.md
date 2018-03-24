@@ -1535,7 +1535,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
     {:configurations
       {:some-config-name
         {:queue "arn:aws:sqs:eu-west-1:123456789012:my-sqs-queue-name"
-         :events #{"ObjectCreatedByPut" "ObjectCreated"}
+         :events #{"s3:ObjectCreated:*"}
          ;; list of key value pairs as maps or nexted 2 element list
          :filter [{"foo" "bar"}
                   {:baz "quux"}

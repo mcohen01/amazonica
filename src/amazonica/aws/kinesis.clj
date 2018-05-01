@@ -73,10 +73,19 @@
           (f (:cred parsed) :stream-name stream :records data-byte))))))
 
 (defn unwrap
+  "Get the contents of the given buffer as a byte-array, decoding as
+  Nippy bytes if they appear to be Nippy encoded. If the ByteBuffer
+  does not appear to contain Nippy data, the bytes found will be
+  returned unchanged. This technique is inspired by ptaoussanis/faraday."
   [^java.nio.ByteBuffer byte-buffer]
-  (let [b (byte-array (.remaining byte-buffer))]
-    (.get byte-buffer b)
-    (nippy/thaw b)))
+  (let [byte-array (.array byte-buffer)
+        serialized? (#'nippy/try-parse-header byte-array)]
+    (if-not serialized?
+      byte-array ; No Nippy header => assume non-nippy binary data
+      (try ; Header match _may_ have been a fluke (though v. unlikely)
+        (nippy/thaw byte-array)
+        (catch Exception e
+          byte-array)))))
 
 (alter-var-root
   #'amazonica.aws.kinesis/get-shard-iterator

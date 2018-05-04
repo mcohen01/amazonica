@@ -210,7 +210,8 @@
   [cred args]
   (if (and (instance? AWSCredentialsProvider (get-credentials cred))
            (not (instance? AWSCredentialsProvider cred))
-           (nil? (:endpoint cred)))
+           (nil? (:endpoint cred))
+           (nil? (:profile cred)))
     {:args (conj args cred)}
     {:args args :cred cred}))
 

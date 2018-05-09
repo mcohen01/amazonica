@@ -18,7 +18,9 @@
              Region
              Regions]
            com.amazonaws.services.s3.AmazonS3EncryptionClientBuilder
-           com.amazonaws.client.builder.AwsSyncClientBuilder
+           [com.amazonaws.services.s3.model
+            CryptoConfiguration]
+           com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
@@ -29,6 +31,8 @@
            java.lang.reflect.ParameterizedType
            java.lang.reflect.Method
            java.lang.reflect.Modifier
+           java.lang.reflect.Constructor
+           java.lang.reflect.Parameter
            java.math.BigDecimal
            java.math.BigInteger
            java.nio.ByteBuffer
@@ -76,7 +80,7 @@
 
 (defn stack->string
   "Converts a Java stacktrace to String representation."
-  [ex]
+  [^Throwable ex]
   (let [sw (StringWriter.)
         pw (PrintWriter. sw)
         _  (.printStackTrace ex pw)]
@@ -92,7 +96,7 @@
   :service-name
   :message
   :stack-trace"
-  [e]
+  [^AmazonServiceException e]
   {:error-code   (.getErrorCode e)
    :error-type   (.toString (.getErrorType e))
    :status-code  (.getStatusCode e)
@@ -142,7 +146,7 @@
   `(binding [*client-config* ~config]
      (do ~@body)))
 
-(defn- builder ^AwsSyncClientBuilder [^Class clazz]
+(defn- builder ^AwsClientBuilder [^Class clazz]
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
     (.invoke method clazz (make-array Object 0))))
 
@@ -153,7 +157,7 @@
         _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
-        endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
+        ^String endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
         builder (if endpoint
                   (if (.startsWith endpoint "http")
                       (.withEndpointConfiguration
@@ -164,7 +168,7 @@
     (.build builder)))
 
 (defn- create-client
-  [clazz credentials configuration raw-creds options]
+  [^Class clazz credentials configuration raw-creds options]
   (if (= (.getSimpleName clazz) "TransferManager")
     (invoke-constructor
       "com.amazonaws.services.s3.transfer.TransferManager"
@@ -174,7 +178,7 @@
                       raw-creds {})])
     (build-client clazz credentials configuration raw-creds options)))
 
-(defn get-credentials
+(defn get-credentials ^AWSCredentialsProvider
   [credentials]
   (cond
     (instance? AWSCredentialsProvider credentials)
@@ -222,7 +226,7 @@
   (when (associative? configuration)
     (create-bean ClientConfiguration configuration)))
 
-(defn- get-region
+(defn- get-region ^Regions
   [credentials]
   (when-let [endpoint (or (:endpoint credentials)
                           (System/getenv "AWS_DEFAULT_REGION"))]
@@ -244,7 +248,7 @@
         key       (or (:secret-key encryption)
                       (:key-pair encryption)
                       (:kms-customer-master-key encryption))
-        crypto    (invoke-constructor
+        ^CryptoConfiguration crypto (invoke-constructor
                     "com.amazonaws.services.s3.model.CryptoConfiguration" [])
         _         (when (:kms-customer-master-key encryption)
                     (.setAwsKmsRegion crypto (Region/getRegion (get-region {:endpoint (:region key)})) ))
@@ -260,12 +264,12 @@
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
         client   (cond-> (AmazonS3EncryptionClientBuilder/standard)
-                   (get-region credentials) (.withRegion (get-region credentials))
-                   true                     (.withCredentials creds)
-                   true                     (.withEncryptionMaterials materials)
-                   true                     (.withCryptoConfiguration crypto)
-                   config                   (.withClientConfiguration config)
-                   true                     (.build))]
+                   (get-region credentials) ^AmazonS3EncryptionClientBuilder (.withRegion (get-region credentials))
+                   true                     ^AmazonS3EncryptionClientBuilder (.withCredentials creds)
+                   true                     ^AmazonS3EncryptionClientBuilder (.withEncryptionMaterials materials)
+                   true                     ^AmazonS3EncryptionClientBuilder (.withCryptoConfiguration crypto)
+                   config                   ^AmazonS3EncryptionClientBuilder (.withClientConfiguration config)
+                   true                     ^AmazonS3EncryptionClientBuilder (.build))]
     client))
 
 (swap! client-config assoc :encryption-client-fn (memoize encryption-client*))
@@ -302,7 +306,7 @@
    #(str/replace % #"(?i)iscsi" "ISCSI")
    #(str/replace % #"(?i)openid" "OPENID")))
 
-(defn- keyword->camel
+(defn- ^String keyword->camel
   [kw]
   (let [n (name kw)
         m (.replace n "?" "")]
@@ -311,7 +315,7 @@
          str/join)))
 
 (defn- aws-package?
-  [clazz]
+  [^Class clazz]
   (->> (.getName clazz)
        (re-find #"com\.amazonaws\.services")
        some?))
@@ -320,8 +324,8 @@
   [date]
   (cond
     (instance? java.util.Date date) date
-    (instance? AbstractInstant date) (.toDate date)
-    (integer? date) (java.util.Date. date)
+    (instance? AbstractInstant date) (.toDate ^AbstractInstant date)
+    (integer? date) (java.util.Date. (int date))
     true (.. (SimpleDateFormat. @date-format)
            (parse (str date) (ParsePosition. 0)))))
 
@@ -330,17 +334,18 @@
   (if (instance? File file)
     file
     (if (string? file)
-      (File. file))))
+      (File. ^String file))))
 
 (defn to-enum
   "Case-insensitive resolution of Enum types by String."
-  [type value]
+  ^java.lang.Enum [^Class type value]
   (some
-    #(if (and
-           (not (nil? (.toString %))) ; some aws enums return nil!
-           (= (str/upper-case value)
-             (str/upper-case (.toString %))))
-      %)
+    (fn [^java.lang.Enum en]
+      (if (and
+            (not (nil? (.toString en))) ; some aws enums return nil!
+            (= (str/upper-case value)
+               (str/upper-case (.toString en))))
+        en))
     (-> type
         (.getDeclaredMethod "values" (make-array Class 0))
         (.invoke type (make-array Object 0)))))
@@ -384,7 +389,7 @@
   "Coerces the supplied stringvalue to the required type as
   defined by the AWS method signature. String or keyword
   conversion to Enum types (e.g. via valueOf()) is supported."
-  [value type]
+  [value ^Class type]
   (let [value (if (keyword? value) (name value) value)]
     (if-not (instance? type value)
       (if (= java.lang.Enum (.getSuperclass type))
@@ -409,7 +414,7 @@
     class-name))
 
 (defn- constructor-args
-  [ctor]
+  [^Constructor ctor]
   (let [types (.getParameterTypes ctor)]
     (if (= 0 (count types))
       (make-array Object 0)
@@ -420,17 +425,16 @@
 
 (defn best-constructor
   "Prefer no-arg ctor if one exists, else the first found."
-  [clazz]
+  ^Constructor [^Class clazz]
   {:pre [clazz]}
   (let [ctors (.getConstructors clazz)]
     (or
       (some
-        #(if (= 0 (count (.getParameterTypes %)))
-          %
-          nil)
+        (fn [^Constructor ctor]
+          (when (= 0 (count (.getParameterTypes ctor))) ctor))
         ctors)
       (first (sort-by
-               (fn [ctor]
+               (fn [^Constructor ctor]
                  (some aws-package? (.getParameterTypes ctor)))
                ctors)))))
 
@@ -448,19 +452,19 @@
   [depth param]
   (if (instance? ParameterizedType param)
       (let [f (partial unwind-types (inc depth))
-            types (-> param .getActualTypeArguments)
+            types (-> ^ParameterizedType param .getActualTypeArguments)
             t (-> types last f)]
         (if (and (instance? ParameterizedType (last types))
                  (.contains (-> types last str) "java.util")
                  (.contains (-> types last str) "java.lang"))
-          {:type [(-> types last .getRawType)]
+          {:type [(-> types ^ParameterizedType last .getRawType)]
            :depth depth}
           t))
       {:type [param]
        :depth depth}))
 
 (defn- paramter-types
-  [method]
+  [^Method method]
   (let [types (seq (.getGenericParameterTypes method))
         param (last types)
         rval  {:generic types}]
@@ -472,8 +476,8 @@
         rval)))
 
 (defn- normalized-name
-  [method-name]
-  (-> (name method-name)
+  [^String method-name]
+  (-> method-name
       (.replaceFirst
         (case (.substring method-name 0 3)
           "get" "get"
@@ -491,22 +495,24 @@
    in the DynamoDBV2Client.
    http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/DeleteItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)
    http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/dynamodbv2/model/GetItemRequest.html#setKey(java.util.Map.Entry, java.util.Map.Entry)"
-  [method name value]
-  (let [args (.getParameterTypes method)]
+  [^Method method name value]
+  (let [args (.getParameterTypes method)
+        n (count args)
+        ^Class clazz (first args)]
     (and (= name (normalized-name (.getName method)))
          (if (empty? value)
-             (= 0 (count args))
-             (and (< 0 (count args))
-                  (or (= (count args) (count (flatten value)))
+             (= 0 n)
+             (and (< 0 n)
+                  (or (= n (count (flatten value)))
                       (and (coll? value)
-                           (= 1 (count args))
-                           (or (contains? @coercions (first args))
-                               (.isArray (first args))
-                               (and (.getPackage (first args))
+                           (= 1 n)
+                           (or (contains? @coercions clazz)
+                               (.isArray clazz)
+                               (and (.getPackage clazz)
                                     (.startsWith
-                                      (.getName (.getPackage (first args)))
+                                      (.getName (.getPackage clazz))
                                       "java.util")))))
-                  (not (and (= 2 (count args))
+                  (not (and (= 2 n)
                             (every? (partial = java.util.Map$Entry)
                                     args))))))))
 
@@ -520,7 +526,7 @@
     class-methods))
 
 (defn- find-methods
-  [pojo k & v]
+  [^Object pojo k & v]
   (-> (.getClass pojo)
       (.getMethods)
       (accessor-methods
@@ -537,18 +543,18 @@
         (java.util.HashMap.)
         (.putAll col))
     (set? col)
-      (java.util.HashSet. col)
+      (java.util.HashSet. ^java.util.Set col)
     (or (list? col) (vector? col))
-      (java.util.ArrayList. col)))
+      (java.util.ArrayList. ^java.util.Collection col)))
 
 (defn- invoke
-  [pojo method v]
+  [pojo ^Method method v]
   (.invoke method pojo
     (into-array
       ;; misbehaving S3Client mutates the coll
       (if (and (coll? v)
                (not (nil? *client-class*))
-               (= "AmazonS3Client" (.getSimpleName *client-class*)))
+               (= "AmazonS3Client" (.getSimpleName ^Class *client-class*)))
         (if (and (> (count (.getParameterTypes method)) 1)
                  (sequential? v))
           (to-java-coll v)
@@ -570,8 +576,8 @@
 (defn- unmarshall
   "Transform Clojure data to the required Java objects."
   [types col]
-  (let [type (last (or (:actual types)
-                       (:generic types)))
+  (let [^Class type (last (or (:actual types)
+                              (:generic types)))
         pp   (partial populate types :actual)]
     (try
       (if (aws-package? type)
@@ -643,7 +649,7 @@
    bean passed as the argument to a method call on the
    Amazon*Client class. (Note that we assume all AWS
    service calls take at most a single argument.)"
-  [method args]
+  [^Method method args]
   (let [clazz (first (.getParameterTypes method))]
     (if (contains? @coercions clazz)
         (coerce-value (into {} args) clazz)
@@ -661,7 +667,7 @@
   (marshall [obj]))
 
 (defn- getter?
-  [method]
+  [^Method method]
   (let [name (.getName method)
         type (.getName (.getReturnType method))]
     (or (and
@@ -673,19 +679,20 @@
 
 (defn accessors
   "Returns a vector of getters or setters for the class."
-  [clazz getters?]
+  [^Class clazz getters?]
   (reduce
-    #(if (or
-           (and getters? (getter? %2))
-           (and (not getters?)
-                (.startsWith (.getName %2) "set")))
-      (conj % %2)
-      %)
+    (fn [acc ^Method m]
+      (if (or
+            (and getters? (getter? m))
+            (and (not getters?)
+                 (.startsWith (.getName m) "set")))
+        (conj acc m)
+        acc))
     []
     (.getDeclaredMethods clazz)))
 
 (defn- prop->name
-  [method]
+  [^Method method]
   (let [name (.getName method)]
     (if (.startsWith name "is")
       (str (.substring name 2) "?")
@@ -697,7 +704,7 @@
   [obj]
   (let [no-arg (make-array Object 0)]
     (into {}
-      (for [m (accessors (class obj) true)]
+      (for [^Method m (accessors (class obj) true)]
         (let [r (marshall (.invoke m obj no-arg))]
           (if-not (nil? r)
             (hash-map
@@ -739,7 +746,7 @@
         obj)))
 
 (defn- use-aws-request-bean?
-  [method args]
+  [^Method method args]
   (let [types (.getParameterTypes method)]
     (and (or (map? args) (< 1 (count args)))
          (< 0 (count types))
@@ -757,35 +764,36 @@
                   (not (< (count types) (count args))))))))
 
 (defn- prepare-args
-  [method args]
+  [^Method method args]
   (let [types (.getParameterTypes method)
         num   (count types)]
     (if (and (empty? args) (= 0 num))
       (into-array Object args)
       (if (= num (count args))
         (into-array Object
-          (map #(if (and (aws-package? %2) (seq (.getConstructors %2)))
-                  ; must be a concrete, instantiatable class
-                  (if (contains? @coercions %2)
-                      (coerce-value % %2)
-                      (create-bean %2 %))
-                  (coerce-value % %2))
-               (vec args)
-               types))
+                    (map (fn [arg ^Class clazz]
+                           (if (and (aws-package? clazz) (seq (.getConstructors clazz)))
+                             ; must be a concrete, instantiatable class
+                             (if (contains? @coercions clazz)
+                               (coerce-value arg clazz)
+                               (create-bean clazz arg))
+                             (coerce-value arg clazz)))
+                         (vec args)
+                         types))
         (if (use-aws-request-bean? method args)
           (cond
             (= 1 num)
             (into-array Object
                         [(create-request-bean
-                            method
-                            (seq (apply hash-map args)))])
+                           method
+                           (seq (apply hash-map args)))])
             (and (aws-package? (first types))
                  (= 2 num)
                  (= File (last types)))
             (into-array Object
                         [(create-request-bean
-                            method
-                            (seq (apply hash-map (butlast args))))
+                           method
+                           (seq (apply hash-map (butlast args))))
                          (last args)])))))))
 
 
@@ -833,7 +841,7 @@
 (swap! client-config assoc :transfer-manager-fn (memoize transfer-manager*))
 
 (defn candidate-client
-  [clazz args]
+  [^Class clazz args]
   (let [cred-bound (or *credentials* (:credential args))
         credential (if (map? cred-bound)
                              (merge @credential cred-bound)
@@ -858,7 +866,7 @@
   "Returns a function that reflectively invokes method on
    clazz with supplied args (if any). The 'method' here is
    the Java method on the Amazon*Client class."
-  [clazz method & arg]
+  [clazz ^Method method & arg]
   (binding [*client-class* clazz]
     (let [args    (args-from arg)
           arg-arr (prepare-args method (:args args))
@@ -877,7 +885,7 @@
             (throw (.getTargetException ite))))))))
 
 (defn- types-match-args
-  [args method]
+  [args ^Method method]
   (let [types (.getParameterTypes method)]
     (if (and (= (count types) (count args))
              (every? identity (map instance? types args)))
@@ -892,18 +900,18 @@
       (first possible)
       (first
         (sort-by
-          (fn [method]
+          (fn [^Method method]
             (let [types (.getParameterTypes method)]
               (cond
                 (some coercible? types) 1
-                (some #(= java.lang.Enum (.getSuperclass %)) types) 2
+                (some #(= java.lang.Enum (.getSuperclass ^Class %)) types) 2
                 :else 3)))
           possible))))
 
 (defn possible-methods
   [methods args]
   (filter
-    (fn [method]
+    (fn [^Method method]
       (let [types (.getParameterTypes method)
             num   (count types)]
         (if (or
@@ -940,7 +948,7 @@
 
 (defn- type-clojure-name
   "Given a `java.lang.Class` return it's name in kabob case"
-  [type]
+  [^Class type]
   (let [type-name (last (.. type getName (split "\\.")))
         type-name (if-let [;; Check for a type name like "[C" etc.
                            [_ name] (re-matches #"\[([A-Z]+)$" type-name)]
@@ -951,7 +959,7 @@
 (defn- parameter-clojure-name
   "Given a `java.lang.reflect.Parameter` return it's name in kabob
   case."
-  [parameter]
+  [^Parameter parameter]
   (if (. parameter isNamePresent)
     (clojure-case (. parameter getName))
     ;; The name will be synthesized so instead we'll derive
@@ -967,10 +975,10 @@
   ;; numbers that are 1.7.X and below.
   (if (re-matches #"[^2-9]\.[1-7]\..+" (System/getProperty "java.version"))
     ;; Java 1.7 and below.
-    (fn [method]
+    (fn [^Method method]
       (map type-clojure-name (. method getParameterTypes)))
     ;; Java 1.8 and above.
-    (fn [method]
+    (fn [^Method method]
       (map parameter-clojure-name (. method getParameters)))))
 
 (defn- method-arglist
@@ -1030,14 +1038,14 @@
   "Returns a map with keys of idiomatic Clojure hyphenated keywords
   corresponding to the public Java method names of the class argument, vals are
   vectors of java.lang.reflect.Methods."
-  [client]
+  [^Class client]
   (->> (.getDeclaredMethods client)
-       (remove (fn [method]
+       (remove (fn [^Method method]
                  (let [mods (.getModifiers method)]
                    (or (not (Modifier/isPublic mods))
                        (Modifier/isStatic mods)
                        (.isSynthetic method)))))
-       (group-by #(camel->keyword (.getName %)))))
+       (group-by #(camel->keyword (.getName ^Method %)))))
 
 (defn- show-functions [ns]
   (intern ns (symbol "show-functions")
@@ -1054,7 +1062,7 @@
   (intern ns 'client-class client)
   (doseq [[fname methods] (client-methods client)
           :let [the-var (intern-function client ns fname methods)
-                fname2 (-> methods first .getName camel->keyword2)]]
+                fname2 (-> methods ^Method first .getName camel->keyword2)]]
     (when (not= fname fname2)
       (let [the-var2 (intern-function client ns fname2 methods)]
         (alter-meta! the-var assoc :amazonica/deprecated-in-favor-of the-var2)))))

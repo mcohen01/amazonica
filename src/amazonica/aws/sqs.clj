@@ -61,14 +61,16 @@
 (add-hook #'receive-message #'delete-on-receive)
 
 (defn find-queue [& s]
-  (some #(if (.contains % (or (second s) (first s))) %)
-        (:queue-urls (list-queues (first s)))))
+  (some
+    (fn [^String q]
+      (when (.contains q (or (second s) (first s))) q))
+    (:queue-urls (list-queues (first s)))))
 
 (defn arn [q] (-> q get-queue-attributes :QueueArn))
 
 (defn assign-dead-letter-queue
   [queue dlq max-receive-count]
   (set-queue-attributes
-    queue {"RedrivePolicy" 
+    queue {"RedrivePolicy"
            (str "{\"maxReceiveCount\": " max-receive-count ",
                   \"deadLetterTargetArn\": \"" (arn dlq) "\"}")}))

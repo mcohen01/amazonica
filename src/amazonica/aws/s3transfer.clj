@@ -5,7 +5,7 @@
             ProgressEvent
             ProgressEventType
             ProgressListener]
-           [com.amazonaws.services.s3.transfer            
+           [com.amazonaws.services.s3.transfer
               Copy
               Download
               MultipleFileUpload
@@ -18,9 +18,9 @@
 (defn- default-listener [transfer e]
   (cond (= (:event e) :failed)    (println ((:wait-for-exception transfer)))
         (= (:event e) :completed) (println "Transfer complete.")))
-      
+
 (defn add-listener
-  [obj]
+  [^Transfer obj]
   (fn [f]
     (let [listener (reify ProgressListener
                      (progressChanged [this event]
@@ -35,16 +35,16 @@
      (do ~@body)))
 
 (defn transfer
-  [obj]
+  [^Transfer obj]
   {:transfer                 obj
    :add-progress-listener    (add-listener obj)
    :get-description          (wait obj (.getDescription obj))
    :get-progress             #(marshall (.getProgress obj))
    :get-state                #(str (.getState obj))
    :is-done                  #(.isDone obj)
-   :abort                    #(.abort obj)
-   :pause                    #(.pause obj)
-   :remove-progress-listener #(.removeProgressListener obj %)
+   :abort                    #(if (instance? Download obj) (.abort ^Download obj) (.abort ^Upload obj))
+   :pause                    #(if (instance? Download obj) (.pause ^Download obj) (.pause ^Upload obj))
+   :remove-progress-listener #(.removeProgressListener obj ^ProgressListener %)
    :wait-for-completion      #(.waitForCompletion obj)
    :wait-for-exception       #(stack->string (.waitForException obj))})
 
@@ -63,7 +63,7 @@
       (merge (transfer obj)
              {:try-pause     #(.tryPause obj %)
               :upload-result #(marshall (.waitForUploadResult obj))})))
-  
+
   Copy
   (marshall [obj]
     (let [t (transfer obj)]
@@ -77,13 +77,13 @@
       (merge t {:key             (wait obj (.getKey obj))
                 :bucket-name     (wait obj (.getBucketName obj))
                 :object-metadata (wait obj (marshall (.getObjectMetadata obj)))})))
-  
+
   MultipleFileUpload
   (marshall [obj]
     (merge (transfer obj)
            {:bucket-name #(.getBucketName obj)
             :key-prefix  #(.getKeyPrefix obj)}))
-  
+
   MultipleFileDownload
   (marshall [obj]
     (merge (transfer obj)

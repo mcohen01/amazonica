@@ -5,7 +5,7 @@
 
 (amz/set-client AWSLambdaClient *ns*)
 
-(defn byte-buffer-zip-file [function-name body]
+(defn byte-buffer-zip-file [function-name ^String body]
   (let [baos (java.io.ByteArrayOutputStream.)
         zos  (java.util.zip.ZipOutputStream. baos)]
     (.putNextEntry zos (java.util.zip.ZipEntry. (str function-name ".js")))
@@ -15,7 +15,7 @@
     (java.nio.ByteBuffer/wrap (.toByteArray baos))))
 
 (defn function-name [node-fn]
-  (-> (re-find #"exports\..+=" node-fn)
+  (-> ^String (re-find #"exports\..+=" node-fn)
       (.replaceFirst "exports." "")
       (.replaceFirst "=" "")
       .trim))

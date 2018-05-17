@@ -4,7 +4,7 @@
            [com.amazonaws.services.ec2.model PortRange Tag]))
 
 (defn- key->str [kw]
-  (if (keyword? kw) 
+  (if (keyword? kw)
       (name kw)
       (str kw)))
 
@@ -28,8 +28,8 @@
       (cond
         (string? value)
         (do
-          (.setFrom ports (Integer. value))
-          (.setTo ports (Integer. value)))
+          (.setFrom ports (Integer. ^String value))
+          (.setTo ports (Integer. ^String value)))
         (number? value)
         (do
           (.setFrom ports (int value))

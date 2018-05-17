@@ -3,12 +3,12 @@
         [robert.hooke :only (add-hook)])
   (:import com.amazonaws.services.glacier.AmazonGlacierClient
            amazonica.TreeHash
-           [java.io BufferedInputStream FileInputStream]))
+           [java.io File BufferedInputStream FileInputStream]))
 
 (set-client AmazonGlacierClient *ns*)
 
 (defn- file-hash->map
-  [file]
+  [^File file]
   {:content-length (.length file)
    :checksum       (-> file
                        TreeHash/computeSHA256TreeHash

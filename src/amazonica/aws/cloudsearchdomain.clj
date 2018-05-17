@@ -1,10 +1,11 @@
 (ns amazonica.aws.cloudsearchdomain
   (:require [amazonica.core :as amz])
-  (:import com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient))
+  (:import com.amazonaws.services.cloudsearchdomain.AmazonCloudSearchDomainClient
+           com.amazonaws.AmazonWebServiceClient))
 
 (amz/set-client AmazonCloudSearchDomainClient *ns*)
 
 (defn set-endpoint [& args]
   (.setEndpoint
-    (amz/candidate-client AmazonCloudSearchDomainClient args)
+    ^AmazonWebServiceClient (amz/candidate-client AmazonCloudSearchDomainClient args)
     (last args)))

@@ -10,7 +10,8 @@
              AttributeValue
              KeysAndAttributes
              ProvisionedThroughput]
-           java.nio.ByteBuffer))
+           java.nio.ByteBuffer
+           java.lang.reflect.Method))
 
 (defn- parse-number
   [^String ns]
@@ -104,7 +105,7 @@
       pt)))
 
 (->> (.getMethods AmazonDynamoDBClient)
-     (filter #(= "setSignerRegionOverride" (.getName %)))
+     (filter #(= "setSignerRegionOverride" (.getName ^Method %)))
      (intern-function AmazonDynamoDBClient *ns* :set-signer-region-override))
 
 (set-client AmazonDynamoDBClient *ns*)

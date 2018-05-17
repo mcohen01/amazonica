@@ -23,6 +23,7 @@
               ObjectMetadata
               Owner
               Permission
+              NotificationConfiguration
               QueueConfiguration
               S3KeyFilter
               S3Object
@@ -33,17 +34,15 @@
 
 (defn- notification-configuration-instance
   [value]
-  (let [ks (->> value keys (reduce str))]
+  (let [^String ks (->> value keys (reduce str))
+        ^"[Ljava.lang.String;" events (into-array (:events value))]
     (cond
       (.contains ks "queue")
-      (QueueConfiguration. (or (:queue-ARN value) (:queue value))
-                           (into-array (:events value)))
+      (QueueConfiguration. (or ^String (:queue-ARN value) ^String (:queue value)) events)
       (.contains ks "topic")
-      (TopicConfiguration. (or (:topic-ARN value) (:topic value))
-                           (into-array (:events value)))
+      (TopicConfiguration. (or ^String (:topic-ARN value) ^String (:topic value)) events)
       (.contains ks "function")
-      (LambdaConfiguration. (or (:function-ARN value) (:function value))
-                            (into-array (:events value))))))
+      (LambdaConfiguration. (or ^String (:function-ARN value) ^String (:function value)) events))))
 
 (defn- as-bucket-notification-config
   [value]
@@ -73,7 +72,7 @@
     (.setFilterRules s3ft (map f value))
     fltr))
 
-(defn- set-account-owner [acl]
+(defn- set-account-owner [^AccessControlList acl]
   (let [s3ns (find-ns (symbol "amazonica.aws.s3"))
         sym  (symbol "get-s3account-owner")
         own  (ns-resolve s3ns sym)]
@@ -83,7 +82,7 @@
         (println "[WARN] Unable to set account owner for ACL: "
                  (.getMessage e))))))
 
-(defn- notification-config [obj]
+(defn- notification-config [^NotificationConfiguration obj]
   {:events (set (.getEvents obj))
    :filter (marshall (.getFilter obj))})
 
@@ -248,16 +247,14 @@
       (when-let [max-age-seconds (:max-age-seconds col)]
         (.setMaxAgeSeconds cors max-age-seconds))
       (when-let [allowed-headers (:allowed-headers col)]
-        (.setAllowedHeaders cors (into-array String allowed-headers)))
+        (.setAllowedHeaders cors ^"[Ljava.lang.String;" (into-array allowed-headers)))
       (when-let [allowed-origins (:allowed-origins col)]
-        (.setAllowedOrigins cors (into-array String allowed-origins)))
+        (.setAllowedOrigins cors ^"[Ljava.lang.String;" (into-array allowed-origins)))
       (when-let [exposed-headers (:exposed-headers col)]
-        (.setExposedHeaders cors (into-array String exposed-headers)))
+        (.setExposedHeaders cors ^"[Ljava.lang.String;" (into-array exposed-headers)))
       (when-let [allowed-methods (:allowed-methods col)]
-        (.setAllowedMethods cors
-                            (into-array CORSRule$AllowedMethods
-                    (fmap #(coerce-value % CORSRule$AllowedMethods)
-                          allowed-methods))))
+        (.setAllowedMethods cors ^"[Lcom.amazonaws.services.s3.model.CORSRule$AllowedMethods;"
+                            (into-array (fmap #(coerce-value % CORSRule$AllowedMethods) allowed-methods))))
       cors)))
 
 (amazonica.core/set-client AmazonS3Client *ns*)

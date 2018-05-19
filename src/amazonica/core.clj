@@ -255,12 +255,12 @@
         em        (when-not (:kms-customer-master-key encryption)
                     (invoke-constructor "com.amazonaws.services.s3.model.EncryptionMaterials"
                     [key]))
-        materials (if-not (or key (:kms-customer-master-key encryption))
+        materials (if (:kms-customer-master-key encryption)
+                    (invoke-constructor "com.amazonaws.services.s3.model.KMSEncryptionMaterialsProvider"
+                    [(:id key)])
                     (invoke-constructor
                     "com.amazonaws.services.s3.model.StaticEncryptionMaterialsProvider"
-                    [em])
-                    (invoke-constructor "com.amazonaws.services.s3.model.KMSEncryptionMaterialsProvider"
-                    [(:id key)]))
+                    [em]))
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
         client   (cond-> (AmazonS3EncryptionClientBuilder/standard)

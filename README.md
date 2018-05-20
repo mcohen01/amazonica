@@ -48,6 +48,7 @@ and the following dependency:
 * CodePipeline
 * CodeStar
 * [CognitoIdentityProviders](#cognitoidentityproviders)
+* [Comprehend](#comprehend)
 * Config
 * CostAndUsageReport
 * CostExplorer
@@ -627,6 +628,15 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (list-user-pools {:max-results 2})
 => {:user-pools [{:lambda-config {}, :last-modified-date "2017-06-16T14:16:28.950-03:00"], :creation-date "2017-06-15T16:23:04.555-03:00"], :name "Amazonica", :id "us-west-1_example"}]}
 
+```
+
+### Comprehend
+```clj
+(ns com.example
+(:require [amazaonica.aws.comprehend :refer :all]))
+
+(amazonica.aws.comprehend/detect-entities {:language-code "en" :text "Hi my name is Joe Bloggs and I live in Glasgow, Scotland"})
+=> {:entities [{:type "PERSON", :text "Joe Bloggs", :score 0.99758613, :begin-offset 14, :end-offset 24} {:type "LOCATION", :text "Glasgow, Scotland", :score 0.93267196, :begin-offset 39, :end-offset 56}]}
 ```
 
 ### DataPipeline

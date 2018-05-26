@@ -1,23 +1,27 @@
 (ns amazonica.aws.sqs
   (:use [amazonica.core :only (kw->str parse-args)]
-        [clojure.walk]
+        [clojure.walk :only (stringify-keys)]
         [robert.hooke :only (add-hook)])
   (:import com.amazonaws.services.sqs.AmazonSQSClient))
 
 (amazonica.core/set-client AmazonSQSClient *ns*)
+
+(defn- parse-attrs [x]
+  (let [args (if (associative? (first x))
+                 (first x)
+                 (apply hash-map x))
+        attrs (:attributes args)]
+    (if attrs
+        (merge args {:attributes (stringify-keys attrs)})
+        args)))
 
 (defn- attr-keys->str
   [f cred & args]
   (let [arg-map (parse-args cred args)
         func    (if (contains? arg-map :cred)
                     (partial f cred)
-                    f)
-        attrs   (if (even? (count (:args arg-map)))
-                    (mapcat identity
-                            (-> (apply hash-map (:args arg-map))
-                                (update-in [:attributes] stringify-keys)))
-                    (:args arg-map))]
-    (apply func attrs)))
+                    f)]
+    (apply func (mapcat identity (parse-attrs (:args arg-map))))))
 
 (defn- message-ids
   [messages]

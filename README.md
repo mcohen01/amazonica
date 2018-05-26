@@ -1698,7 +1698,7 @@ To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/la
 (delete-message (-> msgs
                     :messages
                     first
-                    (assoc :queue-url q)))
+                    (assoc :queue-url queue)))
 
 (receive-message :queue-url queue
                  :wait-time-seconds 6

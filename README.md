@@ -585,13 +585,28 @@ Amazonica uses reflection extensively, to generate the public Vars, to set the b
 
 To put metric data.   [UnitTypes](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html)
 ```clj
-(cloudwatch/put-metric-data
+(put-metric-data
     {:endpoint "us-west-1"} ;; Defaults to us-east-1
     :namespace "test_namespace"
     :metric-data [{:metric-name "test_metric"
                    :unit "Count"
                    :value 1.0
                    :dimensions [{:name "test_name" :value "test_value"}]}])
+```
+
+To batch get metric data.
+```clj
+(get-metric-data
+ :start-time "2018-06-14T00:00:00Z"
+ :end-time   "2018-06-15T00:00:00Z"
+ :metric-data-queries [{:id "test"
+                        :metricStat {:metric {:namespace "AWS/DynamoDB"
+                                              :metricName "ProvisionedReadCapacityUnits"
+                                              :dimensions [{:name "TableName"
+                                                            :value "MyTableName"}]}
+                                     :period 86400
+                                     :stat "Sum"
+                                     :unit "Count"}}])
 ```
 
 ### CloudWatchEvents

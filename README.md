@@ -915,7 +915,7 @@ To batch get metric data.
 
 (describe-environments)
 
-(create-environment creds
+(create-environment cred
                     {:application-name "app"
                      :environment-name "env"
                      :version-label "1.0"

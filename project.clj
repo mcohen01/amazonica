@@ -10,7 +10,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/algo.generic "0.1.2"]
                  [com.amazonaws/aws-java-sdk "1.11.347" :exclusions [joda-time]]
-                 [com.amazonaws/amazon-kinesis-client "1.7.5" :exclusions [joda-time]]
+                 [com.amazonaws/amazon-kinesis-client "1.9.1" :exclusions [joda-time]]
                  [com.amazonaws/dynamodb-streams-kinesis-adapter "1.2.1"
                   :exclusions [com.amazonaws/amazon-kinesis-client
                                com.amazonaws/aws-java-sdk-cloudwatch

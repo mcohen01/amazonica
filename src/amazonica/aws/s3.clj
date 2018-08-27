@@ -38,11 +38,11 @@
         ^"[Ljava.lang.String;" events (into-array (:events value))]
     (cond
       (.contains ks "queue")
-      (QueueConfiguration. (or ^String (:queue-ARN value) ^String (:queue value)) events)
+      (QueueConfiguration. (or ^String (:queue-arn value) ^String (:queue-ARN value) ^String (:queue value)) events)
       (.contains ks "topic")
-      (TopicConfiguration. (or ^String (:topic-ARN value) ^String (:topic value)) events)
+      (TopicConfiguration. (or ^String (:topic-arn value) ^String (:topic-ARN value) ^String (:topic value)) events)
       (.contains ks "function")
-      (LambdaConfiguration. (or ^String (:function-ARN value) ^String (:function value)) events))))
+      (LambdaConfiguration. (or ^String (:function-arn value) ^String (:function-ARN value) ^String (:function value)) events))))
 
 (defn- as-bucket-notification-config
   [value]

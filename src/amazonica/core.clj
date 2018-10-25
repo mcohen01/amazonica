@@ -1,19 +1,15 @@
 (ns amazonica.core
   "Amazon AWS functions."
   (:use [clojure.algo.generic.functor :only (fmap)])
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [amazonica.credentials :as creds])
   (:import clojure.lang.Reflector
            [com.amazonaws
              AmazonServiceException
              ClientConfiguration]
            [com.amazonaws.auth
              AWSCredentials
-             AWSCredentialsProvider
-             AWSStaticCredentialsProvider
-             BasicAWSCredentials
-             BasicSessionCredentials
-             DefaultAWSCredentialsProviderChain]
-           com.amazonaws.auth.profile.ProfileCredentialsProvider
+             AWSCredentialsProvider]
            [com.amazonaws.regions
              Region
              Regions]
@@ -178,35 +174,8 @@
                       raw-creds {})])
     (build-client clazz credentials configuration raw-creds options)))
 
-(defn get-credentials ^AWSCredentialsProvider
-  [credentials]
-  (cond
-    (instance? AWSCredentialsProvider credentials)
-      credentials
-    (instance? AWSCredentials credentials)
-      (AWSStaticCredentialsProvider. credentials)
-    (and (associative? credentials)
-         (contains? credentials :session-token))
-    (AWSStaticCredentialsProvider.
-      (BasicSessionCredentials.
-        (:access-key credentials)
-        (:secret-key credentials)
-        (:session-token credentials)))
-    (and (associative? credentials)
-         (contains? credentials :access-key))
-    (AWSStaticCredentialsProvider.
-      (BasicAWSCredentials.
-        (:access-key credentials)
-        (:secret-key credentials)))
-    (and (associative? credentials)
-         (contains? credentials :profile))
-    (ProfileCredentialsProvider.
-        (:profile credentials))
-    (and (associative? credentials)
-         (instance? AWSCredentialsProvider (:cred credentials)))
-    (:cred credentials)
-    :else
-    (DefaultAWSCredentialsProviderChain.)))
+(def get-credentials
+  creds/get-credentials)
 
 (defn parse-args
   "Legacy support means credentials may or may not be passed

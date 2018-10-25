@@ -1,7 +1,6 @@
 (ns amazonica.credentials
   (:require [clojure.java.shell])
   (:import [com.amazonaws.auth.profile.internal
-            BasicProfileConfigLoader
             AwsProfileNameLoader]
            [com.amazonaws.auth.profile
             ProfilesConfigFile
@@ -15,7 +14,7 @@
             BasicSessionCredentials
             DefaultAWSCredentialsProviderChain
             EC2ContainerCredentialsProviderWrapper
-            EnvironmentVariableCredentialsProvider            
+            EnvironmentVariableCredentialsProvider
             SystemPropertiesCredentialsProvider]))
 
 (defn load-profile-name []
@@ -53,10 +52,10 @@
                               SecretAccessKey
                               SessionToken)))
 
-(defn extended-profile-credentials-provider ^AWSCredentialsProvider
-  ([]
+(defn extended-profile-credentials-provider
+  (^AWSCredentialsProvider []
    (extended-profile-credentials-provider (load-profile-name)))
-  ([profile-name]
+  (^AWSCredentialsProvider [profile-name]
    (let [provider (ProfileCredentialsProvider. profile-name)]
      (reify AWSCredentialsProvider
        (getCredentials [_]
@@ -71,7 +70,7 @@
                ;; Re-throw, profile doesn't exist
                (throw e)))))))))
 
-(defn extended-default-credentials-provider-chain ^AWSCredentialsProvider []
+(defn extended-default-credentials-provider-chain ^AWSCredentialsProviderChain []
   ;; As in https://github.com/aws/aws-sdk-java/blob/34acb557b674b157d854d1e6d1d583256d8fefd1/aws-java-sdk-core/src/main/java/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.java
   (AWSCredentialsProviderChain.
    (java.util.ArrayList. [(EnvironmentVariableCredentialsProvider.)

@@ -3,6 +3,8 @@
 
 A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
+See [API Reference][25]
+
 ## Installation
 
 Leiningen coordinates:
@@ -1786,3 +1788,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [22]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/profile/ProfileCredentialsProvider.html
 [23]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/AWSCredentialsProvider.html
 [24]:http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/AWSCredentials.html
+[25]:https://cljdoc.org/d/amazonica/amazonica/CURRENT/api/amazonica

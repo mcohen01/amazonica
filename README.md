@@ -3,8 +3,6 @@
 
 A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
-See [API Reference][25]
-
 ## Installation
 
 Leiningen coordinates:
@@ -127,7 +125,7 @@ and the following dependency:
                  :description "my_new_snapshot")
 ```
 
-Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found  in the [AWS Javadocs][2].
+Amazonica reflectively delegates to the Java client library, as such it supports the complete set of remote service calls implemented by each of the service-specific AWS client classes (e.g. AmazonEC2Client, AmazonS3Client, etc.), the documentation for which can be found in the [AWS Javadocs][2]. [cljdoc function references][25] are also available.
 
 Reflection is used to create idiomatically named Clojure Vars in the library namespaces corresponding to the AWS service. camelCase Java methods become lower-case, hyphenated Clojure functions. So for example, if you want to create a snapshot of a running EC2 instance, you'd simply
 ```clj

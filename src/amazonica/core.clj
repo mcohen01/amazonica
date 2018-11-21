@@ -17,9 +17,6 @@
            [com.amazonaws.regions
              Region
              Regions]
-           com.amazonaws.services.s3.AmazonS3EncryptionClientBuilder
-           [com.amazonaws.services.s3.model
-            CryptoConfiguration]
            com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
@@ -248,7 +245,7 @@
         key       (or (:secret-key encryption)
                       (:key-pair encryption)
                       (:kms-customer-master-key encryption))
-        ^CryptoConfiguration crypto (invoke-constructor
+        crypto    (invoke-constructor
                     "com.amazonaws.services.s3.model.CryptoConfiguration" [])
         _         (when (:kms-customer-master-key encryption)
                     (.setAwsKmsRegion crypto (Region/getRegion (get-region {:endpoint (:region key)})) ))
@@ -263,13 +260,13 @@
                     [em]))
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
-        client   (cond-> (AmazonS3EncryptionClientBuilder/standard)
-                   (get-region credentials) ^AmazonS3EncryptionClientBuilder (.withRegion (get-region credentials))
-                   true                     ^AmazonS3EncryptionClientBuilder (.withCredentials creds)
-                   true                     ^AmazonS3EncryptionClientBuilder (.withEncryptionMaterials materials)
-                   true                     ^AmazonS3EncryptionClientBuilder (.withCryptoConfiguration crypto)
-                   config                   ^AmazonS3EncryptionClientBuilder (.withClientConfiguration config)
-                   true                     ^AmazonS3EncryptionClientBuilder (.build))]
+        client    (if config
+                      (invoke-constructor
+                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
+                        [creds materials config crypto])
+                      (invoke-constructor
+                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
+                        [creds materials crypto]))]
     client))
 
 (swap! client-config assoc :encryption-client-fn (memoize encryption-client*))

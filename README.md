@@ -1734,7 +1734,7 @@ To batch get metric data.
 
 ;this is to start the execution, then you need to run get-activity-task-result ultimately to monitor for pending requests from the state machine components
 ;to execute a worker task.
-(start-state-machine "arn:aws:states:us-east-1:xxxxxxxxxx:stateMachine:test-sf" "{\"test\":\"test\"}")
+(start-state-machine "{\"test\":\"test\"}" "arn:aws:states:us-east-1:xxxxxxxxxx:stateMachine:test-sf")
 
 ;this will block until it returns a task in the queue from a state machine execution,
 ;so you need to run it in a while loop on the worker side of your app.

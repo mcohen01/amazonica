@@ -203,7 +203,7 @@
          (instance? AWSCredentialsProvider (:cred credentials)))
     (:cred credentials)
     :else
-    (DefaultAWSCredentialsProviderChain.)))
+    (DefaultAWSCredentialsProviderChain/getInstance)))
 
 (defn parse-args
   "Legacy support means credentials may or may not be passed

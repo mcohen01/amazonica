@@ -1463,6 +1463,8 @@ To batch get metric data.
 ;; e.g. via slurp here, or the HTTP connection pool will be exhausted
 ;; after several objects are retrieved)
 
+(delete-object :bucket-name "two-peas" :key "foo")
+
 (generate-presigned-url bucket1 "key-1" (-> 6 hours from-now))
 
 (def file "big-file.jar")

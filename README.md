@@ -26,7 +26,7 @@ and the following dependency:
 <dependency>
   <groupId>amazonica</groupId>
   <artifactId>amazonica</artifactId>
-  <version>0.3.136</version>
+  <version>0.3.137</version>
 </dependency>
 ```
 

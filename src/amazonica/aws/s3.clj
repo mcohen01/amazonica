@@ -2,7 +2,9 @@
   (:use [amazonica.core :only (IMarshall coerce-value marshall register-coercions
                                set-fields to-date kw->str)]
         [clojure.algo.generic.functor :only (fmap)])
-  (:import [com.amazonaws.services.s3
+  (:import java.util.Date
+           com.amazonaws.HttpMethod
+           [com.amazonaws.services.s3
               AmazonS3Client]
            [com.amazonaws.regions Region Regions]
            [com.amazonaws.services.s3.model
@@ -16,6 +18,7 @@
               EmailAddressGrantee
               Filter
               FilterRule
+              GeneratePresignedUrlRequest
               Grant
               Grantee
               GroupGrantee
@@ -27,6 +30,8 @@
               QueueConfiguration
               S3KeyFilter
               S3Object
+              SSEAlgorithm
+              SSECustomerKey
               TagSet
               TopicConfiguration]))
 
@@ -202,6 +207,42 @@
   Filter
   (fn [value]
     (as-filter value))
+  GeneratePresignedUrlRequest
+  (fn [value]
+    (let [req (GeneratePresignedUrlRequest. (:bucket-name value) (:key value))]
+      (if-let [content-md5 (:content-md5 value)]
+        (.setContentMd5 req content-md5))
+      (if-let [content-type (:content-type value)]
+        (.setContentType req content-type))
+      (if-let [expiration (:expiration value)]
+        (.setExpiration req (coerce-value expiration Date)))
+      (if-let [kms-cmk-id (:kms-cmk-id value)]
+        (.setKmsCmkId req kms-cmk-id))
+      (if-let [method (:method value)]
+        (.setMethod req (coerce-value method HttpMethod)))
+      (if-let [response-headers (:response-headers value)]
+        (.setResponseHeaders req response-headers))
+      (if-let [sse-algorithm (:sse-algorithm value)]
+        (.setSSEAlgorithm req sse-algorithm))
+      (if-let [sse-customer-key (:sse-customer-key value)]
+        (.setSSECustomerKey
+          req
+          (coerce-value sse-customer-key SSECustomerKey)))
+      (if-let [sse-customer-key-algorithm (:sse-customer-key-algorithm value)]
+        (.setSSECustomerKeyAlgorithm
+          req
+          (coerce-value sse-customer-key-algorithm SSEAlgorithm)))
+      (if-let [version-id (:version-id value)]
+        (.setVersionId req version-id))
+      (if-let [zero-byte-content (:zero-byte-content value)]
+        (.setZeroByteContent req zero-byte-content))
+      (if-let [params (:request-parameters value)]
+        (doseq [k (keys params)]
+          (.addRequestParameter req (name k) (str (k params)))))
+      req))
+  SSECustomerKey
+  (fn [value]
+    (SSECustomerKey. value))
   Grant
   (fn [value]
     (Grant.

@@ -19,18 +19,31 @@
     (Double/parseDouble ns)
     (Long/parseLong ns)))
 
+(defn marshall-allow-empty-maps [obj]
+  (if (map? obj)
+    (if (empty? obj)
+      obj
+      (apply assoc {}
+        (interleave
+          (fmap #(if (string? %) (keyword %) %)
+                (apply vector (keys obj)))
+          (fmap marshall-allow-empty-maps
+                (apply vector (vals obj))))))
+    (marshall obj)))
+
 (extend-protocol IMarshall
   AttributeValue
   (marshall [obj]
     (let [[type val] (some #(when (not (nil? (val %))) %) (dissoc (bean obj) :class))]
-      (marshall (case type
-                  (:s :b :BOOL) val
-                  (:SS :BS) (into #{} val)
-                  :n (parse-number val)
-                  :NS (into #{} (map parse-number val))
-                  :l (into [] (map marshall val))
-                  :m (into {} (map (fn [[k v]] [k (marshall v)]) val))
-                  :NULL nil)))))
+      (marshall-allow-empty-maps
+        (case type
+          (:s :b :BOOL) val
+          (:SS :BS) (into #{} val)
+          :n (parse-number val)
+          :NS (into #{} (map parse-number val))
+          :l (into [] (map marshall-allow-empty-maps val))
+          :m (into {} (map (fn [[k v]] [k (marshall-allow-empty-maps v)]) val))
+          :NULL nil)))))
 
 (def ^:private byte-array-type (class (byte-array 0)))
 

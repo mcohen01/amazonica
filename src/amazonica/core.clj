@@ -580,16 +580,18 @@
       (if (aws-package? type)
        (if (map? col)
          (if (contains? types :actual)
-           (if (< (:depth types) 3)
-             (apply assoc {}
-                    (interleave (fmap kw->str (apply vector (keys col)))
-                                (fmap pp (apply vector (vals col)))))
-             (apply assoc {}
-                    (interleave (fmap kw->str (apply vector (keys col)))
-                                [(fmap #(populate {:generic [type]}
-                                                  :generic
-                                                  %)
-                                       (first (apply vector (vals col))))])))
+           (if (empty? col)
+             {}  ; assoc doesn't like being called to do nothing
+             (if (< (:depth types) 3)
+               (apply assoc {}
+                      (interleave (fmap kw->str (apply vector (keys col)))
+                                  (fmap pp (apply vector (vals col)))))
+               (apply assoc {}
+                      (interleave (fmap kw->str (apply vector (keys col)))
+                                  [(fmap #(populate {:generic [type]}
+                                                    :generic
+                                                    %)
+                                         (first (apply vector (vals col))))]))))
            (populate types :generic col))
          (if (and (contains? types :actual)
                   (= (:depth types) 3))

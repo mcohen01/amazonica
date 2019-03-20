@@ -2,7 +2,8 @@
   (:import org.joda.time.DateTime
            java.text.SimpleDateFormat
            java.util.Date
-           java.util.UUID)
+           java.util.UUID
+           com.amazonaws.services.dynamodbv2.model.AttributeValue)
   (:require [clojure.string :as str]
             [clojure.pprint :refer [pprint]])
   (:use [clojure.test]
@@ -12,8 +13,7 @@
 
 (def table "TestTable")
 
-(deftest dynamodbv2 []  
-
+(deftest dynamodbv2
   (create-table 
     :table-name table
     :key-schema 
@@ -115,35 +115,39 @@
 
   (set-root-unwrapping! false)
 
-(let [item (batch-get-item 
-             :return-consumed-capacity "TOTAL"
-             :request-items {
-             "TestTable" {:keys [{"id"   {:s "foobar"}
-                                  "date" {:n 3172671}}
-                                 {"id"   {:s "foo"}
-                                  "date" {:n 123456}}]
-                          :consistent-read true
-                          :attributes-to-get ["id" "text" "column1"]}})]
-  (is (= "barbaz" (-> item :responses :TestTable first :text)))
-  (is (= "foo"    (-> item :responses :TestTable first :id))))
+  (let [item (batch-get-item 
+               :return-consumed-capacity "TOTAL"
+               :request-items {
+               "TestTable" {:keys [{"id"   {:s "foobar"}
+                                    "date" {:n 3172671}}
+                                   {"id"   {:s "foo"}
+                                    "date" {:n 123456}}]
+                            :consistent-read true
+                            :attributes-to-get ["id" "text" "column1"]}})]
+    (is (= "barbaz" (-> item :responses :TestTable first :text)))
+    (is (= "foo"    (-> item :responses :TestTable first :id))))
 
-(batch-write-item
-  :return-consumed-capacity "TOTAL"
-  :return-item-collection-metrics "SIZE"
-  :request-items 
-    {"TestTable"
-      [{:delete-request 
-         {:key {:id "foo"
-                :date 123456}}}
-       {:put-request
-         {:item {:id "foobar"
-                 :date 3172671
-                 :text "bunny"
-                 :column1 "funky"}}}]})
-  
-  (clojure.pprint/pprint 
-    (describe-table :table-name "TestTable"))
+  (batch-write-item
+    :return-consumed-capacity "TOTAL"
+    :return-item-collection-metrics "SIZE"
+    :request-items 
+      {"TestTable"
+        [{:delete-request 
+           {:key {:id "foo"
+                  :date 123456}}}
+         {:put-request
+           {:item {:id "foobar"
+                   :date 3172671
+                   :text "bunny"
+                   :column1 "funky"}}}]})
+    
+    (clojure.pprint/pprint 
+      (describe-table :table-name "TestTable"))
 
-  (delete-table :table-name "TestTable")
+    (delete-table :table-name "TestTable"))
 
-)
+(deftest roundtrip-empty-maps
+  (is (= {} 
+         (-> {:m {}}
+             (coerce-value AttributeValue)
+             (marshall)))))

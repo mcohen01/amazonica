@@ -59,7 +59,6 @@
   Upload
   (marshall [obj]
     (let [t (transfer obj)]
-      ((:add-progress-listener t) (partial default-listener t))
       (merge (transfer obj)
              {:try-pause     #(.tryPause obj %)
               :upload-result #(marshall (.waitForUploadResult obj))})))
@@ -67,13 +66,11 @@
   Copy
   (marshall [obj]
     (let [t (transfer obj)]
-      ((:add-progress-listener t) (partial default-listener t))
       (merge t {:copy-result #(marshall (.waitForCopyResult obj))})))
 
   Download
   (marshall [obj]
     (let [t (transfer obj)]
-      ((:add-progress-listener t) (partial default-listener t))
       (merge t {:key             (wait obj (.getKey obj))
                 :bucket-name     (wait obj (.getBucketName obj))
                 :object-metadata (wait obj (marshall (.getObjectMetadata obj)))})))

@@ -1,5 +1,6 @@
 (ns amazonica.aws.sqs
   (:use [amazonica.core :only (kw->str parse-args)]
+        [clojure.string :only (ends-with?)]
         [clojure.walk :only (stringify-keys)]
         [robert.hooke :only (add-hook)])
   (:import com.amazonaws.services.sqs.AmazonSQSClient))
@@ -67,7 +68,7 @@
 (defn find-queue [& s]
   (some
     (fn [^String q]
-      (when (.contains q (or (second s) (first s))) q))
+      (when (ends-with? q (or (second s) (first s))) q))
     (:queue-urls (list-queues (first s)))))
 
 (defn arn [q] (-> q get-queue-attributes :QueueArn))

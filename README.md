@@ -104,6 +104,7 @@ and the following dependency:
 * ServiceCatalog
 * [SimpleDB](#simpledb)
 * [SimpleEmail](#simpleemail)
+* [SimpleSystemsManager](#SimpleSystemsManager)
 * [SimpleWorkflow](#simpleworkflow)
 * [SNS](#sns)
 * [SQS](#sqs)
@@ -1610,6 +1611,14 @@ To batch get metric data.
                 :message {:subject "Test Subject"
                           :body {:html "testing 1-2-3-4"
                                  :text "testing 1-2-3-4"}})
+```
+
+### SimpleSystemsManager
+```clj
+(ns com.example
+  (:require [amazonica.aws.simplesystemsmanagement :as ssm]))
+
+(ssm/get-parameter :name "my-param-name")
 ```
 
 ### SimpleWorkflow

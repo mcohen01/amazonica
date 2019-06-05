@@ -867,6 +867,17 @@ To batch get metric data.
 (update-service :cluster "Amazonica" :service "grafana2" :desired-count 0)
 (delete-service :cluster "Amazonica" :service "grafana2")
 (delete-cluster :cluster "Amazonica")
+
+;; run task
+(run-task
+  :cluster "Amazonica"
+  :launch-type LaunchType/FARGATE
+  :task-definition "task-def-name"
+  :overrides {:container-overrides [{:name    "container-name"
+                                     :command ["java" "-jar" "artifact.jar" "arg1" "arg2"]}]}
+  :network-configuration {:aws-vpc-configuration {:assign-public-ip AssignPublicIp/ENABLED
+                                                  :subnets          ["subnet-XXXXXXXX"]
+                                                  :security-groups  ["sg-XXXXXXXXXXXXXXXX"]}})
 ```
 
 ### ECR

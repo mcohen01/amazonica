@@ -95,6 +95,7 @@ and the following dependency:
 * [OpsWorks](#opsworks)
 * [Pinpoint](#pinpoint)
 * Pricing
+* Polly
 * RDS
 * [Redshift](#redshift)
 * [Route53](#route53)

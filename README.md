@@ -369,6 +369,27 @@ You can supply a `:client-config` entry in the credentials map to configure the 
 (describe-images {:client-config {:proxy-host "proxy.address.com" :proxy-port 8080}})
 ```
 
+#### localstack specific hints
+
+When using localstack (or other AWS mocks) it may be necessary to pass some configuration to the client.
+
+This cannot be done anymore via the `(set-s3client-options :path-style-access true)` which would lead to a `Client is immutable when created with the builder.` exception
+
+This is particularly useful for S3, which in a typical localstack scenario needs path-style-access set to true
+
+This is a working example, please note the config keys
+
+```
+(s3/list-buckets
+  {:client-config {
+    :path-style-access-enabled true
+    :chunked-encoding-disabled false
+    :accelerate-mode-enabled false
+    :payload-signing-enabled true
+    :dualstack-enabled true
+    :force-global-bucket-access-enabled true}})
+```
+
 
 ### Exception Handling
 All functions throw `com.amazonaws.AmazonServiceExceptions`. If you wish to catch exceptions you can convert the AWS object to a Clojure map like so:

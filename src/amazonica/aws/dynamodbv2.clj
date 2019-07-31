@@ -17,7 +17,10 @@
   [^String ns]
   (if (.contains ns ".")
     (Double/parseDouble ns)
-    (Long/parseLong ns)))
+    (try
+      (Long/parseLong ns)
+      (catch NumberFormatException e
+        (Double/parseDouble ns)))))
 
 (defn marshall-allow-empty-maps [obj]
   (if (map? obj)

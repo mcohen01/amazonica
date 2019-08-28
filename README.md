@@ -60,6 +60,7 @@ and the following dependency:
 * Directory
 * [DynamoDBV2](#dynamodbv2)
 * [EC2](#ec2)
+* [EC2InstanceConnect](#ec2instanceconnect)
 * [ECR](#ecr)
 * [ECS](#ecs)
 * [ElastiCache](#elasticache)
@@ -849,6 +850,18 @@ To batch get metric data.
 
 (create-snapshot :volume-id   "vol-8a4857fa"
                  :description "my_new_snapshot")
+
+```
+
+### EC2InstanceConnect
+```clj
+(ns com.example
+  (:require [amazonica.aws.ec2instanceconnect :refer :all]))
+
+(send-ssh-public-key :availability-zone "eu-west-1"
+                     :instance-id "i-1b9a9f71a756fe98"
+                     :instance-os-user "ec2-user"
+                     :ssh-public-key (slurp "/path/to/public/ssh/key"))
 
 ```
 

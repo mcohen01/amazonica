@@ -85,6 +85,7 @@ and the following dependency:
 * [Logs](#logs)
 * [Lambda](#lambda)
 * MachineLearning
+* MechanicalTurk
 * MediaConvert
 * MediaLive
 * MediaPackage
@@ -92,7 +93,7 @@ and the following dependency:
 * MigrationHub
 * Mobile
 * MQ
-* MechanicalTurk
+* MSK (Managed Kafka)
 * [OpsWorks](#opsworks)
 * [Pinpoint](#pinpoint)
 * Pricing

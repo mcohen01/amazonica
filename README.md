@@ -1152,6 +1152,7 @@ To batch get metric data.
 
 (fc/delete-dataset-group :dataset-group-arn "arn:aws:forecast:us-east-1:123456789012:dataset-group/hourly_ts")
 
+```
 
 
 

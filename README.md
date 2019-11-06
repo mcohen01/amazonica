@@ -70,6 +70,7 @@ and the following dependency:
 * [ElasticMapReduce](#elasticmapreduce)
 * [Elasticsearch](#elasticsearch)
 * [ElasticTranscoder](#elastictranscoder)
+* [Forecast](#forecast)
 * GameLift
 * [Glacier](#glacier)
 * Glue
@@ -95,6 +96,7 @@ and the following dependency:
 * MQ
 * MSK (Managed Kafka)
 * [OpsWorks](#opsworks)
+* Personalize
 * [Pinpoint](#pinpoint)
 * Pricing
 * Polly
@@ -103,6 +105,7 @@ and the following dependency:
 * [Route53](#route53)
 * [Route53Domains](#route53domains)
 * [S3](#s3)
+* Sagemaker
 * ServerMigration
 * ServiceCatalog
 * [SimpleDB](#simpledb)
@@ -1074,6 +1077,82 @@ To batch get metric data.
             :outputs [{:key "my/s3/output/obj/key.avi"
                        :preset-id "1351620000001-000030"}])
 ```
+
+
+### Forecast
+```clj
+(require '[amazonica.aws.forecast :as fc])
+
+(fc/create-dataset :dataset-name "hourly_ts"
+                   :data-frequency "H"
+                   :dataset-type "TARGET_TIME_SERIES"
+                   :domain "CUSTOM"
+                   :schema {
+                     :attributes [
+                       {
+                         :attribute-name "timestamp"
+                         :attribute-type "timestamp"
+                       },
+                       {
+                         :attribute-name "target_value"
+                         :attribute-type "float"
+                       },
+                       {
+                         :attribute-name "item_id"
+                         :attribute-type "string"
+                       }]})
+
+;; {:dataset-arn "arn:aws:forecast:us-east-1:123456789012:dataset/hourly_ts"}
+
+(fc/create-dataset-group :dataset-arns ["arn:aws:forecast:us-east-1:123456789012:dataset/hourly_ts"]
+                         :dataset-group-name "hourly_ts"
+                         :domain "CUSTOM")
+
+;; {:dataset-group-arn "arn:aws:forecast:us-east-1:123456789012:dataset-group/hourly_ts"}
+
+
+(require '[amazonica.aws.s3 :as s3])
+
+(s3/put-object "amazonica-forecast"
+               "hourly_ts.csv"
+               (java.io.File. "/path/to/hourly_ts.csv"))
+
+
+(fc/create-dataset-import-job :dataset-import-job-name "import_hourly_ts_job"
+                              :dataset-arn "arn:aws:forecast:us-east-1:123456789012:dataset/hourly_ts"
+                              :data-source {
+                                :s3-config {
+                                  :path "s3://amazonica-forecast/hourly_ts.csv"
+                                  :role-arn "arn:aws:iam::123456789012:role/amazonica"}})
+
+;; {:dataset-import-job-arn "arn:aws:forecast:us-east-1:123456789012:dataset-import-job/hourly_ts/import_hourly_ts_job"}
+
+(fc/create-predictor :input-data-config {
+                       :dataset-group-arn "arn:aws:forecast:us-east-1:123456789012:dataset-group/hourly_ts"}
+                     :algorithm-arn "arn:aws:forecast:::algorithm/ARIMA"
+                     :forecast-horizon 336
+                     :featurization-config {
+                       :forecast-frequency "H"}
+                     :predictor-name "hourly_ts_predictor")
+
+(fc/create-forecast :forecast-name "hourly_ts"
+                    :predictor-arn "arn:aws:forecast:us-east-1:123456789012:predictor/hourly_ts_predictor")
+
+
+(require '[amazonica.aws.forecastquery :as fq])
+
+(fq/query-forecast :forecast-arn "arn:aws:forecast:us-east-1:123456789012:forecast/hourly_ts"
+                   :filters {"item_id" "item1"})
+
+(fc/delete-forecast :forecast-arn "arn:aws:forecast:us-east-1:123456789012:forecast/hourly_ts")
+
+(fc/delete-predictor :predictor-arn "arn:aws:forecast:us-east-1:123456789012:predictor/hourly_ts_predictor")
+
+(fc/delete-dataset :dataset-arn "arn:aws:forecast:us-east-1:123456789012:dataset/hourly_ts")
+
+(fc/delete-dataset-group :dataset-group-arn "arn:aws:forecast:us-east-1:123456789012:dataset-group/hourly_ts")
+
+
 
 
 ### Glacier

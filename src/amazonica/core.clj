@@ -747,9 +747,10 @@
 (defn- use-aws-request-bean?
   [^Method method args]
   (let [types (.getParameterTypes method)]
-    (and (or (map? args) (< 1 (count args)))
+    (and (or (map? args) (< 1 (count args)) (nil? args))
          (< 0 (count types))
-         (or (map? args)
+         (or (nil? args)
+             (map? args)
              (and
                 (or (and
                       (even? (count args))

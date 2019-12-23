@@ -31,10 +31,18 @@ and the following dependency:
 ```
 
 ## Supported Services
+* Amplify
 * Api Gateway
+* AppConfig
+* Application Insights
+* App Mesh
+* Augmented AI
 * [Autoscaling](#autoscaling)
+* Austocaling Plans
+* Backup
 * [Batch](#batch)
 * Budgets
+* Certificate Manager
 * CloudDirectory
 * [CloudFormation](#cloudformation)
 * [CloudFront](#cloudfront)
@@ -43,21 +51,30 @@ and the following dependency:
 * [CloudSearchDomain](#cloudsearchdomain)
 * [CloudWatch](#cloudwatch)
 * [CloudWatchEvents](#cloudwatchevents)
+* CodeBuild
 * CodeCommit
 * [CodeDeploy](#codedeploy)
 * CodePipeline
 * CodeStar
+* Cognito
 * [CognitoIdentityProviders](#cognitoidentityproviders)
 * [Comprehend](#comprehend)
+* Compute Optimizer
 * Config
+* Connect
 * CostAndUsageReport
 * CostExplorer
 * DatabaseMigrationService
 * [DataPipeline](#datapipeline)
+* Data Exchange
+* Data Sync
 * Dax
+* Detective
 * DeviceFarm
 * DirectConnect
 * Directory
+* DLM
+* DocDB
 * [DynamoDBV2](#dynamodbv2)
 * [EC2](#ec2)
 * [EC2InstanceConnect](#ec2instanceconnect)
@@ -70,22 +87,34 @@ and the following dependency:
 * [ElasticMapReduce](#elasticmapreduce)
 * [Elasticsearch](#elasticsearch)
 * [ElasticTranscoder](#elastictranscoder)
+* Event Bridge
 * [Forecast](#forecast)
+* Fraud Detector
 * GameLift
 * [Glacier](#glacier)
+* Global Accelerator
 * Glue
 * GreenGrass
+* Groundstation
 * GuardDuty
 * [IdentityManagement](#identitymanagement)
+* Image Builder
 * ImportExport
 * [IoT](#iot)
+* Kafka
+* Kendra
 * [Kinesis](#kinesis)
 * [Kinesis Analytics](#kinesisanalytics)
 * [KinesisFirehose](#kinesisfirehose)
 * [KMS](#kms)
-* [Logs](#logs)
+* Lake Formation
 * [Lambda](#lambda)
+* Lex
+* Lightsail
+* [Logs](#logs)
 * MachineLearning
+* Macie
+* Managed Blockcahin
 * MechanicalTurk
 * MediaConvert
 * MediaLive
@@ -100,24 +129,39 @@ and the following dependency:
 * [Pinpoint](#pinpoint)
 * Pricing
 * Polly
+* QLDB
+* Quicksight
 * RDS
 * [Redshift](#redshift)
+* Rekognition
 * [Route53](#route53)
 * [Route53Domains](#route53domains)
 * [S3](#s3)
 * Sagemaker
+* Secrets Manager
+* Security Hub
+* Security Token
 * ServerMigration
 * ServiceCatalog
+* Service Discovery
+* Shield
 * [SimpleDB](#simpledb)
 * [SimpleEmail](#simpleemail)
 * [SimpleSystemsManager](#SimpleSystemsManager)
 * [SimpleWorkflow](#simpleworkflow)
+* Snowball
 * [SNS](#sns)
 * [SQS](#sqs)
 * [StepFunctions](#stepfunctions)
 * StorageGateway
+* Support
+* Textract
+* Transcribe
+* Transfer
+* Translate
 * WAF
 * Workspaces
+* XRay
 
 
 ## Documentation

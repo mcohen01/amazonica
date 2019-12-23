@@ -1,4 +1,4 @@
-(ns amazonica.aws.certificatemanager
+(ns amazonica.aws.acm
   (:require [amazonica.core :as amz])
   (:import com.amazonaws.services.certificatemanager.AWSCertificateManagerClient))
 

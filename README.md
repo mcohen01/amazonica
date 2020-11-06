@@ -1890,6 +1890,10 @@ To batch get metric data.
 
 (send-message queue "hello world")
 
+(sqs/send-message :queue-url queue-url
+                  :message-body "hello world"
+                  :message-attributes {"attr" "value"})
+
 (def msgs (receive-message queue))
 
 (delete-message (-> msgs

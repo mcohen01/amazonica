@@ -24,7 +24,7 @@
   (get-queue-attributes q)
   (get-queue-attributes q ["All"])
 
-  (create-queue "DLQ")
+  (create-queue :queue-name "DLQ")
   (while (nil? (find-queue "DLQ")))
   (assign-dead-letter-queue q
                             (find-queue "DLQ")

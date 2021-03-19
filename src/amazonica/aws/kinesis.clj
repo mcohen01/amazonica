@@ -161,6 +161,7 @@
            worker-id
            endpoint
            dynamodb-endpoint
+           billing-mode
            initial-position-in-stream
            ^java.util.Date initial-position-in-stream-date
            failover-time-millis
@@ -195,6 +196,9 @@
 
           dynamodb-endpoint
           (.withDynamoDBEndpoint dynamodb-endpoint)
+          
+          billing-mode
+          (.withBillingMode billing-mode)
 
           initial-position-in-stream
           (.withInitialPositionInStream

@@ -1,6 +1,6 @@
 (ns amazonica.test.securitytoken
   (:use [clojure.test]
-        [amazonica.aws.identitymanagement :exclude [show-functions waiters client-class get-cached-response-metadata]]
+        [amazonica.aws.identitymanagement :exclude [show-functions waiters client-class get-cached-response-metadata shutdown]]
         [amazonica.aws.s3 :exclude [show-functions client-class get-cached-response-metadata set-region]]
         [amazonica.aws.securitytoken :exclude [show-functions waiters client-class]]))
 

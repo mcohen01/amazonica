@@ -1,7 +1,9 @@
 (ns amazonica.core
   "Amazon AWS functions."
   (:use [clojure.algo.generic.functor :only (fmap)])
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]
+            [clojure.set :as set])
   (:import clojure.lang.Reflector
            [com.amazonaws
              AmazonServiceException
@@ -986,6 +988,22 @@
   `java.lang.reflect.Method`."
   [method]
   (let [names (parameter-names method)
+        type (some-> method .getParameters first .getType)
+        fields (when (class? type)
+                 (try
+                   (->> type
+                        .newInstance
+                        bean
+                        (remove (comp #{:class} first))
+                        (into {})
+                        (keys)
+                        (map (comp camel->keyword2 name))
+                        (map (comp symbol name))
+                        ;; fields common to all requests (calculated via `set/intersection`)
+                        (remove '#{clone-source request-credentials-provider request-metric-collector clone-root custom-request-headers sdk-client-execution-timeout request-credentials sdk-request-timeout custom-query-parameters request-client-options read-limit general-progress-listener})
+                        (sort)
+                        (vec))
+                   (catch InstantiationException _)))
         ;; This will help determine when parameter names should be
         ;; suffixed with an index i.e. `parameter-1`. Suffixing is
         ;; necessary when parameter names are synthesized from their
@@ -997,7 +1015,19 @@
            name-index {}
            arglist []]
       (if (empty? names)
-        arglist
+        (cond
+          (empty? arglist)
+          arglist
+
+          (= 1 (count arglist))
+          ['& (if fields
+                (assoc {:keys fields} ;; awkward construction for keeping a nice order when querying the arglist interactively (:keys will show up first this way)
+                       :as            (first arglist))
+                arglist)]
+
+          true
+          arglist)
+
         (let [[name & names*] names]
           (if (= (name-frequency name) 1)
             (let [arg-symbol (symbol name)
@@ -1021,18 +1051,21 @@
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."
   [client ns fname methods]
-  (intern ns (with-meta (symbol (name fname))
-               {:amazonica/client client
-                :amazonica/methods methods
-                :arglists (sort (map method-arglist methods))})
-    (fn [& args]
-      (if-let [method (best-method methods args)]
-        (if-not args
-          ((fn-call client method))
-          ((fn-call client method args)))
-        (throw (IllegalArgumentException.
-                 (format "Could not determine best method to invoke for %s using arguments %s"
-                         (name fname) args)))))))
+  (let [source (some-> client pr-str munge (str/replace "." "/") (str ".java") (io/resource) str)]
+    (intern ns (with-meta (symbol (name fname))
+                 (cond-> {:amazonica/client  client
+                          :amazonica/methods methods
+                          :amazonica/method-name (-> methods first .getName)
+                          :arglists          (sort-by pr-str (map method-arglist methods))}
+                   source (assoc :amazonica/source source)))
+            (fn [& args]
+              (if-let [method (best-method methods args)]
+                (if-not args
+                  ((fn-call client method))
+                  ((fn-call client method args)))
+                (throw (IllegalArgumentException.
+                        (format "Could not determine best method to invoke for %s using arguments %s"
+                                (name fname) args))))))))
 
 (defn- client-methods
   "Returns a map with keys of idiomatic Clojure hyphenated keywords

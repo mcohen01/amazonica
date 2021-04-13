@@ -15,10 +15,10 @@
     {:access-key (get creds "aws_access_key_id")
      :secret-key (get creds "aws_secret_access_key")}))
 
-(def role (-> #(.contains (:role-name %) "lambda")
-            (filter (:roles (iam/list-roles)))
-            first
-            :arn))
+(def role (delay (-> #(.contains (:role-name %) "lambda")
+                     (filter (:roles (iam/list-roles)))
+                     first
+                     :arn)))
 
 (deftest aws-lambda []
 
@@ -29,7 +29,7 @@
                   context.done(null, 'Hello World')
                 }")
 
-  (create-function :role role :function handler)
+  (create-function :role @role :function handler)
   ; (create-function {:role role :function handler})
   ; (create-function cred :role role :function handler)
   ; (create-function cred {:role role :function handler})

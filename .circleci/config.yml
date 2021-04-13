@@ -1,0 +1,62 @@
+version: 2.1
+
+executor_defaults: &executor_defaults
+  working_directory: ~/repo
+
+executors:
+  openjdk8:
+    docker:
+      - image: circleci/clojure:openjdk-8-lein-2.9.5
+    environment:
+      LEIN_ROOT: "true"
+      JVM_OPTS: -Xmx3200m
+    <<: *executor_defaults
+  openjdk11:
+    docker:
+      - image: circleci/clojure:openjdk-11-lein-2.9.5
+    environment:
+      LEIN_ROOT: "true"
+      JVM_OPTS: -Xmx3200m --illegal-access=deny
+    <<: *executor_defaults
+   
+jobs:
+  test:
+    parameters:
+      executor:
+        type: executor
+      extra-profiles:
+        type: string
+      clojure-version:
+        type: string
+    executor: << parameters.executor >>
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+
+      - run:
+          name: Fetch dependencies
+          command: |
+            lein with-profile +test,+aws-sources deps
+            
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+      - run:
+          name: Run test suite
+          # NOTE: only one ns is exercised for now, since other test namespaces seem side-effectful.
+          command: lein with-profile -user,-dev<< parameters.extra-profiles >>,+<< parameters.clojure-version >> do clean, test :only amazonica.test.core
+
+workflows:
+  default:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              executor: [openjdk8, openjdk11]
+              extra-profiles: ["", ",+aws-sources"]
+              clojure-version: ["1.8", "1.9", "1.10.1", "1.10.2"]

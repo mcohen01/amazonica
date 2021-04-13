@@ -3,7 +3,7 @@
 
 A comprehensive Clojure client for the entire [Amazon AWS api][1].  
 
-[![amazonica](https://circleci.com/gh/mcohen01/amazonica.svg?style=svg)](https://app.circleci.com/pipelines/github/mcohen01/amazonica)
+[![amazonica](https://circleci.com/gh/mcohen01/amazonica.svg?style=shield)](https://app.circleci.com/pipelines/github/mcohen01/amazonica)
 
 
 ## Installation

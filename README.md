@@ -1,7 +1,10 @@
 ![AWS logo](claws.png)
 # `Amazonica`
 
-A comprehensive Clojure client for the entire [Amazon AWS api][1].
+A comprehensive Clojure client for the entire [Amazon AWS api][1].  
+
+[![amazonica](https://circleci.com/gh/mcohen01/amazonica.svg?style=svg)](https://app.circleci.com/pipelines/github/mcohen01/amazonica)
+
 
 ## Installation
 

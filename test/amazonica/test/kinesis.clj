@@ -1,7 +1,8 @@
 (ns amazonica.test.kinesis
   (:import org.joda.time.DateTime
            java.nio.ByteBuffer
-           java.util.UUID)
+           java.util.UUID
+           com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker)
   (:require [clojure.string :as string]
             [amazonica.aws.dynamodbv2 :as dyna])
   (:use [clojure.test]
@@ -18,10 +19,10 @@
     {:access-key (get creds "aws_access_key_id")
      :secret-key (get creds "aws_secret_access_key")}))
 
-(deftest kinesis []
+(deftest kinesis
 
-  (def my-stream "my-stream")
-  (def now (DateTime.))
+  (def ^String my-stream "my-stream")
+  (def ^DateTime now (DateTime.))
 
   (create-stream my-stream 1)
 
@@ -89,7 +90,7 @@
                                   (ByteBuffer/wrap (.getBytes "foobar"))
                                   (str (UUID/randomUUID)))))
 
-  (defn get-raw-bytes [byte-buffer]
+  (defn get-raw-bytes [^java.nio.ByteBuffer byte-buffer]
     (let [b (byte-array (.remaining byte-buffer))]
       (.get byte-buffer b)
       b))
@@ -104,7 +105,7 @@
                                         seq-number)})
     :records
     first
-    :data
+    ^bytes (:data)
     (String.)
     (= "foobar")
     (is))
@@ -116,7 +117,7 @@
 
 (def ^:private streamed-data (atom []))
 
-(defn- deserializer [byte-buffer]
+(defn- deserializer [^java.nio.ByteBuffer byte-buffer]
   (try
     (let [bytes (byte-array (.remaining byte-buffer))]
       (.get byte-buffer bytes)
@@ -167,13 +168,13 @@
                            [:table :table-status]))))))
 
     (let [stream-arn (get-in (dyna/describe-table :table-name table) [:table :latest-stream-arn])
-          [w _] (worker :app                        (str (UUID/randomUUID))
-                        :dynamodb-adaptor-client?   true
-                        :stream                     stream-arn
-                        :endpoint                   (str "streams.dynamodb." (get-region stream-arn) ".amazonaws.com")
-                        :initial-position-in-stream "TRIM_HORIZON"
-                        :deserializer               deserializer
-                        :processor                  processor!)]
+          [^Worker w _] (worker :app                        (str (UUID/randomUUID))
+                                :dynamodb-adaptor-client?   true
+                                :stream                     stream-arn
+                                :endpoint                   (str "streams.dynamodb." (get-region stream-arn) ".amazonaws.com")
+                                :initial-position-in-stream "TRIM_HORIZON"
+                                :deserializer               deserializer
+                                :processor                  processor!)]
       (future
         (try
           (.run w)
@@ -194,7 +195,7 @@
             (recur (inc c))))
 
         (is (= 1 (count @streamed-data)))
-        (is (.contains (first @streamed-data) expected-data))
+        (is (.contains ^String (first @streamed-data) expected-data))
 
         (finally
           (.shutdown w))))

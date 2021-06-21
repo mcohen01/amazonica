@@ -7,7 +7,7 @@
         [amazonica.core]
         [amazonica.aws.cloudwatch]))
 
-(deftest cloudwatch []
+(deftest cloudwatch
 
   (clojure.pprint/pprint
     (list-metrics      

@@ -17,7 +17,7 @@
 (defn list-delivery-streams-matching-prefix []
   (->> (fh/list-delivery-streams cred)
        :delivery-stream-names
-       (filter #(.startsWith % stream-prefix))))
+       (filter #(.startsWith ^String % stream-prefix))))
 
 (defn delete-delivery-streams-matching-prefix []
   (->> (list-delivery-streams-matching-prefix)

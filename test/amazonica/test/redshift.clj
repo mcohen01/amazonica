@@ -3,7 +3,7 @@
         [amazonica.core]
         [amazonica.aws.redshift]))
 
-(deftest redshift []
+(deftest redshift
 
   (println (describe-cluster-versions))
   (println (describe-clusters))
@@ -16,7 +16,7 @@
     (throw (Exception. "create-cluster-subnet-group did not throw exception"))
     (catch Exception e
       (is (.contains 
-            (:message (ex->map e))
+            ^String (:message (ex->map e))
             "Some input subnets in :[1, 2, 3, 4] are invalid."))))
     
  (amazonica.aws.redshift/describe-events :source-type "cluster")
@@ -42,7 +42,7 @@
     (catch Exception e
       (println (:message (ex->map e)))
       (is (.contains
-            (:message (ex->map e))
+            ^String (:message (ex->map e))
             "Could not find parameter with name: my_new_param"))))
   
   (delete-cluster-parameter-group :parameter-group-name "foobar")

@@ -4,7 +4,7 @@
         [amazonica.aws.s3 :exclude [show-functions client-class get-cached-response-metadata set-region]]
         [amazonica.aws.securitytoken :exclude [show-functions waiters client-class]]))
 
-(deftest securitytoken []
+(deftest securitytoken
 
   (let [session (:credentials (get-session-token))]
     (is (= true (contains? session :access-key)))

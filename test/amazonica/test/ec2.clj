@@ -1,10 +1,11 @@
 (ns amazonica.test.ec2
-  (:import com.amazonaws.services.ec2.model.RunInstancesRequest)
+  (:import com.amazonaws.services.ec2.model.RunInstancesRequest
+           com.amazonaws.services.ec2.model.BlockDeviceMapping)
   (:use [clojure.test]
         [clojure.pprint]
         [amazonica.aws.ec2]))
 
-(deftest ec2 []
+(deftest ec2
   
   (def vpc-id
    (-> (create-vpc :cidr-block "10.0.0.0/16") :vpc :vpc-id))
@@ -62,6 +63,6 @@
   (let [pojo (RunInstancesRequest.)]
     (amazonica.core/set-fields pojo {:block-device-mappings [{:device-name "foobar"}]})
     (is (= "foobar"
-           (-> pojo .getBlockDeviceMappings first .getDeviceName))))
+           (-> pojo .getBlockDeviceMappings ^BlockDeviceMapping (first) .getDeviceName))))
   
 )

@@ -51,6 +51,13 @@ jobs:
           # NOTE: only one ns is exercised for now, since other test namespaces seem side-effectful.
           command: lein with-profile -user,-dev<< parameters.extra-profiles >>,+<< parameters.clojure-version >> do clean, test :only amazonica.test.core
 
+      - run:
+          name: Create pseudo-credentials for the next step
+          command: mkdir -p ~/.aws; echo -e "[foo]\naws_access_key_id = aaki\naws_secret_access_key = asak" > ~/.aws/credentials 
+      - run:
+          name: Run Eastwood
+          command: lein with-profile -user,+test<< parameters.extra-profiles >>,+<< parameters.clojure-version >> eastwood
+
 workflows:
   default:
     jobs:
@@ -59,4 +66,4 @@ workflows:
             parameters:
               executor: [openjdk8, openjdk11]
               extra-profiles: ["", ",+aws-sources"]
-              clojure-version: ["1.8", "1.9", "1.10.1", "1.10.2"]
+              clojure-version: ["1.8", "1.9", "1.10.1", "1.10.2", "1.10.3"]

@@ -2,7 +2,7 @@
   (:use [clojure.test]
         [amazonica.aws.route53]))
 
-(deftest route53 []
+(deftest route53
 
   (let [config {:caller-reference (str (java.util.UUID/randomUUID))
                 :health-check-config

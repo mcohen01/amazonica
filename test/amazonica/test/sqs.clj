@@ -4,7 +4,7 @@
   (:import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
            com.amazonaws.services.sqs.model.QueueDoesNotExistException))
 
-(deftest sqs []
+(deftest sqs
 
   (list-queues)
   

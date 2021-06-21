@@ -4,7 +4,7 @@
         [clojure.pprint]
         [amazonica.aws.sns]))
 
-(deftest sns []
+(deftest sns
 
   (def topic-name (.. (UUID/randomUUID) toString))
   

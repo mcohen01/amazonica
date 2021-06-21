@@ -4,7 +4,7 @@
         [amazonica.core]
         [amazonica.aws.datapipeline]))
 
-(deftest datapipeline []
+(deftest datapipeline
   
   (let [pid (:pipeline-id
               (create-pipeline

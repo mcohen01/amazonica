@@ -123,31 +123,31 @@
        (remove #{:amazonica/source :amazonica/method-name})))
 
 (deftest camel->keyword-changes-tests
-  "See https://github.com/mcohen01/amazonica/issues/256"
-  (doseq [[service changed-fn-names] changed-camel->keyword-vars
-          [old-name new-name] changed-fn-names
-          :let [service-ns-sym (symbol (str "amazonica.aws." service))
-                old (ns-resolve service-ns-sym old-name)
-                new (ns-resolve service-ns-sym new-name)]]
-    (is (not= old-name new-name))
-    (is (some? old) (str "missing old var: " service " " old-name))
-    (is (some? new) (str "missing new var: " service " " new-name))
+  (testing "See https://github.com/mcohen01/amazonica/issues/256"
+    (doseq [[service changed-fn-names] changed-camel->keyword-vars
+            [old-name new-name] changed-fn-names
+            :let [service-ns-sym (symbol (str "amazonica.aws." service))
+                  old (ns-resolve service-ns-sym old-name)
+                  new (ns-resolve service-ns-sym new-name)]]
+      (is (not= old-name new-name))
+      (is (some? old) (str "missing old var: " service " " old-name))
+      (is (some? new) (str "missing new var: " service " " new-name))
 
-    (is (= #{:arglists
-             :ns
-             :name
-             :amazonica/client
-             :amazonica/methods
-             :amazonica/deprecated-in-favor-of}
-           (set (relevant-keys (meta old)))))
-    (is (= #{:arglists
-             :ns
-             :name
-             :amazonica/client
-             :amazonica/methods}
-           (set (relevant-keys (meta new)))))
-    (is (= new
-           (get (meta old) :amazonica/deprecated-in-favor-of))))
+      (is (= #{:arglists
+               :ns
+               :name
+               :amazonica/client
+               :amazonica/methods
+               :amazonica/deprecated-in-favor-of}
+             (set (relevant-keys (meta old)))))
+      (is (= #{:arglists
+               :ns
+               :name
+               :amazonica/client
+               :amazonica/methods}
+             (set (relevant-keys (meta new)))))
+      (is (= new
+             (get (meta old) :amazonica/deprecated-in-favor-of)))))
 
   ;; Make sure we don't accidentally attach new metadata keys to old, untouched
   ;; vars:
@@ -239,9 +239,9 @@
                              (do
                                (doseq [item arglist-map-or-vec]
                                  (is (symbol? item)
-                                     arglist-map-or-vec))
+                                     (pr-str arglist-map-or-vec)))
                                true)))
-                    arglist)
+                    (pr-str arglist))
                 (do
                   (is (vector? arglist))
                   (doseq [item arglist]

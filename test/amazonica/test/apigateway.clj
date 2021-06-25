@@ -11,12 +11,12 @@
         creds  (-> "user.home"
                    System/getProperty
                    (str file)
-                   slurp
+                   ^String (slurp)
                    (.split "\n"))]
     (clojure.set/rename-keys
       (reduce
         (fn [m e]
-          (let [pair (.split e "=")]
+          (let [pair (.split ^String e "=")]
             (if (some #{access secret} [(first pair)])
                 (apply assoc m pair)
                 m)))
@@ -24,7 +24,7 @@
         creds)
       {access :access-key secret :secret-key})))
 
-(deftest apigateway []
+(deftest apigateway
 
   (get-rest-apis cred)
 

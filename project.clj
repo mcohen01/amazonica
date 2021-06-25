@@ -21,10 +21,15 @@
                  [robert/hooke "1.3.0"]
                  [com.taoensso/nippy "3.1.1"]]
   :jvm-opts     ["-Damazonica.internal.test.using-sources=false"]
-  :profiles {:1.8         {:dependencies [[org.clojure/clojure "1.8.0"]]}
+  :eastwood {:exclude-linters [:def-in-def :deprecations :unlimited-use :unused-ret-vals :local-shadows-var]
+             :ignored-faults {:wrong-arity {amazonica.test.s3 true
+                                            amazonica.test.kinesis-firehose true}}}
+  :profiles {:dev {:plugins [[jonase/eastwood "0.5.2"]]}
+             :1.8         {:dependencies [[org.clojure/clojure "1.8.0"]]}
              :1.9         {:dependencies [[org.clojure/clojure "1.9.0"]]}
              :1.10.1      {:dependencies [[org.clojure/clojure "1.10.1"]]}
              :1.10.2      {:dependencies [[org.clojure/clojure "1.10.2"]]}
+             :1.10.3      {:dependencies [[org.clojure/clojure "1.10.3"]]}
              :aws-sources {:jvm-opts     ["-Damazonica.internal.test.using-sources=true"]
                            :dependencies [[com.amazonaws/amazon-kinesis-client "1.9.3" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-accessanalyzer "1.11.850" :classifier "sources"]

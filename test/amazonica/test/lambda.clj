@@ -15,12 +15,12 @@
     {:access-key (get creds "aws_access_key_id")
      :secret-key (get creds "aws_secret_access_key")}))
 
-(def role (delay (-> #(.contains (:role-name %) "lambda")
+(def role (delay (-> #(.contains ^String (:role-name %) "lambda")
                      (filter (:roles (iam/list-roles)))
                      first
                      :arn)))
 
-(deftest aws-lambda []
+(deftest aws-lambda
 
   (def handler "exports.helloWorld = function(event, context) {
                   console.log('value1 = ' + event.key1)

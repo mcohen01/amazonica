@@ -3,7 +3,7 @@
         [clojure.pprint]
         [amazonica.aws.glacier]))
 
-(deftest glacier []
+(deftest glacier
 
   (def upload-file (java.io.File. "upload.txt"))
   

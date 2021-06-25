@@ -5,7 +5,7 @@
   (:import
    (com.amazonaws.services.simplesystemsmanagement.model SendCommandRequest)))
 
-(deftest simplesystemsmanagement []
+(deftest simplesystemsmanagement
 
   ;; test for marshalling map values
   ;; see https://github.com/mcohen01/amazonica/issues/219

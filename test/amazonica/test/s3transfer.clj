@@ -12,11 +12,11 @@
         creds  (-> "user.home"
                    System/getProperty
                    (str file)
-                   slurp
+                   ^String slurp
                    (.split "\n"))]
     (clojure.set/rename-keys 
       (reduce
-        (fn [m e]
+        (fn [m ^String e]
           (let [pair (.split e "=")]
             (if (some #{access secret} [(first pair)])
                 (apply assoc m pair)
@@ -26,11 +26,11 @@
       {access :access-key secret :secret-key})))
 
 
-(deftest s3transfer []
+(deftest s3transfer
 
-  (def file "upload.txt")
-  (def down-dir (java.io.File. (str "/tmp/" file)))
-  (def bucket "0a178f17-5593-480f-bcf0-cb10f7654b19")
+  (def ^String file "upload.txt")
+  (def ^java.io.File down-dir (java.io.File. (str "/tmp/" file)))
+  (def ^String bucket "0a178f17-5593-480f-bcf0-cb10f7654b19")
   
   (s3/create-bucket bucket)
   

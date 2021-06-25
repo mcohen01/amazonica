@@ -3,7 +3,7 @@
         [amazonica.core]
         [amazonica.aws.kms]))
 
-(deftest kms []
+(deftest kms
   (list-keys)
 
   (let [k (create-key)

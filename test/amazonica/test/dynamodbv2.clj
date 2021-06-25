@@ -97,8 +97,8 @@
                             {:id {:s "foo"}
                              :date {:n 123456}}))]
       (is (= (dissoc item :bytes) (dissoc ret-item :bytes)))
-      (is (= (-> item :bytes String.)
-             (-> ret-item :bytes .array String.)))))
+      (is (= (-> item ^bytes (:bytes) String.)
+             (-> ret-item ^java.nio.ByteBuffer (:bytes) .array String.)))))
   
     
   (query :table-name table

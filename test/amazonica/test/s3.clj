@@ -25,11 +25,11 @@
         creds  (-> "user.home"
                    System/getProperty
                    (str file)
-                   slurp
+                   ^String (slurp)
                    (.split "\n"))]
     (clojure.set/rename-keys
       (reduce
-        (fn [m e]
+        (fn [m ^String e]
           (let [pair (.split e "=")]
             (if (some #{access secret} [(first pair)])
                 (apply assoc m pair)
@@ -40,11 +40,11 @@
 
 (deftest s3
 
-  (def bucket1 (.. (UUID/randomUUID) toString))
-  (def bucket2 (.. (UUID/randomUUID) toString))
-  (def date    (.plusDays (DateTime.) 2))
-  (def upload-file   (java.io.File. "upload.txt"))
-  (def download-file (java.io.File. "download.txt"))
+  (def ^String bucket1 (.. (UUID/randomUUID) toString))
+  (def ^String bucket2 (.. (UUID/randomUUID) toString))
+  (def ^DateTime date    (.plusDays (DateTime.) 2))
+  (def ^java.io.File upload-file   (java.io.File. "upload.txt"))
+  (def ^java.io.File download-file (java.io.File. "download.txt"))
 
   (spit upload-file "hello world")
 
@@ -264,14 +264,14 @@
         (f "x-amz-grant-read")
         (filter (:grants obj))
         first
-        (get-in [:grantee :identifier])
+        ^String (get-in [:grantee :identifier])
         (.contains "AllUsers")))
     (is
       (->
         (f "x-amz-grant-write")
         (filter (:grants obj))
         first
-        (get-in [:grantee :identifier])
+        ^String (get-in [:grantee :identifier])
         (.contains "AuthenticatedUsers"))))
 
   (put-object cred
@@ -360,12 +360,12 @@
                 :bucket-name bucket1
                 :key "jenny"
                 :file upload-file)]
-    (is 32 (.length (:etag etag))))
+    (is (= 32 (.length ^String (:etag etag)))))
 
 
-  (is "text/plain"
-    (get-in (get-object cred bucket1 "jenny")
-            [:object-metadata :raw-metadata :Content-Type]))
+  (is (= "text/plain"
+         (get-in (get-object cred bucket1 "jenny")
+                 [:object-metadata :raw-metadata :Content-Type])))
 
   (get-object
     cred

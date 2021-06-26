@@ -37,7 +37,8 @@
            java.nio.ByteBuffer
            java.text.ParsePosition
            java.text.SimpleDateFormat
-           java.util.Date))
+           java.util.Date
+           java.time.Instant))
 
 (defonce ^:private credential (atom {}))
 
@@ -323,6 +324,7 @@
   [date]
   (cond
     (instance? java.util.Date date) date
+    (instance? Instant date) (java.util.Date/from date)
     (instance? AbstractInstant date) (.toDate ^AbstractInstant date)
     (integer? date) (java.util.Date. (int date))
     true (.. (SimpleDateFormat. @date-format)
@@ -745,6 +747,11 @@
     (if (aws-package? (class obj))
         (get-fields obj)
         obj)))
+
+(defn marshall-date-to-java-time! []
+  (extend-protocol IMarshall 
+    java.util.Date
+    (marshall [obj] (.toInstant obj))))
 
 (defn- use-aws-request-bean?
   [^Method method args]

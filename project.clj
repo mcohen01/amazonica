@@ -1,6 +1,6 @@
-(defproject amazonica "0.3.156"
+(defproject amazonica "0.3.157"
   :description "A comprehensive Clojure client for the entire Amazon AWS api."
-  :url "https://github.com/shevchuk/amazonica"
+  :url "https://github.com/mcohen01/amazonica"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :java-source-paths ["src/main/java"]
@@ -244,8 +244,8 @@
                                           [com.amazonaws/aws-java-sdk-swf-libraries "1.11.22" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-synthetics "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-textract "1.11.850" :classifier "sources"]
-                                          [com.amazonaws/aws-java-sdk-timestreamwrite "1.11.1034" :classifier "sources"]
-                                          [com.amazonaws/aws-java-sdk-timestreamquery "1.11.1034" :classifier "sources"]
+                                          [com.amazonaws/aws-java-sdk-timestreamwrite "1.11.968" :classifier "sources"]
+                                          [com.amazonaws/aws-java-sdk-timestreamquery "1.11.968" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-transcribe "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-transfer "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-translate "1.11.850" :classifier "sources"]

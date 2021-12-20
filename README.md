@@ -159,6 +159,7 @@ and the following dependency:
 * StorageGateway
 * Support
 * Textract
+* Timestream
 * Transcribe
 * Transfer
 * Translate

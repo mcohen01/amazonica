@@ -115,7 +115,6 @@
 (defn marshall
   [deserializer ^Record record]
   {:approximate-arrival-timestamp (amz/marshall (.getApproximateArrivalTimestamp record))
-   :encryption-type               (.getEncryptionType record)
    :sequence-number               (.getSequenceNumber record)
    :partition-key                 (.getPartitionKey record)
    :data                          (deserializer (.getData record))})
@@ -132,26 +131,38 @@
       (Thread/sleep 3000)
       false)))
 
+(def ^:dynamic *checkpointer*
+  "Bound to an IRecordProcessorCheckpointer when processor executes."
+  nil)
+
 (defn- processor-factory
-  [processor deserializer checkpoint next-check]
+  [processor deserializer checkpoint-strategy checkpoint-timeout next-check]
   (reify IRecordProcessorFactory
     (createProcessor [this]
       (reify IRecordProcessor
         (initialize [this shard-id])
         (shutdown [this checkpointer reason]
-          (if (or (= ShutdownReason/TERMINATE reason)
-                  (= "TERMINATE" reason))
+          (if (and (or (= ShutdownReason/TERMINATE reason)
+                       (= "TERMINATE" reason))
+                   ;; those using manual checkpointing need to decide
+                   ;; whether to checkpoint during shutdown on their own.
+                   (not= checkpoint-strategy :manual))
               (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
         (processRecords [this records checkpointer]
-          (if (or (processor (functor/fmap (partial marshall deserializer)
-                                           (vec (seq records))))
-                  (and checkpoint
-                       (> (System/currentTimeMillis) @next-check)))
-              (do (if checkpoint
-                      (reset! next-check
-                              (+' (System/currentTimeMillis)
-                                  (*' 1000 checkpoint))))
-                  (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
+          (let [processor-result (binding [*checkpointer* checkpointer]
+                                   (processor (functor/fmap
+                                               (partial marshall deserializer)
+                                               (vec (seq records)))))
+                checkpoint #(some (partial mark-checkpoint checkpointer) [1 2 3 4 5])]
+            (case checkpoint-strategy
+              :timeout (when (> (System/currentTimeMillis) @next-check)
+                         (reset! next-check
+                                 (+' (System/currentTimeMillis)
+                                     (*' 1000 checkpoint-timeout)))
+                         (checkpoint))
+              :boolean (when processor-result
+                         (checkpoint))
+              nil)))))))
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
@@ -280,8 +291,15 @@
         {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client?]
          :or   {checkpoint 60
                 deserializer unwrap}} opts
+        checkpoint-strategy (cond
+                              (number? checkpoint) :timeout
+                              ;; not sure of a good name for this strategy:
+                              (false? checkpoint) :boolean
+                              (= :manual checkpoint) :manual)
+        checkpoint-timeout (if (= checkpoint-strategy :timeout)
+                             checkpoint)
         next-check (atom 0)
-        factory           (processor-factory processor deserializer checkpoint next-check)
+        factory           (processor-factory processor deserializer checkpoint-strategy checkpoint-timeout next-check)
         creds             (amz/get-credentials credentials)
         provider          (if (instance? AWSCredentials creds)
                             (StaticCredentialsProvider. creds)

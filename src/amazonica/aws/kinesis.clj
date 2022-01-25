@@ -18,9 +18,11 @@
            [com.amazonaws.services.kinesis.model
             Record]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces
+              IRecordProcessorCheckpointer]
+           [com.amazonaws.services.kinesis.clientlibrary.interfaces.v2
+              IRecordProcessorFactory
               IRecordProcessor
-              IRecordProcessorCheckpointer
-              IRecordProcessorFactory]
+              IShutdownNotificationAware]
            [com.amazonaws.services.kinesis.clientlibrary.exceptions
               InvalidStateException
               KinesisClientLibDependencyException
@@ -138,21 +140,28 @@
     (createProcessor [_this]
       (let [next-check (atom 0)]
         (reify IRecordProcessor
-          (initialize [_this _shard-id])
-          (shutdown [_this checkpointer reason]
-            (when (or (= ShutdownReason/TERMINATE reason)
-                      (= "TERMINATE" reason))
-              (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))
-          (processRecords [_this records checkpointer]
-            (when (or (processor (functor/fmap (partial marshall deserializer)
-                                               (vec (seq records))))
-                      (and checkpoint
-                           (> (System/currentTimeMillis) @next-check)))
-              (when checkpoint
-                (reset! next-check
-                        (+' (System/currentTimeMillis)
-                            (*' 1000 checkpoint)))
-                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))))
+          (initialize [_this _initialization-input])
+          (shutdown [_this shutdown-input]
+            (let [reason (.getShutdownReason shutdown-input)
+                  checkpointer (.getCheckpointer shutdown-input)]
+              (when (or (= ShutdownReason/TERMINATE reason)
+                        (= "TERMINATE" reason))
+                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
+          (processRecords [_this process-records-input]
+            (let [records (vec (seq (.getRecords process-records-input)))
+                  checkpointer (.getCheckpointer process-records-input)]
+              (when (or (processor (functor/fmap (partial marshall deserializer)
+                                                 records))
+                        (and checkpoint
+                             (> (System/currentTimeMillis) @next-check)))
+                (when checkpoint
+                  (reset! next-check
+                          (+' (System/currentTimeMillis)
+                              (*' 1000 checkpoint))))
+                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
+          IShutdownNotificationAware
+          (shutdownRequested [_this checkpointer]
+            (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."

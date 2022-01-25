@@ -10,7 +10,7 @@
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/algo.generic "0.1.2"]
                  [com.amazonaws/aws-java-sdk "1.11.968" :exclusions [joda-time]]
-                 [com.amazonaws/amazon-kinesis-client "1.14.2" :exclusions [joda-time]]
+                 [com.amazonaws/amazon-kinesis-client "1.14.7" :exclusions [joda-time]]
                  [com.amazonaws/dynamodb-streams-kinesis-adapter "1.5.2"
                   :exclusions [com.amazonaws/amazon-kinesis-client
                                com.amazonaws/aws-java-sdk-cloudwatch
@@ -31,7 +31,7 @@
              :1.10.2      {:dependencies [[org.clojure/clojure "1.10.2"]]}
              :1.10.3      {:dependencies [[org.clojure/clojure "1.10.3"]]}
              :aws-sources {:jvm-opts     ["-Damazonica.internal.test.using-sources=true"]
-                           :dependencies [[com.amazonaws/amazon-kinesis-client "1.9.3" :classifier "sources"]
+                           :dependencies [[com.amazonaws/amazon-kinesis-client "1.14.7" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-accessanalyzer "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-acm "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-acmpca "1.11.850" :classifier "sources"]

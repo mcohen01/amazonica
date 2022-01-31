@@ -304,9 +304,12 @@
            ;; this will result in some warnings at debug from the kinesis client lib as it will try to set the region/endpoint on this client. 
            ;; These are safe to ignore as we pre-configure the correct values
            (.kinesisClient
-            (doto (AmazonDynamoDBStreamsAdapterClient. ^AWSCredentials provider (.getKinesisClientConfiguration config))
+            (doto (if provider
+                    (AmazonDynamoDBStreamsAdapterClient. ^AWSCredentialsProvider provider (.getKinesisClientConfiguration config))
+                    (AmazonDynamoDBStreamsAdapterClient. (.getKinesisClientConfiguration config)))
               (cond->
-               region-name ^AmazonDynamoDBStreamsAdapterClient (.setRegion (Region/getRegion (Regions/fromName region-name)))
+               region-name ^AmazonDynamoDBStreamsAdapterClient (.setRegion (Region/getRegion (Regions/fromName region-name))))
+              (cond->
                endpoint ^AmazonDynamoDBStreamsAdapterClient (.setEndpoint endpoint)))))
          (.build)) worker-identifier]))
 

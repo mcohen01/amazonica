@@ -120,7 +120,7 @@
    :partition-key                 (.getPartitionKey record)
    :data                          (deserializer (.getData record))})
 
-(defn- mark-checkpoint [^IRecordProcessorCheckpointer checkpointer _]
+(defn- mark-checkpoint [^IRecordProcessorCheckpointer checkpointer]
   (try
     (.checkpoint checkpointer)
     true
@@ -133,25 +133,26 @@
       false)))
 
 (defn- processor-factory
-  [processor deserializer checkpoint next-check]
+  [processor deserializer checkpoint]
   (reify IRecordProcessorFactory
-    (createProcessor [this]
-      (reify IRecordProcessor
-        (initialize [this shard-id])
-        (shutdown [this checkpointer reason]
-          (if (or (= ShutdownReason/TERMINATE reason)
-                  (= "TERMINATE" reason))
-              (some (partial mark-checkpoint checkpointer) [1 2 3 4 5])))
-        (processRecords [this records checkpointer]
-          (if (or (processor (functor/fmap (partial marshall deserializer)
-                                           (vec (seq records))))
-                  (and checkpoint
-                       (> (System/currentTimeMillis) @next-check)))
-              (do (if checkpoint
-                      (reset! next-check
-                              (+' (System/currentTimeMillis)
-                                  (*' 1000 checkpoint))))
-                  (some (partial mark-checkpoint checkpointer) [1 2 3 4 5]))))))))
+    (createProcessor [_this]
+      (let [next-check (atom 0)]
+        (reify IRecordProcessor
+          (initialize [_this _shard-id])
+          (shutdown [_this checkpointer reason]
+            (when (or (= ShutdownReason/TERMINATE reason)
+                      (= "TERMINATE" reason))
+              (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))
+          (processRecords [_this records checkpointer]
+            (when (or (processor (functor/fmap (partial marshall deserializer)
+                                               (vec (seq records))))
+                      (and checkpoint
+                           (> (System/currentTimeMillis) @next-check)))
+              (when checkpoint
+                (reset! next-check
+                        (+' (System/currentTimeMillis)
+                            (*' 1000 checkpoint)))
+                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))))
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
@@ -280,8 +281,7 @@
         {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client?]
          :or   {checkpoint 60
                 deserializer unwrap}} opts
-        next-check (atom 0)
-        factory           (processor-factory processor deserializer checkpoint next-check)
+        factory           (processor-factory processor deserializer checkpoint)
         creds             (amz/get-credentials credentials)
         provider          (if (instance? AWSCredentials creds)
                             (StaticCredentialsProvider. creds)

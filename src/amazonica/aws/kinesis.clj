@@ -8,12 +8,17 @@
               AWSCredentialsProviderChain
               DefaultAWSCredentialsProviderChain]
            com.amazonaws.ClientConfiguration
+           com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            com.amazonaws.internal.StaticCredentialsProvider
            com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
+           com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder
            com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+           com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
            com.amazonaws.services.dynamodbv2.streamsadapter.AmazonDynamoDBStreamsAdapterClient
+           [com.amazonaws.regions
+            Region
+            Regions]
            [com.amazonaws.services.kinesis
-            AmazonKinesis
             AmazonKinesisClient]
            [com.amazonaws.services.kinesis.model
             Record]
@@ -32,6 +37,7 @@
               InitialPositionInStream
               KinesisClientLibConfiguration
               Worker
+              Worker$Builder
               ShutdownReason]
            [com.amazonaws.services.kinesis.metrics.interfaces
             MetricsLevel]
@@ -169,8 +175,6 @@
    {:keys [app
            stream
            worker-id
-           endpoint
-           dynamodb-endpoint
            billing-mode
            initial-position-in-stream
            ^java.util.Date initial-position-in-stream-date
@@ -191,22 +195,13 @@
            metrics-buffer-time-millis
            metrics-max-queue-size
            validate-sequence-number-before-checkpointing
-           region-name
            initial-lease-table-read-capacity
            initial-lease-table-write-capacity]
-    :or {worker-id (str (UUID/randomUUID))
-         endpoint "kinesis.us-east-1.amazonaws.com"}}]
+    :or {worker-id (str (UUID/randomUUID))}}]
   (cond-> (KinesisClientLibConfiguration. (name app)
                                           (name stream)
                                           provider
                                           (name worker-id))
-
-          endpoint
-          (.withKinesisEndpoint endpoint)
-
-          dynamodb-endpoint
-          (.withDynamoDBEndpoint dynamodb-endpoint)
-          
           billing-mode
           (.withBillingMode billing-mode)
 
@@ -272,9 +267,6 @@
           validate-sequence-number-before-checkpointing
           (.withValidateSequenceNumberBeforeCheckpointing validate-sequence-number-before-checkpointing)
 
-          region-name
-          (.withRegionName region-name)
-
           initial-lease-table-read-capacity
           (.withInitialLeaseTableReadCapacity initial-lease-table-read-capacity)
 
@@ -285,11 +277,12 @@
   "Instantiate a kinesis Worker."
   [& args]
   (let [opts (if (associative? (first args))
-                 (first args)
-                 (apply hash-map args))
-        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client?]
+               (first args)
+               (apply hash-map args))
+        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client? ^String region-name ^String endpoint ^String dynamodb-endpoint]
          :or   {checkpoint 60
-                deserializer unwrap}} opts
+                deserializer unwrap
+                endpoint "kinesis.us-east-1.amazonaws.com"}} opts
         factory           (processor-factory processor deserializer checkpoint)
         creds             (amz/get-credentials credentials)
         provider          (if (instance? AWSCredentials creds)
@@ -298,19 +291,37 @@
         config            (kinesis-client-lib-configuration provider opts)
         worker-identifier (.getWorkerIdentifier config)]
     (if dynamodb-adaptor-client?
-      (let [adapterClient (AmazonDynamoDBStreamsAdapterClient.)
-            ;; It is recommended that fluent builders are used to create the DynamoDBClient and the CloudWatchClient.
-            ;; However, this creates immutable objects, and if a region is specified, then the Worker
-            ;; will try to modify them leading to an exception being thrown
-            dynamoDBClient    (AmazonDynamoDBClient.)
-            cloudWatchClient  (AmazonCloudWatchClient.)]
-        [(Worker. ^IRecordProcessorFactory            factory
-                  ^KinesisClientLibConfiguration      config
-                  ^AmazonDynamoDBStreamsAdapterClient adapterClient
-                  ^AmazonDynamoDBClient               dynamoDBClient
-                  ^AmazonCloudWatchClient             cloudWatchClient)
+      (let [;; set regions and endpoints on the respective clients explicitly
+            ;; if they are instead set on the KinesisClientLibConfiguration, the region/endpoint is not updated as the clients created in the fluid builder interface are immutable
+            adapterClient (doto (if provider
+                                  (AmazonDynamoDBStreamsAdapterClient. ^AWSCredentials provider)
+                                  (AmazonDynamoDBStreamsAdapterClient.))
+                            (cond-> region-name ^AmazonDynamoDBStreamsAdapterClient (.setRegion (Region/getRegion (Regions/fromName region-name)))
+                                    endpoint ^AmazonDynamoDBStreamsAdapterClient (.setEndpoint endpoint)))
+            dynamoDBClient (-> (AmazonDynamoDBClientBuilder/standard)
+                               (cond->
+                                region-name ^AmazonDynamoDBClientBuilder (.withRegion region-name)
+                                dynamodb-endpoint ^AmazonDynamoDBClientBuilder (.withEndpointConfiguration (AwsClientBuilder$EndpointConfiguration. dynamodb-endpoint region-name)))
+                               (.build))
+            cloudWatchClient (-> (AmazonCloudWatchClientBuilder/standard)
+                                 (cond->
+                                  region-name ^AmazonCloudWatchClientBuilder (.withRegion region-name))
+                                 (.build))]
+        [(-> (Worker$Builder.)
+             (.recordProcessorFactory ^IRecordProcessorFactory factory)
+             (.config ^KinesisClientLibConfiguration config)
+             (.kinesisClient ^AmazonDynamoDBStreamsAdapterClient adapterClient)
+             (.dynamoDBClient ^AmazonDynamoDBClient dynamoDBClient)
+             (.cloudWatchClient ^AmazonCloudWatchClient cloudWatchClient)
+             (.build))
          worker-identifier])
-      [(Worker. factory config) worker-identifier])))
+      [(-> (Worker$Builder.)
+           (.recordProcessorFactory ^IRecordProcessorFactory factory)
+           (.config (cond-> config
+                      region-name (.withRegionName region-name)
+                      endpoint (.withKinesisEndpoint endpoint)
+                      dynamodb-endpoint (.withDynamoDBEndpoint dynamodb-endpoint)))
+           (.build)) worker-identifier])))
 
 (defn worker!
   "Instantiate a new kinesis Worker and invoke its run method in a

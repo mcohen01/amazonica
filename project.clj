@@ -258,6 +258,6 @@
                                           [com.amazonaws/aws-java-sdk-workspaces "1.11.850" :classifier "sources"]
                                           [com.amazonaws/aws-java-sdk-xray "1.11.850" :classifier "sources"]
                                           ;; the :exclusions prevent warnings due to version ranges:
-                                          [com.amazonaws/dynamodb-streams-kinesis-adapter "1.2.1" :classifier "sources" :exclusions [*]]
+                                          [com.amazonaws/dynamodb-streams-kinesis-adapter "1.5.3" :classifier "sources" :exclusions [*]]
                                           [com.amazonaws/jmespath-java "1.11.850" :classifier "sources"]
                                           [software.amazon.ion/ion-java "1.0.2" :classifier "sources"]]}})

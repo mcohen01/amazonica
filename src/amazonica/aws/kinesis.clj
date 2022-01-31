@@ -7,20 +7,21 @@
               AWSCredentials
               AWSCredentialsProviderChain
               DefaultAWSCredentialsProviderChain]
-           com.amazonaws.ClientConfiguration
            com.amazonaws.internal.StaticCredentialsProvider
-           com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
-           com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
            com.amazonaws.services.dynamodbv2.streamsadapter.AmazonDynamoDBStreamsAdapterClient
+           [com.amazonaws.regions
+            Region
+            Regions]
            [com.amazonaws.services.kinesis
-            AmazonKinesis
             AmazonKinesisClient]
            [com.amazonaws.services.kinesis.model
             Record]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces
+              IRecordProcessorCheckpointer]
+           [com.amazonaws.services.kinesis.clientlibrary.interfaces.v2
+              IRecordProcessorFactory
               IRecordProcessor
-              IRecordProcessorCheckpointer
-              IRecordProcessorFactory]
+              IShutdownNotificationAware]
            [com.amazonaws.services.kinesis.clientlibrary.exceptions
               InvalidStateException
               KinesisClientLibDependencyException
@@ -30,6 +31,7 @@
               InitialPositionInStream
               KinesisClientLibConfiguration
               Worker
+              Worker$Builder
               ShutdownReason]
            [com.amazonaws.services.kinesis.metrics.interfaces
             MetricsLevel]
@@ -138,21 +140,28 @@
     (createProcessor [_this]
       (let [next-check (atom 0)]
         (reify IRecordProcessor
-          (initialize [_this _shard-id])
-          (shutdown [_this checkpointer reason]
-            (when (or (= ShutdownReason/TERMINATE reason)
-                      (= "TERMINATE" reason))
-              (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))
-          (processRecords [_this records checkpointer]
-            (when (or (processor (functor/fmap (partial marshall deserializer)
-                                               (vec (seq records))))
-                      (and checkpoint
-                           (> (System/currentTimeMillis) @next-check)))
-              (when checkpoint
-                (reset! next-check
-                        (+' (System/currentTimeMillis)
-                            (*' 1000 checkpoint)))
-                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))))
+          (initialize [_this _initialization-input])
+          (shutdown [_this shutdown-input]
+            (let [reason (.getShutdownReason shutdown-input)
+                  checkpointer (.getCheckpointer shutdown-input)]
+              (when (or (= ShutdownReason/TERMINATE reason)
+                        (= "TERMINATE" reason))
+                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
+          (processRecords [_this process-records-input]
+            (let [records (vec (seq (.getRecords process-records-input)))
+                  checkpointer (.getCheckpointer process-records-input)]
+              (when (or (processor (functor/fmap (partial marshall deserializer)
+                                                 records))
+                        (and checkpoint
+                             (> (System/currentTimeMillis) @next-check)))
+                (when checkpoint
+                  (reset! next-check
+                          (+' (System/currentTimeMillis)
+                              (*' 1000 checkpoint))))
+                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
+          IShutdownNotificationAware
+          (shutdownRequested [_this checkpointer]
+            (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))
 
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
@@ -185,19 +194,17 @@
            region-name
            initial-lease-table-read-capacity
            initial-lease-table-write-capacity]
-    :or {worker-id (str (UUID/randomUUID))
-         endpoint "kinesis.us-east-1.amazonaws.com"}}]
+    :or {worker-id (str (UUID/randomUUID))}}]
   (cond-> (KinesisClientLibConfiguration. (name app)
                                           (name stream)
                                           provider
                                           (name worker-id))
-
           endpoint
           (.withKinesisEndpoint endpoint)
 
           dynamodb-endpoint
           (.withDynamoDBEndpoint dynamodb-endpoint)
-          
+
           billing-mode
           (.withBillingMode billing-mode)
 
@@ -276,32 +283,32 @@
   "Instantiate a kinesis Worker."
   [& args]
   (let [opts (if (associative? (first args))
-                 (first args)
-                 (apply hash-map args))
-        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client?]
+               (first args)
+               (apply hash-map args))
+        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client? ^String region-name ^String endpoint]
          :or   {checkpoint 60
-                deserializer unwrap}} opts
+                deserializer unwrap
+                endpoint "kinesis.us-east-1.amazonaws.com"}} opts
         factory           (processor-factory processor deserializer checkpoint)
         creds             (amz/get-credentials credentials)
         provider          (if (instance? AWSCredentials creds)
                             (StaticCredentialsProvider. creds)
                             creds)
-        config            (kinesis-client-lib-configuration provider opts)
+        config            (kinesis-client-lib-configuration provider (assoc opts :endpoint endpoint))
         worker-identifier (.getWorkerIdentifier config)]
-    (if dynamodb-adaptor-client?
-      (let [adapterClient (AmazonDynamoDBStreamsAdapterClient.)
-            ;; It is recommended that fluent builders are used to create the DynamoDBClient and the CloudWatchClient.
-            ;; However, this creates immutable objects, and if a region is specified, then the Worker
-            ;; will try to modify them leading to an exception being thrown
-            dynamoDBClient    (AmazonDynamoDBClient.)
-            cloudWatchClient  (AmazonCloudWatchClient.)]
-        [(Worker. ^IRecordProcessorFactory            factory
-                  ^KinesisClientLibConfiguration      config
-                  ^AmazonDynamoDBStreamsAdapterClient adapterClient
-                  ^AmazonDynamoDBClient               dynamoDBClient
-                  ^AmazonCloudWatchClient             cloudWatchClient)
-         worker-identifier])
-      [(Worker. factory config) worker-identifier])))
+    [(-> (Worker$Builder.)
+         (.recordProcessorFactory ^IRecordProcessorFactory factory)
+         (.config ^KinesisClientLibConfiguration config)
+         (cond->
+          dynamodb-adaptor-client?
+           ;; this will result in some warnings at debug from the kinesis client lib as it will try to set the region/endpoint on this client. 
+           ;; These are safe to ignore as we pre-configure the correct values
+           (.kinesisClient
+            (doto (AmazonDynamoDBStreamsAdapterClient. ^AWSCredentials provider (.getKinesisClientConfiguration config))
+              (cond->
+               region-name ^AmazonDynamoDBStreamsAdapterClient (.setRegion (Region/getRegion (Regions/fromName region-name)))
+               endpoint ^AmazonDynamoDBStreamsAdapterClient (.setEndpoint endpoint)))))
+         (.build)) worker-identifier]))
 
 (defn worker!
   "Instantiate a new kinesis Worker and invoke its run method in a

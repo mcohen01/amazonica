@@ -324,7 +324,7 @@
   (cond
     (instance? java.util.Date date) date
     (instance? AbstractInstant date) (.toDate ^AbstractInstant date)
-    (integer? date) (java.util.Date. (int date))
+    (integer? date) (java.util.Date. (long date))
     true (.. (SimpleDateFormat. @date-format)
            (parse (str date) (ParsePosition. 0)))))
 

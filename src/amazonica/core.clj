@@ -20,7 +20,6 @@
              Regions]
            com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
-           com.amazonaws.services.s3.model.CryptoConfiguration
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -247,9 +246,8 @@
         key       (or (:secret-key encryption)
                       (:key-pair encryption)
                       (:kms-customer-master-key encryption))
-        ^CryptoConfiguration
         crypto    (invoke-constructor
-                   "com.amazonaws.services.s3.model.CryptoConfiguration" [])
+                    "com.amazonaws.services.s3.model.CryptoConfiguration" [])
         _         (when (:kms-customer-master-key encryption)
                     (.setAwsKmsRegion crypto (Region/getRegion (get-region {:endpoint (:region key)})) ))
         em        (when-not (:kms-customer-master-key encryption)

@@ -2,8 +2,7 @@
   "Amazon AWS functions."
   (:use [clojure.algo.generic.functor :only (fmap)])
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]
-            [clojure.set :as set])
+            [clojure.java.io :as io])
   (:import clojure.lang.Reflector
            [com.amazonaws
              AmazonServiceException
@@ -21,6 +20,7 @@
              Regions]
            com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
+           com.amazonaws.services.s3.model.CryptoConfiguration
            org.joda.time.DateTime
            org.joda.time.base.AbstractInstant
            java.io.File
@@ -247,8 +247,9 @@
         key       (or (:secret-key encryption)
                       (:key-pair encryption)
                       (:kms-customer-master-key encryption))
+        ^CryptoConfiguration
         crypto    (invoke-constructor
-                    "com.amazonaws.services.s3.model.CryptoConfiguration" [])
+                   "com.amazonaws.services.s3.model.CryptoConfiguration" [])
         _         (when (:kms-customer-master-key encryption)
                     (.setAwsKmsRegion crypto (Region/getRegion (get-region {:endpoint (:region key)})) ))
         em        (when-not (:kms-customer-master-key encryption)
@@ -986,9 +987,10 @@
 (defn- method-arglist
   "Derives a Clojure `:arglist` vector from a
   `java.lang.reflect.Method`."
-  [method]
+  [^Method method]
   (let [names (parameter-names method)
-        type (some-> method .getParameters first .getType)
+        ^Parameter first-parameter (some-> method .getParameters first)
+        ^Class type (when first-parameter (.getType first-parameter))
         fields (when (class? type)
                  (try
                    (->> type
@@ -1051,11 +1053,12 @@
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."
   [client ns fname methods]
-  (let [source (some-> client pr-str munge (str/replace "." "/") (str ".java") (io/resource) str)]
+  (let [source (some-> client pr-str munge (str/replace "." "/") (str ".java") (io/resource) str)
+        ^Method first-method (first methods)]
     (intern ns (with-meta (symbol (name fname))
                  (cond-> {:amazonica/client  client
                           :amazonica/methods methods
-                          :amazonica/method-name (-> methods first .getName)
+                          :amazonica/method-name (.getName first-method)
                           :arglists          (sort-by pr-str (map method-arglist methods))}
                    source (assoc :amazonica/source source)))
             (fn [& args]

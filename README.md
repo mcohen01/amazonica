@@ -109,6 +109,7 @@ and the following dependency:
 * [Kinesis](#kinesis)
 * [Kinesis Analytics](#kinesisanalytics)
 * [KinesisFirehose](#kinesisfirehose)
+* Kinesis Video Streams with WebRTC (Signaling Channels)
 * [KMS](#kms)
 * Lake Formation
 * [Lambda](#lambda)

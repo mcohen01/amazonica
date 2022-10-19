@@ -1,7 +1,7 @@
 ![AWS logo](claws.png)
 # `Amazonica`
 
-A comprehensive Clojure client for the entire [Amazon AWS api][1].  
+A comprehensive Clojure client for the entire [Amazon AWS api][1].
 
 [![amazonica](https://circleci.com/gh/mcohen01/amazonica.svg?style=shield)](https://app.circleci.com/pipelines/github/mcohen01/amazonica)
 
@@ -372,7 +372,7 @@ The credentials map may contain zero or one of the following:
 - `:cred`, in which case the [`AWSCredentialsProvider`][23] instance provided will be used.
 - Or rather than a Clojure map, the argument may be an actual instance or subclass of either [`AWSCredentialsProvider`][23] or [`AWSCredentials`][24].
 
-In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums][16], [.setRegion][17] will be called on the Client, otherwise [.setEndpoint][18] will be called.
+In addition, the credentials map may contain an `:endpoint` entry. If the value of the `:endpoint` key is a lower case, hyphenated translation of one of the [Regions enums][16], [.withRegion][17] will be used to build the Client, otherwise [.withEndpointConfiguration][18] will be used.
 
 **Note:** The first function called (for each distinct AWS service namespace, e.g. amazonica.aws.ec2) creates an Amazon*Client, which is effectively cached via memoization.  Therefore, if you explicitly pass different credentials maps to different functions, you will effectively have different Clients.
 
@@ -1965,8 +1965,8 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [14]: https://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html
 [15]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html
 [16]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/regions/Regions.html
-[17]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setRegion-com.amazonaws.regions.Region-
-[18]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/AmazonWebServiceClient.html#setEndpoint-java.lang.String-
+[17]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/client/builder/AwsClientBuilder.html#withRegion-com.amazonaws.regions.Regions-
+[18]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/client/builder/AwsClientBuilder.html#withEndpointConfiguration-com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration-
 [19]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/kinesis/model/Record.html#getData--
 [20]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/BasicAWSCredentials.html
 [21]: https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/BasicSessionCredentials.html

@@ -15,6 +15,8 @@
              BasicAWSCredentials
              BasicSessionCredentials
              DefaultAWSCredentialsProviderChain]
+           [com.amazonaws.util
+             AwsHostNameUtils]
            com.amazonaws.auth.profile.ProfileCredentialsProvider
            [com.amazonaws.regions
              Region
@@ -152,16 +154,17 @@
 (declare set-fields)
 
 (defn- build-client [^Class clazz credentials configuration raw-creds options]
-  (let [builder (builder clazz)
+  (let [default-region (System/getenv "AWS_DEFAULT_REGION")
+        builder (builder clazz)
         _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
-        ^String endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
+        ^String endpoint (or (:endpoint raw-creds) default-region)
         builder (if endpoint
                   (if (.startsWith endpoint "http")
                       (.withEndpointConfiguration
                         builder
-                        (AwsClientBuilder$EndpointConfiguration. endpoint nil))
+                        (AwsClientBuilder$EndpointConfiguration. endpoint (or (AwsHostNameUtils/parseRegion endpoint nil) default-region)))
                       (.withRegion builder endpoint))
                   builder)]
     (.build builder)))

@@ -17,7 +17,8 @@
            com.amazonaws.auth.profile.ProfileCredentialsProvider
            [com.amazonaws.regions
              Region
-             Regions]
+             Regions
+             DefaultAwsRegionProviderChain]
            com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
@@ -144,6 +145,10 @@
   `(binding [*client-config* ~config]
      (do ~@body)))
 
+(defn- get-default-region []
+  (-> (DefaultAwsRegionProviderChain.)
+      (.getRegion)))
+
 (defn- builder ^AwsClientBuilder [^Class clazz]
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
     (.invoke method clazz (make-array Object 0))))
@@ -155,7 +160,7 @@
         _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
-        ^String endpoint (or (:endpoint raw-creds) (System/getenv "AWS_DEFAULT_REGION"))
+        ^String endpoint (or (:endpoint raw-creds) (get-default-region))
         builder (if endpoint
                   (if (.startsWith endpoint "http")
                       (.withEndpointConfiguration
@@ -227,7 +232,7 @@
 (defn- get-region ^Regions
   [credentials]
   (when-let [endpoint (or (:endpoint credentials)
-                          (System/getenv "AWS_DEFAULT_REGION"))]
+                          (get-default-region))]
     (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
                          (apply hash-set (seq (Regions/values))))
                    (-> (str/upper-case endpoint)

@@ -222,7 +222,7 @@
         (.setMethod req (coerce-value method HttpMethod)))
       (if-let [response-headers (:response-headers value)]
         (.setResponseHeaders req response-headers))
-      (if-let [sse-algorithm (:sse-algorithm value)]
+      (if-let [^String sse-algorithm (:sse-algorithm value)]
         (.setSSEAlgorithm req sse-algorithm))
       (if-let [sse-customer-key (:sse-customer-key value)]
         (.setSSECustomerKey

@@ -2,8 +2,7 @@
   "Amazon AWS functions."
   (:use [clojure.algo.generic.functor :only (fmap)])
   (:require [clojure.string :as str]
-            [clojure.java.io :as io]
-            [clojure.set :as set])
+            [clojure.java.io :as io])
   (:import clojure.lang.Reflector
            [com.amazonaws
              AmazonServiceException
@@ -20,7 +19,8 @@
            com.amazonaws.auth.profile.ProfileCredentialsProvider
            [com.amazonaws.regions
              Region
-             Regions]
+             Regions
+             DefaultAwsRegionProviderChain]
            com.amazonaws.client.builder.AwsClientBuilder
            com.amazonaws.client.builder.AwsClientBuilder$EndpointConfiguration
            org.joda.time.DateTime
@@ -147,6 +147,10 @@
   `(binding [*client-config* ~config]
      (do ~@body)))
 
+(defn- get-default-region []
+  (-> (DefaultAwsRegionProviderChain.)
+      (.getRegion)))
+
 (defn- builder ^AwsClientBuilder [^Class clazz]
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
     (.invoke method clazz (make-array Object 0))))
@@ -159,7 +163,7 @@
         _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
-        ^String endpoint (or (:endpoint raw-creds) default-region)
+        ^String endpoint (or (:endpoint raw-creds) (get-default-region))
         builder (if endpoint
                   (if (.startsWith endpoint "http")
                       (.withEndpointConfiguration
@@ -231,7 +235,7 @@
 (defn- get-region ^Regions
   [credentials]
   (when-let [endpoint (or (:endpoint credentials)
-                          (System/getenv "AWS_DEFAULT_REGION"))]
+                          (get-default-region))]
     (if (contains? (fmap #(-> % str/upper-case (str/replace "_" ""))
                          (apply hash-set (seq (Regions/values))))
                    (-> (str/upper-case endpoint)
@@ -989,9 +993,10 @@
 (defn- method-arglist
   "Derives a Clojure `:arglist` vector from a
   `java.lang.reflect.Method`."
-  [method]
+  [^Method method]
   (let [names (parameter-names method)
-        type (some-> method .getParameters first .getType)
+        ^Parameter first-parameter (some-> method .getParameters first)
+        ^Class type (when first-parameter (.getType first-parameter))
         fields (when (class? type)
                  (try
                    (->> type
@@ -1054,11 +1059,12 @@
    derived from the java.lang.reflect.Method(s). Overloaded
    methods will yield a variadic Clojure function."
   [client ns fname methods]
-  (let [source (some-> client pr-str munge (str/replace "." "/") (str ".java") (io/resource) str)]
+  (let [source (some-> client pr-str munge (str/replace "." "/") (str ".java") (io/resource) str)
+        ^Method first-method (first methods)]
     (intern ns (with-meta (symbol (name fname))
                  (cond-> {:amazonica/client  client
                           :amazonica/methods methods
-                          :amazonica/method-name (-> methods first .getName)
+                          :amazonica/method-name (.getName first-method)
                           :arglists          (sort-by pr-str (map method-arglist methods))}
                    source (assoc :amazonica/source source)))
             (fn [& args]

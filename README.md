@@ -1,7 +1,7 @@
 ![AWS logo](claws.png)
 # `Amazonica`
 
-A comprehensive Clojure client for the entire [Amazon AWS api][1].
+A comprehensive Clojure client for the entire [Amazon AWS API][1].
 
 [![amazonica](https://circleci.com/gh/mcohen01/amazonica.svg?style=shield)](https://app.circleci.com/pipelines/github/mcohen01/amazonica)
 
@@ -35,7 +35,7 @@ and the following dependency:
 
 ## Supported Services
 * Amplify
-* Api Gateway
+* API Gateway
 * AppConfig
 * Application Insights
 * App Mesh

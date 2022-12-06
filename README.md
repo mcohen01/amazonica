@@ -13,6 +13,12 @@ Leiningen coordinates:
 [amazonica "0.3.162"]
 ```
 
+`deps.edn` coordinates:
+
+```clj
+amazonica/amazonica {:mvn/version "0.3.162"}
+```
+
 For Maven users:
 
 add the following repository definition to your `pom.xml`:

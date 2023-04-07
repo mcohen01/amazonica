@@ -41,7 +41,7 @@
            java.text.SimpleDateFormat
            java.util.Date))
 
-(defn contains?
+(defn map-contains?
   "Will check if the given hash-map contains the specified List<Keys>
   [coll primary-key & other-keys]
   (let [key-finder (apply some-fn
@@ -200,20 +200,20 @@
     (instance? AWSCredentials credentials)
       (AWSStaticCredentialsProvider. credentials)
     (and (associative? credentials)
-         (contains? credentials :session-token))
+         (map-contains? credentials :session-token))
     (AWSStaticCredentialsProvider.
       (BasicSessionCredentials.
         (:access-key credentials)
         (:secret-key credentials)
         (:session-token credentials)))
     (and (associative? credentials)
-         (contains? credentials :access-key))
+         (map-contains? credentials :access-key))
     (AWSStaticCredentialsProvider.
       (BasicAWSCredentials.
         (:access-key credentials)
         (:secret-key credentials)))
     (and (associative? credentials)
-         (contains? credentials :profile))
+         (map-contains? credentials :profile))
     (ProfileCredentialsProvider.
         (:profile credentials))
     (and (associative? credentials)

@@ -41,6 +41,14 @@
            java.text.SimpleDateFormat
            java.util.Date))
 
+(defn contains?
+  "Will check if the given hash-map contains the specified List<Keys>
+  [coll primary-key & other-keys]
+  (let [key-finder (apply some-fn
+                          (conj (or other-keys [])
+                                pk))]
+    (some? (key-finder coll))))
+
 (defonce ^:private credential (atom {}))
 
 (defonce ^:private client-config (atom {}))

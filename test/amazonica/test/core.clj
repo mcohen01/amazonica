@@ -246,3 +246,11 @@
                   (is (vector? arglist))
                   (doseq [item arglist]
                     (is (symbol? item))))))))))))
+
+(deftest ^:contains-should-not-consider-nil-values
+  validate-contains?-doesnt-allow-nil-values
+  (testing "contains? shouldn't consider nil values"
+    (let [sample-value {:A "some-value" :B nil}]
+      (is true? (c/contains? sample-value :A))
+      (is false? (c/contains? sample-value :B))
+      (is true? (c/contains? sample-value :A :B)))))

@@ -46,7 +46,7 @@
   [coll primary-key & other-keys]
   (let [key-finder (apply some-fn
                           (conj (or other-keys [])
-                                pk))]
+                                primary-key))]
     (some? (key-finder coll))))
 
 (defonce ^:private credential (atom {}))

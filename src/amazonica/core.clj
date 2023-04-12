@@ -42,11 +42,11 @@
            java.util.Date))
 
 (defn map-contains?
-  "Will check if the given hash-map contains the specified List<Keys>
+  "Check if hash-map contians the specified value(s)"
   [coll primary-key & other-keys]
-  (let [key-finder (apply some-fn
-                          (conj (or other-keys [])
-                                primary-key))]
+  (let [key-finder (apply some-fn (conj (or other-keys
+  					    [])
+					 primary-key))]
     (some? (key-finder coll))))
 
 (defonce ^:private credential (atom {}))

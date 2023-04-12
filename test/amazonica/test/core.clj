@@ -251,6 +251,6 @@
   validate-contains?-doesnt-allow-nil-values
   (testing "map-contains? shouldn't consider nil values"
     (let [sample-value {:A "some-value" :B nil}]
-      (is true? (c/map-contains? sample-value :A))
-      (is false? (c/map-contains? sample-value :B))
-      (is true? (c/map-contains? sample-value :A :B)))))
+      (is (true? (c/map-contains? sample-value :A)))
+      (is (false? (c/map-contains? sample-value :B)))
+      (is (true? (c/map-contains? sample-value :A :B))))))

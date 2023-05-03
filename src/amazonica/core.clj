@@ -147,9 +147,18 @@
   `(binding [*client-config* ~config]
      (do ~@body)))
 
-(defn- get-default-region []
-  (-> (DefaultAwsRegionProviderChain.)
-      (.getRegion)))
+
+(defn- get-default-region
+  "Get the AWS region
+   
+   Takes AWS_DEFAULT_REGION as the first priority to match old behaviour. Otherwise, see 
+   https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-region-selection.html#default-region-provider-chain
+   for region selection order."
+  []
+  (or
+   (System/getenv "AWS_DEFAULT_REGION")
+   (-> (DefaultAwsRegionProviderChain.)
+       (.getRegion))))
 
 (defn- builder ^AwsClientBuilder [^Class clazz]
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
@@ -158,18 +167,18 @@
 (declare set-fields)
 
 (defn- build-client [^Class clazz credentials configuration raw-creds options]
-  (let [default-region (System/getenv "AWS_DEFAULT_REGION")
+  (let [default-region (get-default-region)
         builder (builder clazz)
         _ (set-fields builder options)
         builder (if credentials (.withCredentials builder credentials) builder)
         builder (if configuration (.withClientConfiguration builder configuration) builder)
-        ^String endpoint (or (:endpoint raw-creds) (get-default-region))
+        ^String endpoint (or (:endpoint raw-creds) default-region)
         builder (if endpoint
                   (if (.startsWith endpoint "http")
-                      (.withEndpointConfiguration
-                        builder
-                        (AwsClientBuilder$EndpointConfiguration. endpoint (or (AwsHostNameUtils/parseRegion endpoint nil) default-region)))
-                      (.withRegion builder endpoint))
+                    (.withEndpointConfiguration
+                     builder
+                     (AwsClientBuilder$EndpointConfiguration. endpoint (or (AwsHostNameUtils/parseRegion endpoint nil) default-region)))
+                    (.withRegion builder endpoint))
                   builder)]
     (.build builder)))
 

@@ -6,6 +6,7 @@
   (:import clojure.lang.Reflector
            [com.amazonaws
              AmazonServiceException
+             SdkClientException
              ClientConfiguration]
            [com.amazonaws.auth
              AWSCredentials
@@ -153,12 +154,16 @@
    
    Takes AWS_DEFAULT_REGION as the first priority to match old behaviour. Otherwise, see 
    https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/java-dg-region-selection.html#default-region-provider-chain
-   for region selection order."
+   for region selection order.
+   
+   Returns nil if no region is defined."
   []
   (or
    (System/getenv "AWS_DEFAULT_REGION")
-   (-> (DefaultAwsRegionProviderChain.)
-       (.getRegion))))
+   (try
+     (.getRegion (DefaultAwsRegionProviderChain.))
+     (catch SdkClientException _
+       nil))))
 
 (defn- builder ^AwsClientBuilder [^Class clazz]
   (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]

@@ -134,13 +134,17 @@
       (Thread/sleep 3000)
       false)))
 
+(def ^:dynamic *shard-id* nil )
+
 (defn- processor-factory
   [processor deserializer checkpoint]
   (reify IRecordProcessorFactory
     (createProcessor [_this]
-      (let [next-check (atom 0)]
+      (let [next-check (atom 0)
+            shard-id (atom nil)]
         (reify IRecordProcessor
-          (initialize [_this _initialization-input])
+          (initialize [_this initialisation-input]
+            (reset! shard-id (.getShardId initialisation-input)))
           (shutdown [_this shutdown-input]
             (let [reason (.getShutdownReason shutdown-input)
                   checkpointer (.getCheckpointer shutdown-input)]
@@ -148,17 +152,18 @@
                         (= "TERMINATE" reason))
                 (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
           (processRecords [_this process-records-input]
-            (let [records (vec (seq (.getRecords process-records-input)))
-                  checkpointer (.getCheckpointer process-records-input)]
-              (when (or (processor (functor/fmap (partial marshall deserializer)
-                                                 records))
-                        (and checkpoint
-                             (> (System/currentTimeMillis) @next-check)))
-                (when checkpoint
-                  (reset! next-check
-                          (+' (System/currentTimeMillis)
-                              (*' 1000 checkpoint))))
-                (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil)))))
+            (binding [*shard-id* @shard-id]
+              (let [records (vec (seq (.getRecords process-records-input)))
+                    checkpointer (.getCheckpointer process-records-input)]
+                (when (or (processor (functor/fmap (partial marshall deserializer)
+                                                   records))
+                          (and checkpoint
+                               (> (System/currentTimeMillis) @next-check)))
+                  (when checkpoint
+                    (reset! next-check
+                            (+' (System/currentTimeMillis)
+                                (*' 1000 checkpoint))))
+                  (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))
           IShutdownNotificationAware
           (shutdownRequested [_this checkpointer]
             (some (fn [_] (mark-checkpoint checkpointer)) (repeat 5 nil))))))))
@@ -301,7 +306,7 @@
          (.config ^KinesisClientLibConfiguration config)
          (cond->
           dynamodb-adaptor-client?
-           ;; this will result in some warnings at debug from the kinesis client lib as it will try to set the region/endpoint on this client. 
+           ;; this will result in some warnings at debug from the kinesis client lib as it will try to set the region/endpoint on this client.
            ;; These are safe to ignore as we pre-configure the correct values
            (.kinesisClient
             (doto (if provider

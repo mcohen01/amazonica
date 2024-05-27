@@ -165,9 +165,12 @@
      (catch SdkClientException _
        nil))))
 
-(defn- builder ^AwsClientBuilder [^Class clazz]
-  (let [^Method method (.getMethod clazz "builder" (make-array Class 0))]
-    (.invoke method clazz (make-array Object 0))))
+(defn- builder ^AwsClientBuilder
+  ([^Class clazz]
+   (builder clazz "builder"))
+  ([^Class clazz builder-method]
+   (let [^Method method (.getMethod clazz builder-method (make-array Class 0))]
+     (.invoke method clazz (make-array Object 0)))))
 
 (declare set-fields)
 
@@ -261,6 +264,25 @@
           (catch NoSuchMethodException e
             (println e))))))
 
+(defn- build-encryption-client [^Class clazz credentials configuration raw-creds options materials crypto]
+  (let [default-region (get-default-region)
+        credentials (get-credentials raw-creds)
+        builder (builder clazz "encryptionBuilder")
+        _ (set-fields builder options)
+        builder (if credentials (.withCredentials builder credentials) builder)
+        builder (if configuration (.withClientConfiguration builder configuration) builder)
+        builder (if materials (.withEncryptionMaterials builder materials) builder)
+        builder (if crypto (.withCryptoConfiguration builder crypto) builder)
+        ^String endpoint (or (:endpoint raw-creds) default-region)
+        builder (if endpoint
+                  (if (.startsWith endpoint "http")
+                    (.withEndpointConfiguration
+                     builder
+                     (AwsClientBuilder$EndpointConfiguration. endpoint (or (AwsHostNameUtils/parseRegion endpoint nil) default-region)))
+                    (.withRegion builder endpoint))
+                  builder)]
+    (.build builder)))
+
 (defn encryption-client*
   [encryption credentials configuration]
   (let [creds     (get-credentials credentials)
@@ -283,14 +305,8 @@
                     [em]))
         _         (if-let [provider (:provider encryption)]
                     (.withCryptoProvider crypto provider))
-        client    (if config
-                      (invoke-constructor
-                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
-                        [creds materials config crypto])
-                      (invoke-constructor
-                        "com.amazonaws.services.s3.AmazonS3EncryptionClient"
-                        [creds materials crypto]))]
-    client))
+        clazz     (Class/forName "com.amazonaws.services.s3.AmazonS3EncryptionClient")]
+    (build-encryption-client clazz creds config credentials configuration materials crypto)))
 
 (swap! client-config assoc :encryption-client-fn (memoize encryption-client*))
 

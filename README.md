@@ -8,12 +8,18 @@ A comprehensive Clojure client for the entire [Amazon AWS API][1].
 
 ## Installation
 
-Leiningen coordinates:
+### `deps.edn` coordinates:
+
+```clj
+amazonica/amazonica {:mvn/version "0.3.163"}
+```
+
+### Leiningen coordinates:
 ```clj
 [amazonica "0.3.167"]
 ```
 
-For Maven users:
+### For Maven users:
 
 add the following repository definition to your `pom.xml`:
 

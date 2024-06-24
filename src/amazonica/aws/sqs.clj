@@ -2,7 +2,20 @@
   (:use [amazonica.core :only (kw->str parse-args)]
         [clojure.walk :only (stringify-keys)]
         [robert.hooke :only (add-hook)])
-  (:import com.amazonaws.services.sqs.AmazonSQSClient))
+  (:import com.amazonaws.services.sqs.AmazonSQSClient
+           [com.amazonaws.services.sqs.model MessageAttributeValue]
+           [java.nio ByteBuffer]))
+
+(amazonica.core/register-coercions
+  MessageAttributeValue
+  (fn [value]
+    (cond
+      (string? value) (doto (MessageAttributeValue.) (.withDataType "String") (.withStringValue value))
+      (number? value) (doto (MessageAttributeValue.) (.withDataType "Number") (.withStringValue (str value)))
+      (instance? ByteBuffer value) (doto (MessageAttributeValue.) (.withDataType "Binary") (.withBinaryValue value))
+      :else (throw (ex-info
+                     (format "Values of type %s are not supported for SQS Message Attributes" (class value))
+                     {:value value})))))
 
 (amazonica.core/set-client AmazonSQSClient *ns*)
 

@@ -205,7 +205,9 @@
   (cond-> (KinesisClientLibConfiguration. (name app)
                                           (cond
                                             (keyword? stream) (name stream)
-                                            (instance? com.amazonaws.arn.Arn stream) (.getResourceAsString stream)
+                                            (instance? com.amazonaws.arn.Arn stream) (-> stream
+                                                                                         (.getResource)
+                                                                                         (.getResource))
                                             :else stream)
                                           provider
                                           (or dynamodb-credentials-provider provider)

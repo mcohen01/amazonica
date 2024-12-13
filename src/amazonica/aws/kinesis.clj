@@ -3,10 +3,10 @@
             [taoensso.nippy :as nippy]
             [clojure.algo.generic.functor :as functor])
   (:import [com.amazonaws.auth
-              AWSCredentialsProvider
-              AWSCredentials
-              AWSCredentialsProviderChain
-              DefaultAWSCredentialsProviderChain]
+            AWSCredentialsProvider
+            AWSCredentials
+            AWSCredentialsProviderChain
+            DefaultAWSCredentialsProviderChain]
            com.amazonaws.internal.StaticCredentialsProvider
            com.amazonaws.services.dynamodbv2.streamsadapter.AmazonDynamoDBStreamsAdapterClient
            [com.amazonaws.regions
@@ -17,22 +17,22 @@
            [com.amazonaws.services.kinesis.model
             Record]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces
-              IRecordProcessorCheckpointer]
+            IRecordProcessorCheckpointer]
            [com.amazonaws.services.kinesis.clientlibrary.interfaces.v2
-              IRecordProcessorFactory
-              IRecordProcessor
-              IShutdownNotificationAware]
+            IRecordProcessorFactory
+            IRecordProcessor
+            IShutdownNotificationAware]
            [com.amazonaws.services.kinesis.clientlibrary.exceptions
-              InvalidStateException
-              KinesisClientLibDependencyException
-              ShutdownException
-              ThrottlingException]
+            InvalidStateException
+            KinesisClientLibDependencyException
+            ShutdownException
+            ThrottlingException]
            [com.amazonaws.services.kinesis.clientlibrary.lib.worker
-              InitialPositionInStream
-              KinesisClientLibConfiguration
-              Worker
-              Worker$Builder
-              ShutdownReason]
+            InitialPositionInStream
+            KinesisClientLibConfiguration
+            Worker
+            Worker$Builder
+            ShutdownReason]
            [com.amazonaws.services.kinesis.metrics.interfaces
             MetricsLevel]
            java.nio.ByteBuffer
@@ -49,30 +49,30 @@
     (ByteBuffer/wrap (nippy/freeze data))))
 
 (alter-var-root
-  #'amazonica.aws.kinesis/put-record
-  (fn [f]
-    (fn [& args]
-      (let [parsed (amz/parse-args (first args) (rest args))
-            args   (:args parsed)
-            [stream data key & [seq-id]] args
-            bytes  (->bytes data)
-            putrec (->> (list (:cred parsed) stream bytes key)
-                        (filter (complement nil?))
-                        (apply partial f))]
-      (if seq-id
-          (putrec seq-id)
-          (putrec))))))
+ #'amazonica.aws.kinesis/put-record
+ (fn [f]
+   (fn [& args]
+     (let [parsed (amz/parse-args (first args) (rest args))
+           args   (:args parsed)
+           [stream data key & [seq-id]] args
+           bytes  (->bytes data)
+           putrec (->> (list (:cred parsed) stream bytes key)
+                       (filter (complement nil?))
+                       (apply partial f))]
+       (if seq-id
+         (putrec seq-id)
+         (putrec))))))
 
 (alter-var-root
-  #'amazonica.aws.kinesis/put-records
-  (fn [f]
-    (fn [& args]
-      (let [parsed (amz/parse-args (first args) (rest args))
-            [stream data] (:args parsed)
-            data-byte (map (fn [x] (update-in x [:data] ->bytes)) data)]
-        (if (nil? (:cred parsed))
-          (f :stream-name stream :records data-byte)
-          (f (:cred parsed) :stream-name stream :records data-byte))))))
+ #'amazonica.aws.kinesis/put-records
+ (fn [f]
+   (fn [& args]
+     (let [parsed (amz/parse-args (first args) (rest args))
+           [stream data] (:args parsed)
+           data-byte (map (fn [x] (update-in x [:data] ->bytes)) data)]
+       (if (nil? (:cred parsed))
+         (f :stream-name stream :records data-byte)
+         (f (:cred parsed) :stream-name stream :records data-byte))))))
 
 (defn unwrap
   "Get the contents of the given buffer as a byte-array, decoding as
@@ -90,29 +90,29 @@
           byte-array)))))
 
 (alter-var-root
-  #'amazonica.aws.kinesis/get-shard-iterator
-  (fn [f]
-    (fn [& args]
-      (:shard-iterator (apply f args)))))
+ #'amazonica.aws.kinesis/get-shard-iterator
+ (fn [f]
+   (fn [& args]
+     (:shard-iterator (apply f args)))))
 
 (alter-var-root
-  #'amazonica.aws.kinesis/get-records
-  (fn [f]
-    (fn [& args]
-       (let [parsed      (amz/parse-args (first args) (rest args))
-            args         (if (= 1 (count (:args parsed)))
-                             (first (:args parsed))
-                             (apply hash-map (seq (:args parsed))))
-            deserializer (or (:deserializer args) unwrap)
-            result (->>  (list (:cred parsed) args)
-                         (filter (complement nil?))
-                         (apply f))]
-        (assoc result
-               :records
-               (functor/fmap
-                 (fn [record]
-                   (update-in record [:data] (fn [d] (deserializer d))))
-                   (:records result)))))))
+ #'amazonica.aws.kinesis/get-records
+ (fn [f]
+   (fn [& args]
+     (let [parsed      (amz/parse-args (first args) (rest args))
+           args         (if (= 1 (count (:args parsed)))
+                          (first (:args parsed))
+                          (apply hash-map (seq (:args parsed))))
+           deserializer (or (:deserializer args) unwrap)
+           result (->>  (list (:cred parsed) args)
+                        (filter (complement nil?))
+                        (apply f))]
+       (assoc result
+              :records
+              (functor/fmap
+               (fn [record]
+                 (update-in record [:data] (fn [d] (deserializer d))))
+               (:records result)))))))
 
 (defn marshall
   [deserializer ^Record record]
@@ -134,7 +134,7 @@
       (Thread/sleep 3000)
       false)))
 
-(def ^:dynamic *shard-id* nil )
+(def ^:dynamic *shard-id* nil)
 
 (defn- processor-factory
   [processor deserializer checkpoint]
@@ -171,118 +171,122 @@
 (defn- kinesis-client-lib-configuration
   "Instantiate a KinesisClientLibConfiguration instance."
   ^KinesisClientLibConfiguration [^AWSCredentialsProvider provider
-   {:keys [app
-           stream
-           worker-id
-           endpoint
-           dynamodb-endpoint
-           billing-mode
-           initial-position-in-stream
-           ^java.util.Date initial-position-in-stream-date
-           failover-time-millis
-           shard-sync-interval-millis
-           max-records
-           idle-time-between-reads-in-millis
-           call-process-records-even-for-empty-record-list
-           parent-shard-poll-interval-millis
-           cleanup-leases-upon-shard-completion
-           common-client-config
-           kinesis-client-config
-           dynamodb-client-config
-           cloud-watch-client-config
-           user-agent
-           task-backoff-time-millis
-           metrics-level
-           metrics-buffer-time-millis
-           metrics-max-queue-size
-           validate-sequence-number-before-checkpointing
-           region-name
-           initial-lease-table-read-capacity
-           initial-lease-table-write-capacity]
-    :or {worker-id (str (UUID/randomUUID))}}]
+                                  {:keys [app
+                                          dynamodb-credentials-provider
+                                          cloudwatch-credentials-provider
+                                          stream
+                                          worker-id
+                                          endpoint
+                                          dynamodb-endpoint
+                                          billing-mode
+                                          initial-position-in-stream
+                                          ^java.util.Date initial-position-in-stream-date
+                                          failover-time-millis
+                                          shard-sync-interval-millis
+                                          max-records
+                                          idle-time-between-reads-in-millis
+                                          call-process-records-even-for-empty-record-list
+                                          parent-shard-poll-interval-millis
+                                          cleanup-leases-upon-shard-completion
+                                          common-client-config
+                                          kinesis-client-config
+                                          dynamodb-client-config
+                                          cloud-watch-client-config
+                                          user-agent
+                                          task-backoff-time-millis
+                                          metrics-level
+                                          metrics-buffer-time-millis
+                                          metrics-max-queue-size
+                                          validate-sequence-number-before-checkpointing
+                                          region-name
+                                          initial-lease-table-read-capacity
+                                          initial-lease-table-write-capacity]
+                                   :or {worker-id (str (UUID/randomUUID))}}]
   (cond-> (KinesisClientLibConfiguration. (name app)
                                           (name stream)
                                           provider
+                                          (or dynamodb-credentials-provider provider)
+                                          (or cloudwatch-credentials-provider provider)
                                           (name worker-id))
-          endpoint
-          (.withKinesisEndpoint endpoint)
+    endpoint
+    (.withKinesisEndpoint endpoint)
 
-          dynamodb-endpoint
-          (.withDynamoDBEndpoint dynamodb-endpoint)
+    dynamodb-endpoint
+    (.withDynamoDBEndpoint dynamodb-endpoint)
 
-          billing-mode
-          (.withBillingMode billing-mode)
+    billing-mode
+    (.withBillingMode billing-mode)
 
-          initial-position-in-stream
-          (.withInitialPositionInStream
-           (InitialPositionInStream/valueOf (name initial-position-in-stream)))
+    initial-position-in-stream
+    (.withInitialPositionInStream
+     (InitialPositionInStream/valueOf (name initial-position-in-stream)))
 
-          initial-position-in-stream-date
-          (.withTimestampAtInitialPositionInStream
-           initial-position-in-stream-date)
+    initial-position-in-stream-date
+    (.withTimestampAtInitialPositionInStream
+     initial-position-in-stream-date)
 
-          failover-time-millis
-          (.withFailoverTimeMillis failover-time-millis)
+    failover-time-millis
+    (.withFailoverTimeMillis failover-time-millis)
 
-          shard-sync-interval-millis
-          (.withShardSyncIntervalMillis shard-sync-interval-millis)
+    shard-sync-interval-millis
+    (.withShardSyncIntervalMillis shard-sync-interval-millis)
 
-          max-records
-          (.withMaxRecords max-records)
+    max-records
+    (.withMaxRecords max-records)
 
-          idle-time-between-reads-in-millis
-          (.withIdleTimeBetweenReadsInMillis idle-time-between-reads-in-millis)
+    idle-time-between-reads-in-millis
+    (.withIdleTimeBetweenReadsInMillis idle-time-between-reads-in-millis)
 
-          call-process-records-even-for-empty-record-list
-          (.withCallProcessRecordsEvenForEmptyRecordList
-           call-process-records-even-for-empty-record-list)
+    call-process-records-even-for-empty-record-list
+    (.withCallProcessRecordsEvenForEmptyRecordList
+     call-process-records-even-for-empty-record-list)
 
-          parent-shard-poll-interval-millis
-          (.withParentShardPollIntervalMillis
-           parent-shard-poll-interval-millis)
+    parent-shard-poll-interval-millis
+    (.withParentShardPollIntervalMillis
+     parent-shard-poll-interval-millis)
 
-          cleanup-leases-upon-shard-completion
-          (.withCleanupLeasesUponShardCompletion
-           cleanup-leases-upon-shard-completion)
+    cleanup-leases-upon-shard-completion
+    (.withCleanupLeasesUponShardCompletion
+     cleanup-leases-upon-shard-completion)
 
-          common-client-config
-          (.withCommonClientConfig common-client-config)
+    common-client-config
+    (.withCommonClientConfig common-client-config)
 
-          kinesis-client-config
-          (.withKinesisClientConfig kinesis-client-config)
+    kinesis-client-config
+    (.withKinesisClientConfig kinesis-client-config)
 
-          dynamodb-client-config
-          (.withDynamoDBClientConfig dynamodb-client-config)
+    dynamodb-client-config
+    (.withDynamoDBClientConfig dynamodb-client-config)
 
-          cloud-watch-client-config
-          (.withCloudWatchClientConfig cloud-watch-client-config)
+    cloud-watch-client-config
+    (.withCloudWatchClientConfig cloud-watch-client-config)
 
-          user-agent
-          (.withUserAgent user-agent)
+    user-agent
+    (.withUserAgent user-agent)
 
-          task-backoff-time-millis
-          (.withTaskBackoffTimeMillis task-backoff-time-millis)
+    task-backoff-time-millis
+    (.withTaskBackoffTimeMillis task-backoff-time-millis)
 
-          metrics-level
-          (.withMetricsLevel (MetricsLevel/valueOf (name metrics-level)))
+    metrics-level
+    (.withMetricsLevel (MetricsLevel/valueOf (name metrics-level)))
 
-          metrics-buffer-time-millis
-          (.withMetricsBufferTimeMillis metrics-buffer-time-millis)
+    metrics-buffer-time-millis
+    (.withMetricsBufferTimeMillis metrics-buffer-time-millis)
 
-          metrics-max-queue-size
-          (.withMetricsMaxQueueSize metrics-max-queue-size)
+    metrics-max-queue-size
+    (.withMetricsMaxQueueSize metrics-max-queue-size)
 
-          validate-sequence-number-before-checkpointing
-          (.withValidateSequenceNumberBeforeCheckpointing validate-sequence-number-before-checkpointing)
+    validate-sequence-number-before-checkpointing
+    (.withValidateSequenceNumberBeforeCheckpointing validate-sequence-number-before-checkpointing)
 
-          region-name
-          (.withRegionName region-name)
+    region-name
+    (.withRegionName region-name)
 
-          initial-lease-table-read-capacity
-          (.withInitialLeaseTableReadCapacity initial-lease-table-read-capacity)
+    initial-lease-table-read-capacity
+    (.withInitialLeaseTableReadCapacity initial-lease-table-read-capacity)
 
-          initial-lease-table-write-capacity
-          (.withInitialLeaseTableWriteCapacity initial-lease-table-write-capacity)))
+    initial-lease-table-write-capacity
+    (.withInitialLeaseTableWriteCapacity initial-lease-table-write-capacity)))
 
 (defn worker
   "Instantiate a kinesis Worker."
@@ -290,7 +294,13 @@
   (let [opts (if (associative? (first args))
                (first args)
                (apply hash-map args))
-        {:keys [processor deserializer checkpoint credentials dynamodb-adaptor-client? ^String region-name ^String endpoint]
+        {:keys [processor
+                deserializer
+                checkpoint
+                credentials
+                dynamodb-adaptor-client?
+                ^String region-name
+                ^String endpoint]
          :or   {checkpoint 60
                 deserializer unwrap
                 endpoint "kinesis.us-east-1.amazonaws.com"}} opts

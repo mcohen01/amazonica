@@ -111,6 +111,7 @@
      :instance-length         (.getInstanceLength obj)
      :last-modified           (marshall (.getLastModified obj))
      :ongoing-restore         (marshall (.getOngoingRestore obj))
+     :storage-class           (.getStorageClass obj)
      ;; :raw-metadata            (.getRawMetadata obj)
      :restore-expiration-time (marshall (.getRestoreExpirationTime obj))
      :server-side-encryption  (.getServerSideEncryption obj)
